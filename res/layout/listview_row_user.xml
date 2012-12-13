@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="5dip" 
+    android:descendantFocusability="blocksDescendants">
+
+    <ImageView
+        android:id="@+id/avatar"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_centerVertical="true"
+        android:layout_margin="5dp"
+        android:background="@drawable/image_border"
+        android:padding="3dp" />
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_centerVertical="true"
+        android:layout_toRightOf="@+id/avatar" 
+        android:weightSum="10">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="Username"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+	
+	        <TextView
+	            android:id="@+id/score"
+	            android:layout_width="wrap_content"
+	            android:layout_height="wrap_content"
+	            android:text="0 XP"
+	            android:textAppearance="?android:attr/textAppearanceSmall" />
+
+        </LinearLayout>
+		
+        <TextView
+            android:id="@+id/textView1"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="10" 
+    		android:gravity="center"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+        
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="7"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:layout_width="150dp"
+                android:layout_height="wrap_content"
+                android:src="@drawable/grolsch" 
+                android:layout_marginRight="5dp" />
+            
+           	<ImageButton
+                android:layout_width="150dp"
+                android:layout_height="wrap_content"
+                android:src="@drawable/grolsch"
+                android:layout_marginRight="5dp" />
+           	
+           	<ImageButton
+                android:layout_width="150dp"
+                android:layout_height="wrap_content"
+                android:src="@drawable/grolsch"
+                android:layout_marginRight="5dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+    
+</RelativeLayout>
