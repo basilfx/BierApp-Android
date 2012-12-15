@@ -43,6 +43,8 @@ public class UserAdapter extends ArrayAdapter<User> {
         
         // Set properties
         TextView name = (TextView) view.findViewById(R.id.name);
+        TextView balance = (TextView) view.findViewById(R.id.balance);
+        TextView score = (TextView) view.findViewById(R.id.score);
         ImageView avatar = (ImageView) view.findViewById(R.id.avatar);
         ImageView moreView = (ImageView) view.findViewById(R.id.product_placeholder_more);
         
@@ -57,6 +59,18 @@ public class UserAdapter extends ArrayAdapter<User> {
         final User user = this.getItem(pos);
         UserRowItem rowItem = this.rowItems.get(pos);
         rowItem.setRow(user, name, avatar);
+        
+        // Hide or show balance/score
+        switch (user.getType()) {
+	        case User.INHABITANT:
+	        	balance.setVisibility(View.VISIBLE);
+	        	score.setVisibility(View.VISIBLE);
+	        	break;
+	        case User.GUEST:
+	        	balance.setVisibility(View.INVISIBLE);
+	        	score.setVisibility(View.GONE);
+	        	break;
+        }
 
         // Add products to the placeholders
         for (int i = 0; i < productView.length; i++) {

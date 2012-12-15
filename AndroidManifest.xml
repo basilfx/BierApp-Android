@@ -25,6 +25,9 @@
         </activity>
         
         <activity android:name=".activity.HomeActivity"></activity>
+        <activity android:name=".activity.GuestsActivity"></activity>
+        <activity android:name=".activity.HistoryActivity"></activity>
+        <activity android:name=".activity.StatsActivity"></activity>
     </application>
 
 </manifest>

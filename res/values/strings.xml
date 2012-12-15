@@ -4,6 +4,8 @@
     <string name="menu_settings">Instelllingen</string>
     
     <string name="menu_add_guest">Gast Toevoegen</string>
+    
+    <string name="menu_show_guests">Gasten</string>
     <string name="menu_show_history">Geschiedenis</string>
     <string name="menu_show_stats">Statistieken</string>
     

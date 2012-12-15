@@ -4,6 +4,7 @@ import java.util.Date;
 
 public class TransactionItem {
 	private User user;
+	private User payer;
 	private Product product;
 	private int amount;
 	
