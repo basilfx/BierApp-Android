@@ -8,8 +8,8 @@
 
     <ImageView
         android:id="@+id/avatar"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
         android:layout_centerVertical="true"
         android:layout_margin="5dp"
         android:background="@drawable/image_border"
@@ -17,16 +17,16 @@
 
     <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_toRightOf="@+id/avatar"
         android:weightSum="10" >
 
         <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
+            android:layout_height="fill_parent"
             android:layout_weight="2"
+            android:gravity="center_vertical"
             android:orientation="vertical" >
 
             <TextView
@@ -45,14 +45,30 @@
                 android:textAppearance="?android:attr/textAppearanceSmall" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/balance"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="fill_parent"
             android:layout_weight="2"
-            android:gravity="center"
-            android:text="10"
-            android:textAppearance="?android:attr/textAppearanceLarge" />
+            android:gravity="center_vertical|center_horizontal"
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/balance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:text="10"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <TextView
+                android:id="@+id/change"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0"
+                android:visibility="gone"
+                android:textAppearance="?android:attr/textAppearanceSmall" />
+
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/products"
@@ -64,32 +80,32 @@
 
             <ImageView
                 android:id="@+id/product_placeholder_1"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_marginRight="12dp"
+                android:layout_width="55dp"
+                android:layout_height="55dp"
+                android:layout_marginRight="10dp"
                 android:background="@drawable/image_border"
                 android:src="@drawable/product_beer_none" />
 
             <ImageView
                 android:id="@+id/product_placeholder_2"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_marginRight="12dp"
+                android:layout_width="55dp"
+                android:layout_height="55dp"
+                android:layout_marginRight="10dp"
                 android:background="@drawable/image_border"
                 android:src="@drawable/product_beer_none" />
 
             <ImageView
                 android:id="@+id/product_placeholder_3"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_marginRight="12dp"
+                android:layout_width="55dp"
+                android:layout_height="55dp"
+                android:layout_marginRight="10dp"
                 android:background="@drawable/image_border"
                 android:src="@drawable/product_beer_none" />
 
             <ImageView
                 android:id="@+id/product_placeholder_more"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
+                android:layout_width="55dp"
+                android:layout_height="55dp"
                 android:background="@drawable/image_border"
                 android:src="@android:drawable/ic_search_category_default" />
         </LinearLayout>
