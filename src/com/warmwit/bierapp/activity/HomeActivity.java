@@ -33,12 +33,11 @@ import com.warmwit.bierapp.data.model.TransactionItem;
 import com.warmwit.bierapp.data.model.User;
 
 public class HomeActivity extends Activity {
-	private ListView userListView;
-	private ArrayList<UserRowItem> userRowItems;
 	private BierAppApplication application;
-	
 	private Transaction transaction;
 	
+	private ListView userListView;
+	private ArrayList<UserRowItem> userRowItems;
 	private MenuItem purchaseMenu;
 	
     @Override
@@ -116,15 +115,17 @@ public class HomeActivity extends Activity {
 							Multimap<User, TransactionItem> grouped = HomeActivity.this.transaction.groupByUser();
 							StringBuilder message = new StringBuilder();
 							
+							// Walk through each transaction and display count
 							for (User user : grouped.keySet()) {
 								message.append(user.getFullName() + "\t\t" + grouped.get(user).size() + "x\n");
 							}
 							
+							// Set the message
 							alertDialog.setMessage(message.toString());
 						}
 						
+						// Show dialog and done
 						alertDialog.show();
-						
 						return true;
 					case R.id.menu_purchase_cancel:
 						// Cancel the transaction if there is one

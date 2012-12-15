@@ -11,7 +11,6 @@ import android.view.View.OnLongClickListener;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.warmwit.bierapp.BierAppApplication;
@@ -45,50 +44,58 @@ public class UserAdapter extends ArrayAdapter<User> {
         // Set properties
         TextView name = (TextView) view.findViewById(R.id.name);
         ImageView avatar = (ImageView) view.findViewById(R.id.avatar);
-        LinearLayout products = (LinearLayout) view.findViewById(R.id.products);
+        ImageView moreView = (ImageView) view.findViewById(R.id.product_placeholder_more);
+        
+        // Get placeholders
+        ImageView[] productView = { 
+    		(ImageView) view.findViewById(R.id.product_placeholder_1),
+    		(ImageView) view.findViewById(R.id.product_placeholder_2),
+    		(ImageView) view.findViewById(R.id.product_placeholder_3),
+        };
         
         // Set properties
         final User user = this.getItem(pos);
         UserRowItem rowItem = this.rowItems.get(pos);
         rowItem.setRow(user, name, avatar);
 
-        // Add products
-        int drawn = 0;
-        
-        for (final Product product : this.application.products) {
-        	// Stop after three drawn icons
-        	if (drawn > 3) break;
-        	
-        	// 
-        	ImageView button = new ImageView(this.getContext());
-        	button.setImageResource(R.drawable.product_beer_brand);
-        	
-        	// Notify the receiving end of the onProductClicked callback
-        	button.setOnClickListener(new OnClickListener() {
-				@Override
-				public void onClick(View v) {
-					UserAdapter.this.callback.onProductClicked(user, product);
-				}
-			});
-        	
-        	// Prevent long clicks to be detected as single clicks
-        	button.setOnLongClickListener(new OnLongClickListener() {
-				@Override
-				public boolean onLongClick(View v) {
-					return false;
-				}
-			});
-        	
-        	// Add to products view
-        	products.addView(button);
-        	
-        	// Increment counter
-        	drawn = drawn + 1;
+        // Add products to the placeholders
+        for (int i = 0; i < productView.length; i++) {
+        	if (i < this.application.products.size()) {
+        		// Make sure the view is visible
+        		productView[i].setVisibility(View.VISIBLE);
+        		
+	        	// Retrieve corresponding product
+	        	final Product product = this.application.products.get(i);
+	        	
+	        	// Set image
+	        	productView[i].setImageResource(product.getBuiltinLogo());
+	        	
+	        	// Notify the receiving end of the onProductClicked callback
+	        	productView[i].setOnClickListener(new OnClickListener() {
+					@Override
+					public void onClick(View v) {
+						UserAdapter.this.callback.onProductClicked(user, product);
+					}
+				});
+	        	
+	        	// Prevent long clicks to be detected as single clicks
+	        	productView[i].setOnLongClickListener(new OnLongClickListener() {
+					@Override
+					public boolean onLongClick(View v) {
+						return false;
+					}
+				});
+        	} else {
+        		// Hide view
+        		productView[i].setVisibility(View.INVISIBLE);
+        	}
         }
         
-        // Show 'more' button when there are products left
-        if (drawn < this.application.products.size()) {
-        	//
+        // Show the more button if applicable
+        if (this.application.products.size() > productView.length) {
+        	moreView.setVisibility(View.VISIBLE);
+        } else {
+        	moreView.setVisibility(View.INVISIBLE);
         }
         
         // Done
