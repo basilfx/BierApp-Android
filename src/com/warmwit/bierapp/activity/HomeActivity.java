@@ -6,6 +6,7 @@ import java.util.Set;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -45,7 +46,7 @@ public class HomeActivity extends Activity {
         super.onCreate(savedInstanceState);
         
         // Set content
-        setContentView(R.layout.activity_home);
+        this.setContentView(R.layout.activity_home);
         
         // Bind controls
         this.application = (BierAppApplication) this.getApplication();
@@ -99,7 +100,40 @@ public class HomeActivity extends Activity {
     	MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_home, menu);
         
-        OnMenuItemClickListener handler = new OnMenuItemClickListener() {
+        // Create normal menu handler
+        OnMenuItemClickListener generalHandler = new OnMenuItemClickListener() {
+        	@Override
+			public boolean onMenuItemClick(MenuItem item) {
+        		Intent intent;
+        		
+				switch (item.getItemId()) {
+					case R.id.menu_show_guests:
+						// Switch to guests activity
+						intent = new Intent(HomeActivity.this, GuestsActivity.class);
+						startActivity(intent); 
+						
+						return true;
+					case R.id.menu_show_history:
+						// Switch to guests activity
+						intent = new Intent(HomeActivity.this, HistoryActivity.class);
+						startActivity(intent); 
+						
+						return true;
+					case R.id.menu_show_stats:
+						// Switch to guests activity
+						intent = new Intent(HomeActivity.this, StatsActivity.class);
+						startActivity(intent); 
+						
+						return true;
+					default:
+						// Nothing to do
+						return false;
+				}
+			}
+		};
+        
+        // Create purchase menu handler
+        OnMenuItemClickListener purchaseHandler = new OnMenuItemClickListener() {
 			@Override
 			public boolean onMenuItemClick(MenuItem item) {
 				switch (item.getItemId()) {
@@ -148,10 +182,15 @@ public class HomeActivity extends Activity {
 		// Save reference to purchase menu to hide/update it
 		this.purchaseMenu = menu.findItem(R.id.menu_purchase);
 		
-		// Add handler to submenu items
-		menu.findItem(R.id.menu_purchase_confirm).setOnMenuItemClickListener(handler);
-		menu.findItem(R.id.menu_purchase_show).setOnMenuItemClickListener(handler);
-		menu.findItem(R.id.menu_purchase_cancel).setOnMenuItemClickListener(handler);
+		// Add handler to general menu
+		menu.findItem(R.id.menu_show_guests).setOnMenuItemClickListener(generalHandler);
+		menu.findItem(R.id.menu_show_stats).setOnMenuItemClickListener(generalHandler);
+		menu.findItem(R.id.menu_show_history).setOnMenuItemClickListener(generalHandler);
+		
+		// Add handler to purchase menu
+		menu.findItem(R.id.menu_purchase_confirm).setOnMenuItemClickListener(purchaseHandler);
+		menu.findItem(R.id.menu_purchase_show).setOnMenuItemClickListener(purchaseHandler);
+		menu.findItem(R.id.menu_purchase_cancel).setOnMenuItemClickListener(purchaseHandler);
         
 		// Done
 		return super.onCreateOptionsMenu(menu);
