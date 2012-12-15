@@ -23,6 +23,7 @@ public class SplashActivity extends Activity {
 	        
 			try {
 	        	application.users = application.getRemoteClient().getUsers();
+	        	application.products = application.getRemoteClient().getProducts();
 	        } catch (IOException e) {
 	        	Log.e("SPLASH", "Unable to connect", e);
 	        }

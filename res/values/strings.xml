@@ -1,8 +1,16 @@
 <resources>
 
     <string name="app_name">BierApp</string>
-    <string name="menu_settings">Settings</string>
-    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">Instelllingen</string>
+    
     <string name="menu_add_guest">Gast Toevoegen</string>
+    <string name="menu_show_history">Geschiedenis</string>
+    <string name="menu_show_stats">Statistieken</string>
+    
+    <string name="menu_clear_transaction_items">Transactie-items wissen</string>
+    
+    <string name="menu_purchase_confirm">Kopen</string>
+    <string name="menu_purchase_show">Weergeven</string>
+    <string name="menu_purchase_cancel">Wissen</string>
 
 </resources>

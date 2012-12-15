@@ -1,6 +1,7 @@
 package com.warmwit.bierapp.data.model;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 
 public class User {
 	public static final int INHABITANT = 0;
@@ -26,5 +27,20 @@ public class User {
 	
 	public int getType() {
 		return this.type;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+	 	if (o instanceof User){
+	        final User other = (User) o;
+	        
+	        return Objects.equal(this.firstName, other.firstName) &&
+        		Objects.equal(this.middleName, other.middleName) &&
+        		Objects.equal(this.lastName, other.lastName) &&
+        		Objects.equal(this.avatarUrl, other.avatarUrl) &&
+        		Objects.equal(this.type, other.type);
+	    } else{
+	        return false;
+	    }
 	}
 }

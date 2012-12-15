@@ -46,7 +46,7 @@
         </LinearLayout>
 		
         <TextView
-            android:id="@+id/textView1"
+            android:id="@+id/balance"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
@@ -55,28 +55,11 @@
             android:textAppearance="?android:attr/textAppearanceLarge" />
         
         <LinearLayout
+            android:id="@+id/products"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="7"
             android:orientation="horizontal">
-
-            <ImageButton
-                android:layout_width="150dp"
-                android:layout_height="wrap_content"
-                android:src="@drawable/grolsch" 
-                android:layout_marginRight="5dp" />
-            
-           	<ImageButton
-                android:layout_width="150dp"
-                android:layout_height="wrap_content"
-                android:src="@drawable/grolsch"
-                android:layout_marginRight="5dp" />
-           	
-           	<ImageButton
-                android:layout_width="150dp"
-                android:layout_height="wrap_content"
-                android:src="@drawable/grolsch"
-                android:layout_marginRight="5dp" />
 
         </LinearLayout>
 

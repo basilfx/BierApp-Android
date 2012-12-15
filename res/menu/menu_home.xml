@@ -1,6 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
     <item android:id="@+id/menu_add_guest" android:title="@string/menu_add_guest"></item>
+    <item android:id="@+id/menu_show_history" android:title="@string/menu_show_history"></item>
+    <item android:id="@+id/menu_show_stats" android:title="@string/menu_show_stats"></item>
     
-
+    <item android:id="@+id/menu_purchase"
+        android:icon="@android:drawable/ic_input_add" 
+        android:showAsAction="always|withText"
+        android:visible="false">
+        
+        <menu>
+            <item android:id="@+id/menu_purchase_confirm"
+				android:title="@string/menu_purchase_confirm" />
+            
+            <item android:id="@+id/menu_purchase_show"
+				android:title="@string/menu_purchase_show" />
+            
+            <item android:id="@+id/menu_purchase_cancel"
+				android:title="@string/menu_purchase_cancel" />
+        </menu>
+    </item>
 </menu>
