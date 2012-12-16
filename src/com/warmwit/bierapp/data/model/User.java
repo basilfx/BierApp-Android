@@ -30,6 +30,10 @@ public class User {
 		return this.type;
 	}
 
+	public String getName() {
+		return this.firstName;
+	}
+	
 	@Override
 	public boolean equals(Object o) {
 	 	if (o instanceof User){

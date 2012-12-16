@@ -11,7 +11,7 @@
     
     <string name="menu_clear_transaction_items">Transactie-items wissen</string>
     
-    <string name="menu_purchase_confirm">Kopen</string>
+    <string name="menu_purchase_confirm">Consumeren</string>
     <string name="menu_purchase_show">Weergeven</string>
     <string name="menu_purchase_cancel">Wissen</string>
 

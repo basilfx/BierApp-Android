@@ -25,8 +25,9 @@ import com.mobsandgeeks.adapters.SimpleSectionAdapter;
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.callbacks.ProductClickedCallback;
-import com.warmwit.bierapp.data.adapter.UserAdapter;
-import com.warmwit.bierapp.data.adapter.UserRowItem;
+import com.warmwit.bierapp.data.adapter.UserListAdapter;
+import com.warmwit.bierapp.data.adapter.UserRowState;
+import com.warmwit.bierapp.data.adapter.UserRowView;
 import com.warmwit.bierapp.data.model.Guest;
 import com.warmwit.bierapp.data.model.Product;
 import com.warmwit.bierapp.data.model.Transaction;
@@ -38,7 +39,7 @@ public class HomeActivity extends Activity {
 	private Transaction transaction;
 	
 	private ListView userListView;
-	private ArrayList<UserRowItem> userRowItems;
+	private ArrayList<UserRowState> userRowItems;
 	private MenuItem purchaseMenu;
 	
     @Override
@@ -56,10 +57,10 @@ public class HomeActivity extends Activity {
  		if (savedInstanceState != null) {
  			this.userRowItems = savedInstanceState.getParcelableArrayList("userRowItems");
  		} else {
- 			this.userRowItems = new ArrayList<UserRowItem>(application.users.size());
+ 			this.userRowItems = new ArrayList<UserRowState>(application.users.size());
  			
  			for (User user : application.users) {
- 				this.userRowItems.add(new UserRowItem(user));
+ 				this.userRowItems.add(new UserRowState(user));
  			}
  		}
         
@@ -84,8 +85,8 @@ public class HomeActivity extends Activity {
         
         super.onCreateContextMenu(menu, v, menuInfo);
     }
-    
-    @Override
+
+	@Override
 	public boolean onContextItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
     		case R.id.menu_context_add_guest:
@@ -103,7 +104,7 @@ public class HomeActivity extends Activity {
 					}
     		    	
     		    });
-    		           
+    		    
     		    builder.show();
     			
     			return true;
@@ -248,7 +249,7 @@ public class HomeActivity extends Activity {
 			}
 		};
 		
-    	UserAdapter userAdapter = new UserAdapter(this, this.userRowItems, callback);
+    	UserListAdapter userAdapter = new UserListAdapter(this, this.userRowItems, callback);
     	userAdapter.addAll(this.application.users);
     	
     	// Create sectionizer to seperate guests from inhabitants
@@ -282,7 +283,7 @@ public class HomeActivity extends Activity {
 		if (amount == 0) {
 			this.purchaseMenu.setVisible(false);
 		} else {
-			this.purchaseMenu.setTitle(amount + " producten");
+			this.purchaseMenu.setTitle(amount + " consumpties");
 			this.purchaseMenu.setVisible(true);
 		}
 		
@@ -290,7 +291,7 @@ public class HomeActivity extends Activity {
 		for (int i = 0; i < this.userRowItems.size(); i++) {
 			// Get references
 			User user = this.application.users.get(i);
-			UserRowItem row = this.userRowItems.get(i);
+			UserRowState row = this.userRowItems.get(i);
 			
 			if (amount != 0) {
 				row.setChange(this.transaction.getAmount(user));
@@ -299,7 +300,17 @@ public class HomeActivity extends Activity {
 			}
 		}
 		
-		userListView.invalidateViews();
+		// Update rows currently visible
+		int firstIndex = this.userListView.getFirstVisiblePosition();
+		int lastIndex = this.userListView.getLastVisiblePosition();
 		
+		for (int i = firstIndex; i <= lastIndex; i++) {
+			View view = this.userListView.getChildAt(i);
+			
+			// Skip section headers
+			if (view instanceof UserRowView) {
+				((UserRowView) view).refreshView();
+			}
+		}
 	}
 }
