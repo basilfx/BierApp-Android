@@ -110,7 +110,7 @@ public class ImageDownloader {
 			File sdDir = android.os.Environment.getExternalStorageDirectory();  
 			
 			//TODO : Change your direcory here
-			cacheDir = new File(sdDir,"data/tac/images");
+			cacheDir = new File(sdDir, "data/tac/images");
 		}
 		else
 			cacheDir = context.getCacheDir();

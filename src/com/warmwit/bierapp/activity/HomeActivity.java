@@ -7,6 +7,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -114,6 +115,11 @@ public class HomeActivity extends Activity {
     		    
     		    if (this.transaction != null) {
     		    	this.transaction.clear(user);
+    		    	
+    		    	// Display toast message
+					Toast.makeText(HomeActivity.this, "Transactie-items voor " + user.getName() + " gewist", Toast.LENGTH_LONG).show();
+    		    	
+					// Update view
     		    	this.refreshView();
     		    }
     		    
@@ -300,11 +306,11 @@ public class HomeActivity extends Activity {
 			}
 		}
 		
-		// Update rows currently visible
+		// Update rows currently visible -- note that getChildAt() corresponds to first visible item!
 		int firstIndex = this.userListView.getFirstVisiblePosition();
 		int lastIndex = this.userListView.getLastVisiblePosition();
 		
-		for (int i = firstIndex; i <= lastIndex; i++) {
+		for (int i = 0; i <= lastIndex - firstIndex; i++) {
 			View view = this.userListView.getChildAt(i);
 			
 			// Skip section headers
