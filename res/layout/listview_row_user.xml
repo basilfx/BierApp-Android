@@ -8,8 +8,8 @@
 
     <ImageView
         android:id="@+id/avatar"
-        android:layout_width="55dp"
-        android:layout_height="55dp"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
         android:layout_centerVertical="true"
         android:layout_margin="5dp"
         android:background="@drawable/image_border"
@@ -80,32 +80,32 @@
 
             <ImageView
                 android:id="@+id/product_placeholder_1"
-                android:layout_width="55dp"
-                android:layout_height="55dp"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
                 android:layout_marginRight="10dp"
                 android:background="@drawable/image_border"
                 android:src="@drawable/product_beer_none" />
 
             <ImageView
                 android:id="@+id/product_placeholder_2"
-                android:layout_width="55dp"
-                android:layout_height="55dp"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
                 android:layout_marginRight="10dp"
                 android:background="@drawable/image_border"
                 android:src="@drawable/product_beer_none" />
 
             <ImageView
                 android:id="@+id/product_placeholder_3"
-                android:layout_width="55dp"
-                android:layout_height="55dp"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
                 android:layout_marginRight="10dp"
                 android:background="@drawable/image_border"
                 android:src="@drawable/product_beer_none" />
 
             <ImageView
                 android:id="@+id/product_placeholder_more"
-                android:layout_width="55dp"
-                android:layout_height="55dp"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
                 android:background="@drawable/image_border"
                 android:src="@android:drawable/ic_search_category_default" />
         </LinearLayout>

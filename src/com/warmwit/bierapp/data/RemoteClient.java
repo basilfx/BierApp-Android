@@ -14,7 +14,7 @@ import com.warmwit.bierapp.data.model.User;
 
 public class RemoteClient {
 	
-	private static final String BASE_URL = "http://192.168.1.148/BierApp/index.php";
+	private static final String BASE_URL = "http://10.0.0.21/BierApp/index.php";
 	
 	public List<User> getUsers() throws IOException {
 		return Lists.newArrayList(new Gson().fromJson(getInputStream("/users"), User[].class));

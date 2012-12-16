@@ -2,8 +2,11 @@ package com.warmwit.bierapp.data.adapter;
 
 import java.util.Random;
 
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -13,6 +16,7 @@ import com.warmwit.bierapp.util.ImageDownloader;
 
 public class UserRowItem implements Parcelable {
 	private int randomAvatar;
+	private int change;
 	
 	public UserRowItem(User user) {
 		// Pick random avatar
@@ -33,7 +37,11 @@ public class UserRowItem implements Parcelable {
     	this.randomAvatar = avatars[(new Random().nextInt(avatars.length))];
 	}
 	
-	public void setRow(User user, TextView text, ImageView view) {
+	public void setChange(int change) {
+		this.change = change;
+	}
+	
+	public void setRow(User user, TextView text, TextView change, ImageView view) {
 		// Set the avatar
 		if (user.getAvatarUrl() != null) {
 			ImageDownloader downloader = new ImageDownloader();
@@ -44,6 +52,20 @@ public class UserRowItem implements Parcelable {
 		
 		// Set the name
 		text.setText(user.getFullName());
+		
+		// Set the change
+		if (this.change != 0) {
+			if (this.change < 0) {
+				change.setTextColor(Color.GREEN);
+				change.setText("+" + this.change);
+			} else {
+				change.setTextColor(Color.RED);
+				change.setText("-" + this.change);
+			}
+			change.setVisibility(View.VISIBLE);
+		} else {
+			change.setVisibility(View.GONE);
+		}
 	}
 
 	public UserRowItem(Parcel in) {

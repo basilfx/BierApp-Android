@@ -29,6 +29,17 @@ public class Transaction extends ArrayList<TransactionItem>{
 		return result;
 	}
 	
+	public int getAmount(User user) {
+		int total = 0;
+		
+		for (TransactionItem transcation : this) {
+			if (transcation.getUser().equals(user))
+				total = total + 1;
+		}
+		
+		return total;
+	}
+	
 	public void clear(User user) {
 		Iterator<TransactionItem> iterator = this.iterator();
 		

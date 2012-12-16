@@ -70,7 +70,17 @@ public class HomeActivity extends Activity {
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
         MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu_context_user, menu);
+        AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
+	    User user = (User) this.userListView.getAdapter().getItem(info.position);
+        
+        switch (user.getType()) {
+        	case User.INHABITANT:
+        		inflater.inflate(R.menu.menu_context_home_inhabitant, menu);
+        		break;
+        	case User.GUEST:
+        		inflater.inflate(R.menu.menu_context_home_guest, menu);
+        		break;
+        }
         
         super.onCreateContextMenu(menu, v, menuInfo);
     }
@@ -265,11 +275,31 @@ public class HomeActivity extends Activity {
     }
 	
 	public void refreshView() {
-		if (this.transaction == null) {
+		// Retrieve total amount of products
+		int amount = this.transaction == null ? 0 : this.transaction.getTotalAmount();
+		
+		// Save or hide purchase menu based on amount.
+		if (amount == 0) {
 			this.purchaseMenu.setVisible(false);
 		} else {
-			this.purchaseMenu.setTitle(this.transaction.getTotalAmount() + " producten");
+			this.purchaseMenu.setTitle(amount + " producten");
 			this.purchaseMenu.setVisible(true);
 		}
+		
+		// Update changes items
+		for (int i = 0; i < this.userRowItems.size(); i++) {
+			// Get references
+			User user = this.application.users.get(i);
+			UserRowItem row = this.userRowItems.get(i);
+			
+			if (amount != 0) {
+				row.setChange(this.transaction.getAmount(user));
+			} else {
+				row.setChange(0);
+			}
+		}
+		
+		userListView.invalidateViews();
+		
 	}
 }

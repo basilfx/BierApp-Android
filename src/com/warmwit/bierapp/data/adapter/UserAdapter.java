@@ -45,6 +45,7 @@ public class UserAdapter extends ArrayAdapter<User> {
         TextView name = (TextView) view.findViewById(R.id.name);
         TextView balance = (TextView) view.findViewById(R.id.balance);
         TextView score = (TextView) view.findViewById(R.id.score);
+        TextView change = (TextView) view.findViewById(R.id.change);
         ImageView avatar = (ImageView) view.findViewById(R.id.avatar);
         ImageView moreView = (ImageView) view.findViewById(R.id.product_placeholder_more);
         
@@ -58,7 +59,7 @@ public class UserAdapter extends ArrayAdapter<User> {
         // Set properties
         final User user = this.getItem(pos);
         UserRowItem rowItem = this.rowItems.get(pos);
-        rowItem.setRow(user, name, avatar);
+        rowItem.setRow(user, name, change, avatar);
         
         // Hide or show balance/score
         switch (user.getType()) {
