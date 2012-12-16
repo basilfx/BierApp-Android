@@ -1,11 +1,10 @@
 package com.warmwit.bierapp.activity;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Set;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.ContextMenu;
@@ -16,11 +15,11 @@ import android.view.MenuItem;
 import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import com.mobsandgeeks.adapters.Sectionizer;
 import com.mobsandgeeks.adapters.SimpleSectionAdapter;
 import com.warmwit.bierapp.BierAppApplication;
@@ -28,6 +27,7 @@ import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.callbacks.ProductClickedCallback;
 import com.warmwit.bierapp.data.adapter.UserAdapter;
 import com.warmwit.bierapp.data.adapter.UserRowItem;
+import com.warmwit.bierapp.data.model.Guest;
 import com.warmwit.bierapp.data.model.Product;
 import com.warmwit.bierapp.data.model.Transaction;
 import com.warmwit.bierapp.data.model.TransactionItem;
@@ -79,6 +79,23 @@ public class HomeActivity extends Activity {
 	public boolean onContextItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
     		case R.id.menu_context_add_guest:
+    			
+    			ArrayAdapter<Guest> adapter = new ArrayAdapter<Guest>(this, android.R.layout.simple_list_item_single_choice, this.application.guests);
+    			
+    			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    		    builder.setTitle("Kies een gast");
+    		    builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
+
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						// TODO Auto-generated method stub
+						
+					}
+    		    	
+    		    });
+    		           
+    		    builder.show();
+    			
     			return true;
     		case R.id.menu_context_clear_transaction_items:
     			AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();

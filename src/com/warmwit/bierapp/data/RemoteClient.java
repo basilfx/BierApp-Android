@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import com.warmwit.bierapp.data.model.Guest;
 import com.warmwit.bierapp.data.model.Product;
 import com.warmwit.bierapp.data.model.User;
 
@@ -25,6 +26,17 @@ public class RemoteClient {
 	
 	public List<Product> getProducts() throws IOException {
 		return Lists.newArrayList(new Gson().fromJson(getInputStream("/products"), Product[].class));
+	}
+	
+	public List<Guest> getGuests() throws IOException {
+		Guest[] guests = {
+			new Guest(),
+			new Guest(),
+		};
+		
+		
+		
+		return Lists.newArrayList(guests);
 	}
 	
 	public Product getProduct(long productId) throws IOException {

@@ -2,6 +2,7 @@ package com.warmwit.bierapp.data.model;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
+import com.google.common.base.Strings;
 
 public class User {
 	public static final int INHABITANT = 0;
@@ -14,7 +15,7 @@ public class User {
 	private int type;
 	
 	public String getFullName() {
-		return Joiner.on(' ').skipNulls().join(new Object[] { this.firstName, this.middleName.isEmpty() ? null : this.middleName, this.lastName});
+		return Joiner.on(' ').skipNulls().join(new Object[] { this.firstName, Strings.isNullOrEmpty(this.middleName) ? null : this.middleName, this.lastName});
 	}
 	
 	public String toString() {
