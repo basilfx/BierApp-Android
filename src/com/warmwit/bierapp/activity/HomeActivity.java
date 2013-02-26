@@ -6,8 +6,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -26,6 +26,7 @@ import com.mobsandgeeks.adapters.SimpleSectionAdapter;
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.callbacks.ProductClickedCallback;
+import com.warmwit.bierapp.data.ApiConnector;
 import com.warmwit.bierapp.data.adapter.UserListAdapter;
 import com.warmwit.bierapp.data.adapter.UserRowState;
 import com.warmwit.bierapp.data.adapter.UserRowView;
@@ -36,9 +37,10 @@ import com.warmwit.bierapp.data.model.TransactionItem;
 import com.warmwit.bierapp.data.model.User;
 
 public class HomeActivity extends Activity {
-	private BierAppApplication application;
+	private ApiConnector apiConnector;
 	private Transaction transaction;
 	
+	private UserListAdapter userListAdapter; 
 	private ListView userListView;
 	private ArrayList<UserRowState> userRowItems;
 	private MenuItem purchaseMenu;
@@ -51,17 +53,25 @@ public class HomeActivity extends Activity {
         this.setContentView(R.layout.activity_home);
         
         // Bind controls
-        this.application = (BierAppApplication) this.getApplication();
-        this.userListView = (ListView) this.findViewById(R.id.userListView);
-     	
+        this.apiConnector = ((BierAppApplication) this.getApplication()).getApiConnector();
+        this.userListView = (ListView) this.findViewById(R.id.user_list);
+        
         // Restore state data
  		if (savedInstanceState != null) {
  			this.userRowItems = savedInstanceState.getParcelableArrayList("userRowItems");
  		} else {
- 			this.userRowItems = new ArrayList<UserRowState>(application.users.size());
+ 			// In advance, declare size of array
+ 			int size = this.apiConnector.getUsers().size() + this.apiConnector.getGuests().size();
+ 			this.userRowItems = new ArrayList<UserRowState>(size);
  			
- 			for (User user : application.users) {
+ 			// Users
+ 			for (User user : this.apiConnector.getUsers()) {
  				this.userRowItems.add(new UserRowState(user));
+ 			}
+ 			
+ 			// Guests
+ 			for (Guest guest : this.apiConnector.getGuests()) {
+ 				this.userRowItems.add(new UserRowState(guest));
  			}
  		}
         
@@ -92,7 +102,7 @@ public class HomeActivity extends Activity {
     	switch (item.getItemId()) {
     		case R.id.menu_context_add_guest:
     			
-    			ArrayAdapter<Guest> adapter = new ArrayAdapter<Guest>(this, android.R.layout.simple_list_item_single_choice, this.application.guests);
+    			ArrayAdapter<Guest> adapter = new ArrayAdapter<Guest>(this, android.R.layout.simple_list_item_single_choice, this.apiConnector.getGuests());
     			
     			AlertDialog.Builder builder = new AlertDialog.Builder(this);
     		    builder.setTitle("Kies een gast");
@@ -147,9 +157,9 @@ public class HomeActivity extends Activity {
 						startActivity(intent); 
 						
 						return true;
-					case R.id.menu_show_history:
+					case R.id.menu_show_transactions:
 						// Switch to guests activity
-						intent = new Intent(HomeActivity.this, HistoryActivity.class);
+						intent = new Intent(HomeActivity.this, TransactionActivity.class);
 						startActivity(intent); 
 						
 						return true;
@@ -219,7 +229,7 @@ public class HomeActivity extends Activity {
 		// Add handler to general menu
 		menu.findItem(R.id.menu_show_guests).setOnMenuItemClickListener(generalHandler);
 		menu.findItem(R.id.menu_show_stats).setOnMenuItemClickListener(generalHandler);
-		menu.findItem(R.id.menu_show_history).setOnMenuItemClickListener(generalHandler);
+		menu.findItem(R.id.menu_show_transactions).setOnMenuItemClickListener(generalHandler);
 		
 		// Add handler to purchase menu
 		menu.findItem(R.id.menu_purchase_confirm).setOnMenuItemClickListener(purchaseHandler);
@@ -248,19 +258,20 @@ public class HomeActivity extends Activity {
 				}
 				
 				// Add item
-				HomeActivity.this.transaction.add(user, product);
+				//HomeActivity.this.transaction.add(user, product);
 				
 				// Refresh view
 				HomeActivity.this.refreshView();
 			}
 		};
 		
-    	UserListAdapter userAdapter = new UserListAdapter(this, this.userRowItems, callback);
-    	userAdapter.addAll(this.application.users);
+    	this.userListAdapter = new UserListAdapter(this, this.userRowItems, callback);
+    	this.userListAdapter.addAll(this.apiConnector.getUsers());
+    	this.userListAdapter.addAll(this.apiConnector.getGuests());
     	
     	// Create sectionizer to seperate guests from inhabitants
     	SimpleSectionAdapter<User> sectionAdapter = new SimpleSectionAdapter<User>(
-			this, userAdapter, R.layout.listview_row_header, R.id.header, new Sectionizer<User>() {
+			this, userListAdapter, R.layout.listview_row_header, R.id.header, new Sectionizer<User>() {
 			@Override
 			public String getSectionTitleForItem(User instance) {
 				if (instance.getType() == User.INHABITANT) {
@@ -296,14 +307,11 @@ public class HomeActivity extends Activity {
 		// Update changes items
 		for (int i = 0; i < this.userRowItems.size(); i++) {
 			// Get references
-			User user = this.application.users.get(i);
+			User user = this.userListAdapter.getItem(i);
 			UserRowState row = this.userRowItems.get(i);
 			
-			if (amount != 0) {
-				row.setChange(this.transaction.getAmount(user));
-			} else {
-				row.setChange(0);
-			}
+			// Update row
+			row.setChange(amount != 0 ? this.transaction.getAmount(user) : 0);
 		}
 		
 		// Update rows currently visible -- note that getChildAt() corresponds to first visible item!

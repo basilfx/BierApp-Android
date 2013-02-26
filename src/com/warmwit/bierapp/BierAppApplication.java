@@ -1,24 +1,21 @@
 package com.warmwit.bierapp;
 
-import java.util.List;
-
 import android.app.Application;
 
+import com.warmwit.bierapp.data.ApiConnector;
 import com.warmwit.bierapp.data.RemoteClient;
-import com.warmwit.bierapp.data.model.Guest;
-import com.warmwit.bierapp.data.model.Product;
-import com.warmwit.bierapp.data.model.User;
 
 public class BierAppApplication extends Application {
-	private RemoteClient remoteClient = new RemoteClient();
+	private RemoteClient remoteClient;
 	
-	public List<User> users;
+	private ApiConnector apiConnector;
 	
-	public List<Product> products;
+	public ApiConnector getApiConnector() {
+		return this.apiConnector;
+	}
 	
-	public List<Guest> guests;
-	
-	public RemoteClient getRemoteClient() {
-		return this.remoteClient;
+	public BierAppApplication() {
+		this.remoteClient = new RemoteClient("http://10.0.0.11:8000/apps/bierapp/api");
+		this.apiConnector = new ApiConnector(remoteClient);
 	}
 }

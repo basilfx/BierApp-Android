@@ -5,11 +5,45 @@ import com.warmwit.bierapp.R;
 
 public class Product {
 	
-	private String name;
+	private int id;
+	private String title;
+	private int cost;
 	private int logo;
 	
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public int getLogo() {
+		return logo;
+	}
+
+	public void setLogo(int logo) {
+		this.logo = logo;
+	}
+
+	public int getCost() {
+		return cost;
+	}
+
+	public void setCost(int cost) {
+		this.cost = cost;
+	}
+
 	public String toString() {
-		return this.name;
+		return this.title;
 	}	
 	
 	public int getBuiltinLogo() {
@@ -23,6 +57,6 @@ public class Product {
 			R.drawable.product_beer_warsteiner,
 		};
 		
-		return this.logo < resources.length ? resources[this.logo - 1] : R.drawable.product_beer_none;
+		return this.logo < resources.length ? resources[this.id] : R.drawable.product_beer_none;
 	}
 }

@@ -81,14 +81,14 @@ public class UserRowView extends LinearLayout {
 	        	break;
         }
 
-        // Add products to the placeholders
+        // Add products to the place holders
         for (int i = 0; i < products.length; i++) {
-        	if (i < this.application.products.size()) {
+        	if (i < this.application.getApiConnector().getProducts().size()) {
         		// Make sure the view is visible
         		this.products[i].setVisibility(View.VISIBLE);
         		
 	        	// Retrieve corresponding product
-	        	final Product product = this.application.products.get(i);
+	        	final Product product = this.application.getApiConnector().getProducts().get(i);
 	        	
 	        	// Set image
 	        	this.products[i].setImageResource(product.getBuiltinLogo());
@@ -115,7 +115,7 @@ public class UserRowView extends LinearLayout {
         }
         
         // Show the more button if applicable
-        if (this.application.products.size() > products.length) {
+        if (this.application.getApiConnector().getProducts().size() > products.length) {
         	this.more.setVisibility(View.VISIBLE);
         } else {
         	this.more.setVisibility(View.INVISIBLE);
@@ -130,7 +130,7 @@ public class UserRowView extends LinearLayout {
 		
 		// Set the name, score and XP
 		this.name.setText(this.user.getName());
-		this.score.setText("1337 XP");
+		this.score.setText(this.user.getScore() + " XP");
 		this.balance.setText(0 + "");
 
 		// Set the change if applicable

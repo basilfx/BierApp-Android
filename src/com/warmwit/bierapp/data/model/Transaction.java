@@ -9,12 +9,24 @@ import com.google.common.collect.Multimaps;
 
 public class Transaction extends ArrayList<TransactionItem>{
 
-	public void add(User user, Product product) {
-		this.add(user, product, 1);
-	}
+	private int id;
 	
-	public void add(User user, Product product, int amount) {
-		this.add(new TransactionItem(user, product, amount));
+	private String description;
+	
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
 	}
 	
 	public int getTotalAmount() {

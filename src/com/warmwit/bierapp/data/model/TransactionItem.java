@@ -1,22 +1,13 @@
 package com.warmwit.bierapp.data.model;
 
-import java.util.Date;
 
 public class TransactionItem {
+	private int id;
+	
 	private User user;
 	private User payer;
 	private Product product;
 	private int amount;
-	
-	private Date start;
-	private Date end;
-
-	public TransactionItem(User user, Product product, int amount) {
-		this.user = user;
-		this.product = product;
-		this.amount = amount;
-		this.start = new Date();
-	}
 	
 	public int getAmount() {
 		return this.amount;
@@ -24,5 +15,37 @@ public class TransactionItem {
 	
 	public User getUser() {
 		return this.user;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	public User getPayer() {
+		return payer;
+	}
+
+	public void setPayer(User payer) {
+		this.payer = payer;
+	}
+
+	public Product getProduct() {
+		return product;
+	}
+
+	public void setProduct(Product product) {
+		this.product = product;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
+	}
+
+	public void setAmount(int amount) {
+		this.amount = amount;
 	}
 }

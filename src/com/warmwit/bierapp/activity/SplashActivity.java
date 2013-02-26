@@ -10,24 +10,28 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager.LayoutParams;
+import android.widget.Toast;
 
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
+import com.warmwit.bierapp.data.ApiConnector;
 
 public class SplashActivity extends Activity {
 
 	private class LoadDataTask extends AsyncTask<Void, Void, Void> {
 		@Override
 		protected Void doInBackground(Void... params) {
-			BierAppApplication application = (BierAppApplication) SplashActivity.this.getApplication();
-	        
+			ApiConnector apiConnector = ((BierAppApplication) SplashActivity.this.getApplication()).getApiConnector();
+			
+			// Warmup cache
 			try {
-	        	application.users = application.getRemoteClient().getUsers();
-	        	application.products = application.getRemoteClient().getProducts();
-	        	application.guests = application.getRemoteClient().getGuests();
-	        } catch (IOException e) {
-	        	Log.e("SPLASH", "Unable to connect", e);
-	        }
+				apiConnector.loadUsers();
+				apiConnector.loadGuests();
+				apiConnector.loadProducts();
+				apiConnector.loadTransactions();
+			} catch (IOException e) {
+				Log.e("SPLASH", e.getMessage());
+			}
 	        
 	        return null;
 		}
