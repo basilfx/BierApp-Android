@@ -1,4 +1,4 @@
-package com.warmwit.bierapp.data.adapter;
+package com.warmwit.bierapp.data.adapters;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -11,16 +11,16 @@ import com.google.common.base.Strings;
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.callbacks.ProductClickedCallback;
-import com.warmwit.bierapp.data.model.Product;
-import com.warmwit.bierapp.data.model.User;
-import com.warmwit.bierapp.util.ImageDownloader;
+import com.warmwit.bierapp.data.models.Product;
+import com.warmwit.bierapp.data.models.User;
+import com.warmwit.bierapp.utils.ImageDownloader;
 
 public class UserRowView extends LinearLayout {
 
 	private BierAppApplication application;
 	private ProductClickedCallback callback;
-	private User user;
 	private UserRowState userRowState;
+	private User user;
 	
 	private TextView name;
 	private TextView balance;
@@ -131,7 +131,7 @@ public class UserRowView extends LinearLayout {
 		// Set the name, score and XP
 		this.name.setText(this.user.getName());
 		this.score.setText(this.user.getScore() + " XP");
-		this.balance.setText(0 + "");
+		this.balance.setText(this.user.getBalance() + "");
 
 		// Set the change if applicable
 		if (changeValue != 0) {

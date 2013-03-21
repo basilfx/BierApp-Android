@@ -1,4 +1,4 @@
-package com.warmwit.bierapp.data.model;
+package com.warmwit.bierapp.data.models;
 
 import com.warmwit.bierapp.R;
 

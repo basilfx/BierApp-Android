@@ -1,4 +1,4 @@
-package com.warmwit.bierapp.activity;
+package com.warmwit.bierapp.activities;
 
 import com.warmwit.bierapp.R;
 

@@ -1,4 +1,4 @@
-package com.warmwit.bierapp.util;
+package com.warmwit.bierapp.utils;
 
 import android.app.ActionBar.Tab;
 import android.app.ActionBar.TabListener;

@@ -15,7 +15,7 @@ public class BierAppApplication extends Application {
 	}
 	
 	public BierAppApplication() {
-		this.remoteClient = new RemoteClient("http://10.0.0.11:8000/apps/bierapp/api");
+		this.remoteClient = new RemoteClient("http://beterlijst.apps.basilfx.net/apps/bierapp/api");
 		this.apiConnector = new ApiConnector(remoteClient);
 	}
 }

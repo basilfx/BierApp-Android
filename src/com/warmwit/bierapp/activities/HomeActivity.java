@@ -1,5 +1,6 @@
-package com.warmwit.bierapp.activity;
+package com.warmwit.bierapp.activities;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import android.app.Activity;
@@ -8,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -27,23 +29,29 @@ import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.callbacks.ProductClickedCallback;
 import com.warmwit.bierapp.data.ApiConnector;
-import com.warmwit.bierapp.data.adapter.UserListAdapter;
-import com.warmwit.bierapp.data.adapter.UserRowState;
-import com.warmwit.bierapp.data.adapter.UserRowView;
-import com.warmwit.bierapp.data.model.Guest;
-import com.warmwit.bierapp.data.model.Product;
-import com.warmwit.bierapp.data.model.Transaction;
-import com.warmwit.bierapp.data.model.TransactionItem;
-import com.warmwit.bierapp.data.model.User;
+import com.warmwit.bierapp.data.adapters.UserListAdapter;
+import com.warmwit.bierapp.data.adapters.UserRowState;
+import com.warmwit.bierapp.data.adapters.UserRowView;
+import com.warmwit.bierapp.data.models.Guest;
+import com.warmwit.bierapp.data.models.Product;
+import com.warmwit.bierapp.data.models.Transaction;
+import com.warmwit.bierapp.data.models.TransactionItem;
+import com.warmwit.bierapp.data.models.User;
+
+import static com.google.common.base.Preconditions.*;
 
 public class HomeActivity extends Activity {
 	private ApiConnector apiConnector;
-	private Transaction transaction;
 	
 	private UserListAdapter userListAdapter; 
 	private ListView userListView;
 	private ArrayList<UserRowState> userRowItems;
 	private MenuItem purchaseMenu;
+	
+	/**
+	 * @var Reference to an on-going transaction
+	 */
+	private Transaction transaction;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -182,8 +190,11 @@ public class HomeActivity extends Activity {
 			public boolean onMenuItemClick(MenuItem item) {
 				switch (item.getItemId()) {
 					case R.id.menu_purchase_confirm:
-						return true;
+						if (HomeActivity.this.transaction != null) {
+							new SaveTransactionTask().execute();
+						}
 						
+						return true;
 					case R.id.menu_purchase_show:
 						AlertDialog alertDialog;
 						alertDialog = new AlertDialog.Builder(HomeActivity.this).create();
@@ -255,10 +266,18 @@ public class HomeActivity extends Activity {
 				// Create new transaction if needed
 				if (HomeActivity.this.transaction == null) {
 					HomeActivity.this.transaction = new Transaction();
+					HomeActivity.this.transaction.setDescription("Normale verkoop");
 				}
 				
-				// Add item
-				//HomeActivity.this.transaction.add(user, product);
+				// Create a transaction
+				TransactionItem transactionItem = new TransactionItem();
+				transactionItem.setAmount(1);
+				transactionItem.setPayer(user);
+				transactionItem.setUser(user);
+				transactionItem.setProduct(product);
+				
+				// Add to the list
+				HomeActivity.this.transaction.add(transactionItem);
 				
 				// Refresh view
 				HomeActivity.this.refreshView();
@@ -327,4 +346,50 @@ public class HomeActivity extends Activity {
 			}
 		}
 	}
+	
+	private class SaveTransactionTask extends AsyncTask<Void, Void, Integer> {
+
+		@Override
+		protected Integer doInBackground(Void... params) {
+			checkNotNull(HomeActivity.this.transaction);
+			
+			try {
+				return HomeActivity.this.apiConnector.saveTransaction(HomeActivity.this.transaction) ? 0 : 1;
+			} catch (IOException e) {
+				Log.e("HOME", e.getMessage());
+				return 2;
+			}
+		}
+		
+		@Override
+		protected void onPostExecute(Integer result) {
+			switch (result) {
+				case 0: // OK
+					HomeActivity.this.transaction = null;
+					HomeActivity.this.refreshView();
+					
+					Toast.makeText(HomeActivity.this, "Transactie succesvol verzonden!", Toast.LENGTH_LONG).show();
+					
+					break;
+				case 1: // POST error
+					new AlertDialog.Builder(HomeActivity.this)
+						.setMessage("Opslaan van transactie is mislukt. Probeer het nogmaals.")
+						.setTitle("Transactiefout")
+						.create()
+						.show();
+					break;
+				case 2: // Exception
+					new AlertDialog.Builder(HomeActivity.this)
+						.setMessage("Geen internetverbinding. Probeer het nogmaals.")
+						.setTitle("Connectiefout")
+						.create()
+						.show();
+					
+					break;
+					
+			}
+		}
+
+	}
+
 }

@@ -6,13 +6,15 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import android.util.Log;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.warmwit.bierapp.data.model.Guest;
-import com.warmwit.bierapp.data.model.Product;
-import com.warmwit.bierapp.data.model.Transaction;
-import com.warmwit.bierapp.data.model.TransactionItem;
-import com.warmwit.bierapp.data.model.User;
+import com.warmwit.bierapp.data.models.Guest;
+import com.warmwit.bierapp.data.models.Product;
+import com.warmwit.bierapp.data.models.Transaction;
+import com.warmwit.bierapp.data.models.TransactionItem;
+import com.warmwit.bierapp.data.models.User;
 
 public class ApiConnector {
 
@@ -102,9 +104,9 @@ public class ApiConnector {
 	}
 	
 	public void loadUsers() throws IOException {
-		RemoteClient.ApiUser[] apiUsers = (RemoteClient.ApiUser[]) this.remoteClient.get("/users", null);
+		ApiUser[] apiUsers = (ApiUser[]) this.remoteClient.get("/users", null);
 		
-		for (RemoteClient.ApiUser apiUser : apiUsers) {
+		for (ApiUser apiUser : apiUsers) {
 			User user = new User();
 			
 			user.setId(apiUser.id);
@@ -122,6 +124,21 @@ public class ApiConnector {
 	
 	public void loadUserById(int id) throws IOException {
 		checkArgument(id > 0);
+	}
+	
+	public void loadUsersInfo() throws IOException {
+		ApiUserInfo[] apiUsersInfo = (ApiUserInfo[]) this.remoteClient.get("/users/info", null);
+		
+		for (ApiUserInfo apiUserInfo : apiUsersInfo) {
+			User user = this.getUserOrGuestById(apiUserInfo.id);
+			
+			if (user != null) {
+				user.setScore(apiUserInfo.score);
+				user.setBalance(apiUserInfo.balance);
+			} else {
+				Log.w(this.getClass().getName(), "Received infor for user with ID " + apiUserInfo.id + ", but user not in cache.");
+			}
+		}
 	}
 	
 	// 
@@ -147,9 +164,9 @@ public class ApiConnector {
 	}
 	
 	public void loadGuests() throws IOException {
-		RemoteClient.ApiUser[] apiGuests = (RemoteClient.ApiUser[]) this.remoteClient.get("/guests", null);
+		ApiUser[] apiGuests = (ApiUser[]) this.remoteClient.get("/guests", null);
 		
-		for (RemoteClient.ApiUser apiGuest : apiGuests) {
+		for (ApiUser apiGuest : apiGuests) {
 			Guest guest = new Guest();
 			
 			guest.setId(apiGuest.id);
@@ -188,31 +205,72 @@ public class ApiConnector {
 		checkArgument(id > 0);
 	}
 	
-	public void loadTransactions() throws IOException {
-		RemoteClient.ApiTransaction[] apiTransactions = (RemoteClient.ApiTransaction[]) this.remoteClient.get("/transactions", null);
+	private Transaction convertToTransaction(ApiTransaction apiTransaction) {
+		Transaction transaction = new Transaction();
 		
-		for (RemoteClient.ApiTransaction apiTransaction : apiTransactions) {
-			Transaction transaction = new Transaction();
+		transaction.setId(apiTransaction.id);
+		transaction.setDescription(apiTransaction.description);
+		transaction.setDateCreated(apiTransaction.date_created);
+		
+		for (ApiTransactionItem apiTransactionItem : apiTransaction.transaction_items) {
+			TransactionItem transactionItem = new TransactionItem();
 			
-			transaction.setId(apiTransaction.id);
-			transaction.setDescription(apiTransaction.description);
+			transactionItem.setUser(this.getUserOrGuestById(apiTransactionItem.executing_user));
+			transactionItem.setPayer(this.getUserOrGuestById(apiTransactionItem.accounted_user));
+			transactionItem.setProduct(this.getProductById(apiTransactionItem.product));
+			transactionItem.setAmount(-1 * apiTransactionItem.count);
 			
-			for (RemoteClient.ApiTransactionItem apiTransactionItem : apiTransaction.transaction_items) {
-				TransactionItem transactionItem = new TransactionItem();
-				
-				transactionItem.setUser(this.getUserOrGuestById(apiTransactionItem.executing_user));
-				transactionItem.setPayer(this.getUserOrGuestById(apiTransactionItem.accounted_user));
-				transactionItem.setProduct(this.getProductById(apiTransactionItem.product));
-				transactionItem.setAmount(apiTransactionItem.count);
-				
-				// TODO: validatie
-				transaction.add(transactionItem);
-			}
-			
-			this.transactionCache.put(apiTransaction.id, transaction);
+			// TODO: validatie
+			transaction.add(transactionItem);
+		}
+		
+		return transaction;
+	}
+	
+	public void loadTransactions() throws IOException {
+		ApiTransaction[] apiTransactions = (ApiTransaction[]) this.remoteClient.get("/transactions", null);
+		
+		for (ApiTransaction apiTransaction : apiTransactions) {
+			this.transactionCache.put(apiTransaction.id, this.convertToTransaction(apiTransaction));
 		}
 		
 		this.transactionsAreLoaded = true;
+	}
+	
+	public boolean saveTransaction(Transaction transaction) throws IOException {
+		ApiTransaction apiTransaction = new ApiTransaction();
+		
+		apiTransaction.description = transaction.getDescription();
+		apiTransaction.transaction_items = new ApiTransactionItem[transaction.size()];
+		
+		for (int i = 0; i < transaction.size(); i++) {
+			TransactionItem transactionItem = transaction.get(i);
+			ApiTransactionItem apiTransactionItem = new ApiTransactionItem();
+			
+			apiTransactionItem.accounted_user = transactionItem.getPayer().getId();
+			apiTransactionItem.executing_user = transactionItem.getUser().getId();
+			apiTransactionItem.count = -1 * transactionItem.getAmount();
+			apiTransactionItem.product = transactionItem.getProduct().getId();
+			
+			apiTransaction.transaction_items[i] = apiTransactionItem;
+		}
+		
+		// Send to server
+		Object result= this.remoteClient.post(apiTransaction, "/transactions/", null);
+		
+		// Parse result
+		if (result != null) {
+			apiTransaction = (ApiTransaction) result;
+			this.transactionCache.put(apiTransaction.id, this.convertToTransaction(apiTransaction));
+			
+			// Load new user info
+			this.loadUsersInfo();
+			
+			// Done
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
 	//
@@ -239,9 +297,9 @@ public class ApiConnector {
 	}
 	
 	public void loadProducts() throws IOException {
-		RemoteClient.ApiProduct[] apiProducts = (RemoteClient.ApiProduct[]) this.remoteClient.get("/products", null);
+		ApiProduct[] apiProducts = (ApiProduct[]) this.remoteClient.get("/products", null);
 		
-		for (RemoteClient.ApiProduct apiProduct : apiProducts) {
+		for (ApiProduct apiProduct : apiProducts) {
 			Product product = new Product();
 			
 			product.setId(apiProduct.id);

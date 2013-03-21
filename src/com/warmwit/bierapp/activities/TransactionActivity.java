@@ -1,4 +1,8 @@
-package com.warmwit.bierapp.activity;
+package com.warmwit.bierapp.activities;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.text.DateFormat;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -9,8 +13,8 @@ import com.mobsandgeeks.adapters.SimpleSectionAdapter;
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.data.ApiConnector;
-import com.warmwit.bierapp.data.adapter.TransactionListAdapter;
-import com.warmwit.bierapp.data.model.User;
+import com.warmwit.bierapp.data.adapters.TransactionListAdapter;
+import com.warmwit.bierapp.data.models.Transaction;
 
 public class TransactionActivity extends Activity {
 	private ApiConnector apiConnector;
@@ -41,11 +45,15 @@ public class TransactionActivity extends Activity {
     	this.transactionListAdapter.addAll(this.apiConnector.getTransactions());
     	
     	// Create sectionizer to seperate transactions by date
-    	SimpleSectionAdapter<User> sectionAdapter = new SimpleSectionAdapter<User>(
-			this, this.transactionListAdapter, R.layout.listview_row_header, R.id.header, new Sectionizer<User>() {
+    	SimpleSectionAdapter<Transaction> sectionAdapter = new SimpleSectionAdapter<Transaction>(
+			this, this.transactionListAdapter, R.layout.listview_row_header, R.id.header, new Sectionizer<Transaction>() {
 			@Override
-			public String getSectionTitleForItem(User instance) {
-				return "Today";
+			public String getSectionTitleForItem(Transaction instance) {
+				checkNotNull(instance);
+				checkNotNull(instance.getDateCreated());
+				
+				return DateFormat.getDateInstance(DateFormat.LONG)
+								 .format(instance.getDateCreated());
 			}		
 		});
     	

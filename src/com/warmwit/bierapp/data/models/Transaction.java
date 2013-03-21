@@ -1,6 +1,7 @@
-package com.warmwit.bierapp.data.model;
+package com.warmwit.bierapp.data.models;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 
 import com.google.common.base.Function;
@@ -13,6 +14,16 @@ public class Transaction extends ArrayList<TransactionItem>{
 	
 	private String description;
 	
+	private Date dateCreated;
+	
+	public Date getDateCreated() {
+		return dateCreated;
+	}
+
+	public void setDateCreated(Date dateCreated) {
+		this.dateCreated = dateCreated;
+	}
+
 	public int getId() {
 		return id;
 	}

@@ -1,4 +1,4 @@
-package com.warmwit.bierapp.activity;
+package com.warmwit.bierapp.activities;
 
 import java.io.IOException;
 
@@ -17,20 +17,36 @@ import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.data.ApiConnector;
 
 public class SplashActivity extends Activity {
-
-	private class LoadDataTask extends AsyncTask<Void, Void, Void> {
+	
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        
+        // Make splash screen full size
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        this.getWindow().setFlags(LayoutParams.FLAG_FULLSCREEN, LayoutParams.FLAG_FULLSCREEN);
+        
+        // Set content
+        this.setContentView(R.layout.activity_splash);
+        
+        // Load data and advance to next screen
+        new LoadDataTask().execute();
+    }
+    
+    private class LoadDataTask extends AsyncTask<Void, Void, Void> {
 		@Override
 		protected Void doInBackground(Void... params) {
 			ApiConnector apiConnector = ((BierAppApplication) SplashActivity.this.getApplication()).getApiConnector();
 			
 			// Warmup cache
 			try {
+				apiConnector.loadProducts();
 				apiConnector.loadUsers();
 				apiConnector.loadGuests();
-				apiConnector.loadProducts();
 				apiConnector.loadTransactions();
+				apiConnector.loadUsersInfo();
 			} catch (IOException e) {
-				Log.e("SPLASH", e.getMessage());
+				Log.e(this.getClass().getName(), e.getMessage());
 			}
 	        
 	        return null;
@@ -48,20 +64,5 @@ public class SplashActivity extends Activity {
 				}
 			}, 1000);
 		}
-    }
-	
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        
-        // Make splash screen full size
-        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        this.getWindow().setFlags(LayoutParams.FLAG_FULLSCREEN, LayoutParams.FLAG_FULLSCREEN);
-        
-        // Set content
-        this.setContentView(R.layout.activity_splash);
-        
-        // Load data and advance to next screen
-        new LoadDataTask().execute();
     }
 }

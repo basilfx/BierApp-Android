@@ -1,4 +1,4 @@
-package com.warmwit.bierapp.util;
+package com.warmwit.bierapp.utils;
 
 import java.io.File;
 import java.io.FileOutputStream;

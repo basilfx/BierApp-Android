@@ -1,4 +1,4 @@
-package com.warmwit.bierapp.data.adapter;
+package com.warmwit.bierapp.data.adapters;
 
 import java.util.List;
 
@@ -16,8 +16,8 @@ import android.widget.TextView;
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.callbacks.ProductClickedCallback;
-import com.warmwit.bierapp.data.model.Product;
-import com.warmwit.bierapp.data.model.User;
+import com.warmwit.bierapp.data.models.Product;
+import com.warmwit.bierapp.data.models.User;
 
 public class UserListAdapter extends ArrayAdapter<User> {
 	private List<UserRowState> userRowStates;

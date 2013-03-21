@@ -15,7 +15,7 @@
         android:theme="@style/AppTheme">
         
         <activity
-            android:name=".activity.SplashActivity"
+            android:name=".activities.SplashActivity"
             android:noHistory="true">
         
             <intent-filter>
@@ -25,10 +25,10 @@
             </intent-filter>
         </activity>
         
-        <activity android:name=".activity.HomeActivity"></activity>
-        <activity android:name=".activity.GuestsActivity"></activity>
-        <activity android:name=".activity.TransactionActivity"></activity>
-        <activity android:name=".activity.StatsActivity"></activity>
+        <activity android:name=".activities.HomeActivity"></activity>
+        <activity android:name=".activities.GuestsActivity"></activity>
+        <activity android:name=".activities.TransactionActivity"></activity>
+        <activity android:name=".activities.StatsActivity"></activity>
     </application>
 
 </manifest>

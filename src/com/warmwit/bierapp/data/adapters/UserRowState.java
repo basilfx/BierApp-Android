@@ -1,4 +1,4 @@
-package com.warmwit.bierapp.data.adapter;
+package com.warmwit.bierapp.data.adapters;
 
 import java.util.Random;
 
@@ -11,8 +11,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.warmwit.bierapp.R;
-import com.warmwit.bierapp.data.model.User;
-import com.warmwit.bierapp.util.ImageDownloader;
+import com.warmwit.bierapp.data.models.User;
+import com.warmwit.bierapp.utils.ImageDownloader;
 
 public class UserRowState implements Parcelable {
 	private int randomAvatar;

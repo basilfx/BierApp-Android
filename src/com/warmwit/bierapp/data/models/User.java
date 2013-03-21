@@ -1,4 +1,4 @@
-package com.warmwit.bierapp.data.model;
+package com.warmwit.bierapp.data.models;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
@@ -14,6 +14,9 @@ public class User {
 	private String middleName;
 	private String lastName;
 	private String avatarUrl;
+	
+	private int balance;
+	private int score;
 	
 	protected int type;
 	
@@ -77,12 +80,20 @@ public class User {
 		this.avatarUrl = avatarUrl;
 	}
 
-	public void setType(int type) {
-		this.type = type;
+	public void setScore(int score) {
+		this.score = score;
 	}
 	
 	public int getScore() {
-		return 42;
+		return this.score;
+	}
+
+	public int getBalance() {
+		return balance;
+	}
+
+	public void setBalance(int balance) {
+		this.balance = balance;
 	}
 
 	@Override
