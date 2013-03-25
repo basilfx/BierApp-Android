@@ -8,8 +8,8 @@
 
     <ImageView
         android:id="@+id/avatar"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
+        android:layout_width="65dp"
+        android:layout_height="65dp"
         android:layout_centerVertical="true"
         android:layout_margin="5dp"
         android:background="@drawable/image_border"
@@ -20,7 +20,7 @@
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_toRightOf="@+id/avatar"
-        android:weightSum="25" >
+        android:weightSum="20" >
 
         <LinearLayout
             android:layout_width="0dp"
@@ -33,6 +33,7 @@
                 android:id="@+id/name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:gravity="top|right"
                 android:maxLines="1"
                 android:text="Username"
                 android:textAppearance="?android:attr/textAppearanceLarge" />
@@ -41,33 +42,9 @@
                 android:id="@+id/score"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:gravity="top|right"
                 android:text="0 XP"
                 android:textAppearance="?android:attr/textAppearanceSmall" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="fill_parent"
-            android:layout_weight="4"
-            android:gravity="center_vertical|center_horizontal"
-            android:orientation="vertical" >
-
-            <TextView
-                android:id="@+id/balance"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:maxLines="1"
-                android:text="10"
-                android:textAppearance="?android:attr/textAppearanceLarge" />
-
-            <TextView
-                android:id="@+id/change"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:visibility="gone"
-                android:textAppearance="?android:attr/textAppearanceSmall" />
-
         </LinearLayout>
 
         <LinearLayout
@@ -75,39 +52,35 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="right|center"
-            android:layout_weight="15"
-            android:orientation="horizontal" >
+            android:layout_weight="14"
+            android:orientation="horizontal" 
+            android:baselineAligned="false">
 
-            <ImageView
-                android:id="@+id/product_placeholder_1"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:layout_marginRight="5dp"
-                android:background="@drawable/image_selectable"
-                android:src="@drawable/product_beer_none" />
-
-            <ImageView
-                android:id="@+id/product_placeholder_2"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:layout_marginRight="5dp"
-                android:background="@drawable/image_selectable"
-                android:src="@drawable/product_beer_none" />
-
-            <ImageView
-                android:id="@+id/product_placeholder_3"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:layout_marginRight="5dp"
-                android:background="@drawable/image_selectable"
-                android:src="@drawable/product_beer_none" />
-
+            <com.warmwit.bierapp.data.adapters.ProductView
+                android:id="@+id/product_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" >
+            </com.warmwit.bierapp.data.adapters.ProductView>
+            
+            <com.warmwit.bierapp.data.adapters.ProductView
+                android:id="@+id/product_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" >
+            </com.warmwit.bierapp.data.adapters.ProductView>
+            
+            <com.warmwit.bierapp.data.adapters.ProductView
+                android:id="@+id/product_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" >
+            </com.warmwit.bierapp.data.adapters.ProductView>
+            
             <ImageView
                 android:id="@+id/product_placeholder_more"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="65dp"
+                android:layout_height="65dp"
                 android:background="@drawable/image_selectable"
                 android:src="@android:drawable/ic_search_category_default" />
+
         </LinearLayout>
     </LinearLayout>
 

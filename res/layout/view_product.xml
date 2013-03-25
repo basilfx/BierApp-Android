@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="65dp"
+	android:layout_height="65dp"
+	android:layout_marginRight="5dp" >
+
+	<ImageView
+		android:id="@+id/product_logo"
+		android:background="@drawable/image_selectable"
+		android:src="@drawable/product_beer_none" 
+		android:layout_width="fill_parent"
+		android:layout_height="fill_parent" />
+	
+	<RelativeLayout
+	    android:id="@+id/product_bar"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:layout_gravity="bottom|left"
+		android:layout_marginRight="3dp"
+		android:layout_marginLeft="3dp"
+		android:layout_marginBottom="3dp"
+		android:orientation="horizontal" 
+		android:background="#AA000000" >
+	
+		<TextView
+			android:id="@+id/product_change"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignParentLeft="true"
+			android:maxLines="1"
+			android:text="-10"
+			android:textAppearance="?android:attr/textAppearanceSmall" />
+		
+		<TextView
+			android:id="@+id/product_count"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_alignParentRight="true"
+			android:maxLines="1"
+			android:text="10"
+			android:textAppearance="?android:attr/textAppearanceSmall" 
+			/>
+	</RelativeLayout>
+</FrameLayout>

@@ -2,6 +2,7 @@ package com.warmwit.bierapp.data.adapters;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -19,51 +20,60 @@ public class UserRowView extends LinearLayout {
 
 	private BierAppApplication application;
 	private ProductClickedCallback callback;
-	private UserRowState userRowState;
 	private User user;
+	private int randomAvatar;
 	
 	private TextView name;
-	private TextView balance;
 	private TextView score;
-	private TextView change;
-	
 	private ImageView avatar;
 	private ImageView more;
-	private ImageView[] products;
 	
-	public UserRowView(Context context) {
-		super(context);
+	private ProductView[] products; 
+	
+	public UserRowView(Context context, AttributeSet attrs, int defStyle) {
+		super(context, attrs, defStyle);
 		
 		// Inflate layout
 		View.inflate(context, R.layout.listview_row_user, this);
 		
+		this.randomAvatar = R.drawable.avatar_1;
+		
 		// Find fields
 		this.name = (TextView) this.findViewById(R.id.name);
-		this.balance = (TextView) this.findViewById(R.id.balance);
 		this.score = (TextView) this.findViewById(R.id.score);
-		this.change = (TextView) this.findViewById(R.id.change);
 		this.avatar = (ImageView) this.findViewById(R.id.avatar);
 		this.more = (ImageView) this.findViewById(R.id.product_placeholder_more);
 		
 		// Find products
-		this.products = new ImageView[] { 
-    		(ImageView) this.findViewById(R.id.product_placeholder_1),
-    		(ImageView) this.findViewById(R.id.product_placeholder_2),
-    		(ImageView) this.findViewById(R.id.product_placeholder_3),
-        };
+		this.products = new ProductView[] {
+			(ProductView) this.findViewById(R.id.product_1),
+			(ProductView) this.findViewById(R.id.product_2),
+			(ProductView) this.findViewById(R.id.product_3)
+		};
 	}
 	
-	public void setRow(User user, UserRowState userRowState, ProductClickedCallback callback, BierAppApplication application) {
+	public UserRowView(Context context, AttributeSet attrs) {
+		this(context, attrs, 0);
+	}
+	
+	public UserRowView(Context context) {
+		this(context, null, 0);
+	}
+	
+	public void setRow(User user, ProductClickedCallback callback, BierAppApplication application) {
 		this.user = user;
-		this.userRowState = userRowState;
 		this.callback = callback;
 		this.application = application;
+	}
+	
+	public User getUser() {
+		return this.user;
 	}
 	
 	public void initView() {
 		// Show avatar
 		if (Strings.isNullOrEmpty(this.user.getAvatarUrl())) {
-			this.avatar.setImageResource(this.userRowState.getRandomAvatar());
+			this.avatar.setImageResource(this.randomAvatar);
 		} else {
 			ImageDownloader downloader = new ImageDownloader();
 			downloader.download(this.user.getAvatarUrl(), this.avatar);
@@ -72,32 +82,27 @@ public class UserRowView extends LinearLayout {
         // Hide or show balance/score
         switch (this.user.getType()) {
 	        case User.INHABITANT:
-	        	this.balance.setVisibility(View.VISIBLE);
 	        	this.score.setVisibility(View.VISIBLE);
 	        	break;
 	        case User.GUEST:
-	        	this.balance.setVisibility(View.GONE);
-	        	this.score.setVisibility(View.GONE);
+	        	this.score.setVisibility(View.INVISIBLE);
 	        	break;
         }
 
         // Add products to the place holders
         for (int i = 0; i < products.length; i++) {
         	if (i < this.application.getApiConnector().getProducts().size()) {
-        		// Make sure the view is visible
-        		this.products[i].setVisibility(View.VISIBLE);
-        		
 	        	// Retrieve corresponding product
 	        	final Product product = this.application.getApiConnector().getProducts().get(i);
+	        	final int productIndex = i;
 	        	
-	        	// Set image
-	        	this.products[i].setImageResource(product.getBuiltinLogo());
+	        	this.products[i].setupView(this.user.getType() == User.GUEST, 0, 0);
 	        	
 	        	// Notify the receiving end of the onProductClicked callback
 	        	this.products[i].setOnClickListener(new OnClickListener() {
 					@Override
 					public void onClick(View v) {
-						UserRowView.this.callback.onProductClicked(UserRowView.this.user, product);
+						UserRowView.this.callback.onProductClicked(UserRowView.this, product);
 					}
 				});
 	        	
@@ -110,7 +115,7 @@ public class UserRowView extends LinearLayout {
 				});
         	} else {
         		// Hide view
-        		this.products[i].setVisibility(View.INVISIBLE);
+        		this.products[i].setVisibility(View.GONE);
         	}
         }
         
@@ -118,34 +123,11 @@ public class UserRowView extends LinearLayout {
         if (this.application.getApiConnector().getProducts().size() > products.length) {
         	this.more.setVisibility(View.VISIBLE);
         } else {
-        	this.more.setVisibility(View.INVISIBLE);
+        	this.more.setVisibility(View.GONE);
         }
         
-        // Small UI things are in refreshView()
-        this.refreshView();
-	}
-	
-	public void refreshView() {
-		int changeValue = this.userRowState.getChange();
-		
-		// Set the name, score and XP
-		this.name.setText(this.user.getName());
-		this.score.setText(this.user.getScore() + " XP");
-		this.balance.setText(this.user.getBalance() + "");
-
-		// Set the change if applicable
-		if (changeValue != 0) {
-			if (changeValue < 0) {
-				change.setTextColor(Color.GREEN);
-				change.setText("+" + changeValue);
-			} else {
-				change.setTextColor(Color.RED);
-				change.setText("-" + changeValue);
-			}
-			
-			change.setVisibility(View.VISIBLE);
-		} else {
-			change.setVisibility(View.GONE);
-		}
+        // Set the name, score and XP
+ 		this.name.setText(this.user.getName());
+ 		this.score.setText(this.user.getScore() + " XP");
 	}
 }

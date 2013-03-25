@@ -1,10 +1,15 @@
 package com.warmwit.bierapp.activities;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -30,7 +35,6 @@ import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.callbacks.ProductClickedCallback;
 import com.warmwit.bierapp.data.ApiConnector;
 import com.warmwit.bierapp.data.adapters.UserListAdapter;
-import com.warmwit.bierapp.data.adapters.UserRowState;
 import com.warmwit.bierapp.data.adapters.UserRowView;
 import com.warmwit.bierapp.data.models.Guest;
 import com.warmwit.bierapp.data.models.Product;
@@ -38,14 +42,12 @@ import com.warmwit.bierapp.data.models.Transaction;
 import com.warmwit.bierapp.data.models.TransactionItem;
 import com.warmwit.bierapp.data.models.User;
 
-import static com.google.common.base.Preconditions.*;
-
 public class HomeActivity extends Activity {
 	private ApiConnector apiConnector;
 	
+	private int[] userRandomAvatars;
 	private UserListAdapter userListAdapter; 
 	private ListView userListView;
-	private ArrayList<UserRowState> userRowItems;
 	private MenuItem purchaseMenu;
 	
 	/**
@@ -66,21 +68,11 @@ public class HomeActivity extends Activity {
         
         // Restore state data
  		if (savedInstanceState != null) {
- 			this.userRowItems = savedInstanceState.getParcelableArrayList("userRowItems");
+ 			this.userRandomAvatars = savedInstanceState.getIntArray("userRandomAvatars");
  		} else {
  			// In advance, declare size of array
  			int size = this.apiConnector.getUsers().size() + this.apiConnector.getGuests().size();
- 			this.userRowItems = new ArrayList<UserRowState>(size);
- 			
- 			// Users
- 			for (User user : this.apiConnector.getUsers()) {
- 				this.userRowItems.add(new UserRowState(user));
- 			}
- 			
- 			// Guests
- 			for (Guest guest : this.apiConnector.getGuests()) {
- 				this.userRowItems.add(new UserRowState(guest));
- 			}
+ 			this.userRandomAvatars = new int[size];
  		}
         
  		// Bind data
@@ -109,7 +101,6 @@ public class HomeActivity extends Activity {
 	public boolean onContextItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
     		case R.id.menu_context_add_guest:
-    			
     			ArrayAdapter<Guest> adapter = new ArrayAdapter<Guest>(this, android.R.layout.simple_list_item_single_choice, this.apiConnector.getGuests());
     			
     			AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -138,7 +129,8 @@ public class HomeActivity extends Activity {
 					Toast.makeText(HomeActivity.this, "Transactie-items voor " + user.getName() + " gewist", Toast.LENGTH_LONG).show();
     		    	
 					// Update view
-    		    	this.refreshView();
+					this.refreshGlobal();
+					this.refreshUser(info.position);
     		    }
     		    
     			return true;
@@ -191,7 +183,7 @@ public class HomeActivity extends Activity {
 				switch (item.getItemId()) {
 					case R.id.menu_purchase_confirm:
 						if (HomeActivity.this.transaction != null) {
-							new SaveTransactionTask().execute();
+							new SaveTransactionTask(HomeActivity.this).execute();
 						}
 						
 						return true;
@@ -220,7 +212,7 @@ public class HomeActivity extends Activity {
 						// Cancel the transaction if there is one
 						if (HomeActivity.this.transaction != null) {
 							HomeActivity.this.transaction = null;
-							HomeActivity.this.refreshView();
+							HomeActivity.this.refreshAll();
 						}
 						
 						// Display toast message
@@ -256,13 +248,13 @@ public class HomeActivity extends Activity {
 		super.onSaveInstanceState(outState);
 		
 		// Save all userRowItems to the bundle
-		outState.putParcelableArrayList("userRowItems", this.userRowItems);
+		outState.putIntArray("userRandomAvatars", this.userRandomAvatars);
 	}
 
 	private void bindData(Bundle savedInstance) {
 		ProductClickedCallback callback = new ProductClickedCallback() {
 			@Override
-			public void onProductClicked(User user, Product product) {
+			public void onProductClicked(UserRowView userRowView, Product product) {
 				// Create new transaction if needed
 				if (HomeActivity.this.transaction == null) {
 					HomeActivity.this.transaction = new Transaction();
@@ -271,6 +263,8 @@ public class HomeActivity extends Activity {
 				
 				// Create a transaction
 				TransactionItem transactionItem = new TransactionItem();
+				User user = userRowView.getUser();
+				
 				transactionItem.setAmount(1);
 				transactionItem.setPayer(user);
 				transactionItem.setUser(user);
@@ -280,11 +274,11 @@ public class HomeActivity extends Activity {
 				HomeActivity.this.transaction.add(transactionItem);
 				
 				// Refresh view
-				HomeActivity.this.refreshView();
+				HomeActivity.this.refreshGlobal();
 			}
 		};
 		
-    	this.userListAdapter = new UserListAdapter(this, this.userRowItems, callback);
+    	this.userListAdapter = new UserListAdapter(this, callback);
     	this.userListAdapter.addAll(this.apiConnector.getUsers());
     	this.userListAdapter.addAll(this.apiConnector.getGuests());
     	
@@ -311,7 +305,12 @@ public class HomeActivity extends Activity {
     	this.registerForContextMenu(this.userListView);
     }
 	
-	public void refreshView() {
+	public void refreshAll() {
+		this.refreshGlobal();
+		this.refreshUsers();
+	}
+	
+	public void refreshGlobal() {
 		// Retrieve total amount of products
 		int amount = this.transaction == null ? 0 : this.transaction.getTotalAmount();
 		
@@ -322,32 +321,39 @@ public class HomeActivity extends Activity {
 			this.purchaseMenu.setTitle(amount + " consumpties");
 			this.purchaseMenu.setVisible(true);
 		}
-		
-		// Update changes items
-		for (int i = 0; i < this.userRowItems.size(); i++) {
-			// Get references
-			User user = this.userListAdapter.getItem(i);
-			UserRowState row = this.userRowItems.get(i);
-			
-			// Update row
-			row.setChange(amount != 0 ? this.transaction.getAmount(user) : 0);
-		}
-		
+	}
+	
+	public void refreshUsers() {
 		// Update rows currently visible -- note that getChildAt() corresponds to first visible item!
 		int firstIndex = this.userListView.getFirstVisiblePosition();
 		int lastIndex = this.userListView.getLastVisiblePosition();
 		
 		for (int i = 0; i <= lastIndex - firstIndex; i++) {
-			View view = this.userListView.getChildAt(i);
-			
-			// Skip section headers
-			if (view instanceof UserRowView) {
-				((UserRowView) view).refreshView();
-			}
+			this.refreshUser(i);
 		}
 	}
 	
+	public void refreshUser(int index) {
+		View view = this.userListView.getChildAt(index);
+		
+		// Skip section headers
+		if (view instanceof UserRowView) {
+			//((UserRowView) view).refreshView();
+		}
+	}
+
 	private class SaveTransactionTask extends AsyncTask<Void, Void, Integer> {
+	    private ProgressDialog dialog;
+		
+		public SaveTransactionTask(Context context) {
+	        this.dialog = new ProgressDialog(context);
+	    }
+		
+		@Override
+		protected void onPreExecute() {
+			this.dialog.setMessage("Transactie versturen");
+	        this.dialog.show();
+		}
 
 		@Override
 		protected Integer doInBackground(Void... params) {
@@ -363,10 +369,17 @@ public class HomeActivity extends Activity {
 		
 		@Override
 		protected void onPostExecute(Integer result) {
+			checkNotNull(result);
+			
+			// Hide popup dialog
+			if (this.dialog.isShowing()) {
+				this.dialog.dismiss();
+			}
+			
 			switch (result) {
 				case 0: // OK
 					HomeActivity.this.transaction = null;
-					HomeActivity.this.refreshView();
+					HomeActivity.this.refreshAll();
 					
 					Toast.makeText(HomeActivity.this, "Transactie succesvol verzonden!", Toast.LENGTH_LONG).show();
 					
