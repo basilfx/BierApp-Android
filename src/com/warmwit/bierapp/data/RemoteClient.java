@@ -35,7 +35,9 @@ public class RemoteClient {
 			
 			if (response.getStatusLine().getStatusCode() == 200) {
 				data = EntityUtils.toString(response.getEntity());
-				return new Gson().fromJson(data, ApiTransaction.class);
+				
+				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+				return gson.fromJson(data, ApiTransaction.class);
 			} else {
 				return null;
 			}
@@ -57,7 +59,7 @@ public class RemoteClient {
 		String completeUrl = url + (query != null ? "?" + query : "");
 		
 		// Request URL. Throws IOException on error
-		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss").create();
+		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 		InputStreamReader reader = getInputStream(completeUrl);
 		
 		// Parse result
@@ -67,7 +69,7 @@ public class RemoteClient {
 			if (url.equals("/users")) { // All users
 				return gson.fromJson(reader, ApiUser[].class);
 			} else if (url.equals("/users/info")) {
-				return gson.fromJson(reader, ApiUserInfo[].class);
+				return gson.fromJson(reader, ApiUser[].class);
 			} else { // Single user
 				return gson.fromJson(reader, ApiUser.class);
 			}

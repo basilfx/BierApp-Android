@@ -6,4 +6,7 @@ public class ApiUser {
 	public String first_name;
 	public String last_name;
 	public String avatar;
+	public int type;
+	
+	public ApiUserInfo[] product_info;
 }

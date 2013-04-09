@@ -2,20 +2,21 @@ package com.warmwit.bierapp;
 
 import android.app.Application;
 
-import com.warmwit.bierapp.data.ApiConnector;
 import com.warmwit.bierapp.data.RemoteClient;
 
 public class BierAppApplication extends Application {
 	private RemoteClient remoteClient;
 	
-	private ApiConnector apiConnector;
-	
-	public ApiConnector getApiConnector() {
-		return this.apiConnector;
+	public RemoteClient getRemoteClient() {
+		return this.remoteClient;
 	}
 	
 	public BierAppApplication() {
-		this.remoteClient = new RemoteClient("http://beterlijst.apps.basilfx.net/apps/bierapp/api");
-		this.apiConnector = new ApiConnector(remoteClient);
+		//this.remoteClient = new RemoteClient("http://beterlijst.apps.basilfx.net/apps/bierapp/api");
+		this.remoteClient = new RemoteClient("http://10.0.0.30:8000/apps/bierapp/api");
+	}
+	
+	public static String getHostUrl() {
+		return "http://10.0.0.30:8000";
 	}
 }

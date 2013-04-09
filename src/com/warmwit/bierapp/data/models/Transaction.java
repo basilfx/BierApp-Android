@@ -1,21 +1,45 @@
 package com.warmwit.bierapp.data.models;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
+import com.j256.ormlite.dao.ForeignCollection;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.field.ForeignCollectionField;
+import com.j256.ormlite.table.DatabaseTable;
 
-public class Transaction extends ArrayList<TransactionItem>{
+@DatabaseTable
+public class Transaction {
 
+	@DatabaseField(index = true, generatedId = true)
 	private int id;
 	
+	@DatabaseField
 	private String description;
 	
+	@DatabaseField(canBeNull = true)
 	private Date dateCreated;
 	
+	@ForeignCollectionField(eager = true)
+	private ForeignCollection<TransactionItem> transactionItems;
+
+	@DatabaseField
+	private boolean dirty;
+	
+	@DatabaseField
+	private boolean synced;
+	
+	public Transaction() {}
+	
+	public ForeignCollection<TransactionItem> getTransactionItems() {
+		return transactionItems;
+	}
+
+	public void setTransactionItems(
+			ForeignCollection<TransactionItem> transactionItems) {
+		this.transactionItems = transactionItems;
+	}
+
 	public Date getDateCreated() {
 		return dateCreated;
 	}
@@ -39,48 +63,20 @@ public class Transaction extends ArrayList<TransactionItem>{
 	public void setDescription(String description) {
 		this.description = description;
 	}
-	
-	public int getTotalAmount() {
-		int result = 0;
-		
-		// Accumulate amounts
-		for (TransactionItem transaction : this) {
-			result = result + transaction.getAmount();
-		}
-		
-		// Done
-		return result;
+
+	public boolean isDirty() {
+		return dirty;
 	}
-	
-	public int getAmount(User user) {
-		int total = 0;
-		
-		for (TransactionItem transcation : this) {
-			if (transcation.getUser().equals(user))
-				total = total + 1;
-		}
-		
-		return total;
+
+	public void setDirty(boolean dirty) {
+		this.dirty = dirty;
 	}
-	
-	public void clear(User user) {
-		Iterator<TransactionItem> iterator = this.iterator();
-		
-		while (iterator.hasNext()) {
-			TransactionItem transaction = iterator.next();
-			
-			if (transaction.getUser().equals(user)) {
-				iterator.remove();
-			}
-		}
+
+	public boolean isSynced() {
+		return synced;
 	}
-	
-	public Multimap<User, TransactionItem> groupByUser() {
-		 return Multimaps.index(this, new Function<TransactionItem, User>() {
-			@Override
-			public User apply(TransactionItem item) {
-				return item.getUser();
-			}
-		});
+
+	public void setSynced(boolean synced) {
+		this.synced = synced;
 	}
 }

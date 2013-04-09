@@ -34,7 +34,6 @@ public class ImageDownloader {
 	
 	public ImageDownloader(){
 		imageCache = new HashMap<String, Bitmap>();
-		
 	}
 	
 	//download function

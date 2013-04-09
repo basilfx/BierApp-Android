@@ -4,7 +4,7 @@ import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable
-public class TransactionItem {
+public class UserInfo {
 	
 	@DatabaseField(index = true, generatedId = true)
 	private int id;
@@ -13,26 +13,10 @@ public class TransactionItem {
 	private User user;
 	
 	@DatabaseField(foreign = true)
-	private User payer;
-	
-	@DatabaseField(foreign = true)
 	private Product product;
 	
 	@DatabaseField
 	private int count;
-	
-	@DatabaseField(foreign = true)
-	private Transaction transaction;
-
-	public TransactionItem() {}
-	
-	public int getCount() {
-		return this.count;
-	}
-	
-	public User getUser() {
-		return this.user;
-	}
 
 	public int getId() {
 		return id;
@@ -41,13 +25,13 @@ public class TransactionItem {
 	public void setId(int id) {
 		this.id = id;
 	}
-
-	public User getPayer() {
-		return payer;
+	
+	public User getUser() {
+		return user;
 	}
 
-	public void setPayer(User payer) {
-		this.payer = payer;
+	public void setUser(User user) {
+		this.user = user;
 	}
 
 	public Product getProduct() {
@@ -58,19 +42,11 @@ public class TransactionItem {
 		this.product = product;
 	}
 
-	public void setUser(User user) {
-		this.user = user;
+	public int getCount() {
+		return count;
 	}
 
 	public void setCount(int count) {
 		this.count = count;
-	}
-
-	public Transaction getTransaction() {
-		return transaction;
-	}
-
-	public void setTransaction(Transaction transaction) {
-		this.transaction = transaction;
 	}
 }

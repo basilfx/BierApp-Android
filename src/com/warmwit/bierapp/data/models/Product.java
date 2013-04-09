@@ -1,14 +1,26 @@
 package com.warmwit.bierapp.data.models;
 
-import com.warmwit.bierapp.R;
+import java.util.Observable;
 
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
 
+@DatabaseTable
 public class Product {
 	
+	@DatabaseField(index = true, id = true)
 	private int id;
+	
+	@DatabaseField
 	private String title;
+	
+	@DatabaseField
 	private int cost;
-	private int logo;
+	
+	@DatabaseField
+	private String logo;
+	
+	public Product() {}
 	
 	public int getId() {
 		return id;
@@ -26,11 +38,11 @@ public class Product {
 		this.title = title;
 	}
 
-	public int getLogo() {
+	public String getLogo() {
 		return logo;
 	}
 
-	public void setLogo(int logo) {
+	public void setLogo(String logo) {
 		this.logo = logo;
 	}
 
@@ -45,18 +57,4 @@ public class Product {
 	public String toString() {
 		return this.title;
 	}	
-	
-	public int getBuiltinLogo() {
-		int resources[] = {
-			R.drawable.product_beer_grolsch,
-			R.drawable.product_beer_grolsch,
-			R.drawable.product_beer_hertogjan,
-			R.drawable.product_beer_palm,
-			R.drawable.product_beer_jupiler,
-			R.drawable.product_beer_brand,
-			R.drawable.product_beer_warsteiner,
-		};
-		
-		return this.logo < resources.length ? resources[this.id] : R.drawable.product_beer_none;
-	}
 }

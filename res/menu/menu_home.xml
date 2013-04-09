@@ -3,6 +3,7 @@
     <item android:id="@+id/menu_show_guests" android:title="@string/menu_show_guests"></item>
     <item android:id="@+id/menu_show_transactions" android:title="@string/menu_show_transactions"></item>
     <item android:id="@+id/menu_show_stats" android:title="@string/menu_show_stats"></item>
+    <item android:id="@+id/menu_refresh" android:title="@string/menu_refresh"></item>
     
     <item android:id="@+id/menu_purchase"
         android:icon="@android:drawable/ic_input_add" 

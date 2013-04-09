@@ -1,258 +1,151 @@
 package com.warmwit.bierapp.data;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.sql.SQLException;
 
 import android.util.Log;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.warmwit.bierapp.data.models.Guest;
+import com.j256.ormlite.dao.ForeignCollection;
 import com.warmwit.bierapp.data.models.Product;
+import com.warmwit.bierapp.data.models.UserInfo;
 import com.warmwit.bierapp.data.models.Transaction;
 import com.warmwit.bierapp.data.models.TransactionItem;
 import com.warmwit.bierapp.data.models.User;
+import com.warmwit.bierapp.database.DatabaseHelper;
+import com.warmwit.bierapp.database.ProductQuery;
+import com.warmwit.bierapp.database.UserQuery;
 
 public class ApiConnector {
 
 	private RemoteClient remoteClient;
+	private DatabaseHelper databaseHelper;
 	
-	// Users
-	private Map<Integer, User> userCache;
-	private List<Integer> userIndexCache;
-	private boolean usersAreLoaded;
-	
-	// Guests
-	private Map<Integer, Guest> guestCache;
-	private List<Integer> guestIndexCache;
-	private boolean guestsAreLoaded;
-	
-	// Products
-	private Map<Integer, Product> productCache;
-	private List<Integer> productIndexCache;
-	private boolean productsAreLoaded;
-	
-	// Transactions
-	private Map<Integer, Transaction> transactionCache;
-	private List<Integer> transactionIndexCache;
-	private boolean transactionsAreLoaded;
-	
-	public ApiConnector(RemoteClient remoteClient) {
-		this.remoteClient = remoteClient;
-		
-		// Users
-		this.userCache = Maps.newHashMap();
-		this.userIndexCache = Lists.newArrayList();
-		this.usersAreLoaded = false;
-		
-		// Guests
-		this.guestCache = Maps.newHashMap();
-		this.guestIndexCache = Lists.newArrayList();
-		this.guestsAreLoaded = false;
-		
-		// Products
-		this.productCache = Maps.newHashMap();
-		this.productIndexCache = Lists.newArrayList();
-		this.productsAreLoaded = false;
-		
-		// Transactions
-		this.transactionCache = Maps.newHashMap();
-		this.transactionIndexCache = Lists.newArrayList();
-		this.transactionsAreLoaded = false;
-	}
-	
-	//
-	// General
-	//
-	
-	private <T> T getByIndex(int index, Map<Integer, T> cache, List<Integer> indexCache) {
-		// Index cannot exceed number of users
-		checkArgument(index < indexCache.size());
-		
-		int key = indexCache.get(index);
-		return cache.get(key);
+	public ApiConnector(RemoteClient remoteClient, DatabaseHelper databaseHelper) {
+		this.remoteClient = checkNotNull(remoteClient);
+		this.databaseHelper = checkNotNull(databaseHelper);
 	}
 	
 	//
 	// Users
 	//
 	
-	public User getUserByIndex(int index) {
-		checkArgument(this.usersAreLoaded);
-		return this.getByIndex(index, this.userCache, this.userIndexCache);
-	}
-	
-	public User getUserById(int id) {
-		checkArgument(this.usersAreLoaded);
-		return this.userCache.get(id);
-	}
-	
-	public List<User> getUsers() {
-		checkArgument(this.usersAreLoaded);
-		return Lists.newArrayList(this.userCache.values());
-	}
-	
-	public User getUserOrGuestById(int id) {
-		if (this.userCache.containsKey(id)) {
-			return this.userCache.get(id);
-		} else {
-			return this.guestCache.get(id);
-		}
-	}
-	
-	public void loadUsers() throws IOException {
+	public void loadUsers() throws IOException, SQLException {
 		ApiUser[] apiUsers = (ApiUser[]) this.remoteClient.get("/users", null);
 		
 		for (ApiUser apiUser : apiUsers) {
-			User user = new User();
-			
-			user.setId(apiUser.id);
-			user.setFirstName(apiUser.first_name);
-			user.setLastName(apiUser.last_name);
-			user.setAvatarUrl(apiUser.avatar);
-			
-			// TODO: validation
-			this.userCache.put(apiUser.id, user);
-			this.userIndexCache.add(apiUser.id);
-		}
-		
-		this.usersAreLoaded = true;
-	}
-	
-	public void loadUserById(int id) throws IOException {
-		checkArgument(id > 0);
-	}
-	
-	public void loadUsersInfo() throws IOException {
-		ApiUserInfo[] apiUsersInfo = (ApiUserInfo[]) this.remoteClient.get("/users/info", null);
-		
-		for (ApiUserInfo apiUserInfo : apiUsersInfo) {
-			User user = this.getUserOrGuestById(apiUserInfo.id);
-			
-			if (user != null) {
-				user.setScore(apiUserInfo.score);
-				user.setBalance(apiUserInfo.balance);
-			} else {
-				Log.w(this.getClass().getName(), "Received infor for user with ID " + apiUserInfo.id + ", but user not in cache.");
+			if (!this.databaseHelper.getUserDao().idExists(apiUser.id)) {
+				User user = new User();
+				
+				user.setId(apiUser.id);
+				user.setFirstName(apiUser.first_name);
+				user.setLastName(apiUser.last_name);
+				user.setAvatarUrl(apiUser.avatar);
+				user.setType(apiUser.type);
+				
+				user.setDirty(false);
+				user.setSynced(true);
+				
+				// Save changes to database
+				this.databaseHelper.getUserDao().create(user);
 			}
 		}
 	}
 	
-	// 
-	// Guests
-	//
-	public Guest getGuestByIndex(int index) {
-		checkArgument(this.guestsAreLoaded);
-		return this.getByIndex(index, this.guestCache, this.guestIndexCache);
-	}
-	
-	public Guest getGuestById(int id) {
-		checkArgument(this.guestsAreLoaded);
-		return this.guestCache.get(id);
-	}
-	
-	public List<Guest> getGuests() {
-		checkArgument(this.guestsAreLoaded);
-		return Lists.newArrayList(this.guestCache.values());
-	}
-	
-	public void loadGuestById(int id) throws IOException {
-		checkArgument(id > 0);
-	}
-	
-	public void loadGuests() throws IOException {
-		ApiUser[] apiGuests = (ApiUser[]) this.remoteClient.get("/guests", null);
+	public void loadUserInfo() throws IOException, SQLException {
+		UserQuery userQuery = new UserQuery(this.databaseHelper);
+		ProductQuery productQuery = new ProductQuery(this.databaseHelper);
 		
-		for (ApiUser apiGuest : apiGuests) {
-			Guest guest = new Guest();
+		ApiUser[] apiUsers = (ApiUser[]) this.remoteClient.get("/users/info", null);
+		
+		for (ApiUser apiUser : apiUsers) {
+			User user = userQuery.byId(apiUser.id);
 			
-			guest.setId(apiGuest.id);
-			guest.setFirstName(apiGuest.first_name);
-			guest.setLastName(apiGuest.last_name);
-			guest.setAvatarUrl(apiGuest.avatar);
-			
-			// TODO: validation
-			this.guestCache.put(apiGuest.id, guest);
-			this.guestIndexCache.add(apiGuest.id);
+			for (ApiUserInfo apiUserInfo : apiUser.product_info) {
+				Product product = productQuery.byId(apiUserInfo.product_id);
+				UserInfo userInfo = userQuery.userProductInfo(user, product);
+				boolean exists = true;
+
+				if (userInfo == null) {
+					userInfo = new UserInfo();
+					exists = false;
+				}
+				
+				userInfo.setUser(user);
+				userInfo.setProduct(product);
+				userInfo.setCount(apiUserInfo.count);
+				
+				if (exists) {
+					this.databaseHelper.getUserInfoDao().update(userInfo);
+				} else {
+					this.databaseHelper.getUserInfoDao().create(userInfo);
+				}
+			}
 		}
-		
-		this.guestsAreLoaded = true;
 	}
 	
 	//
 	// Transactions
 	//
 	
-	public Transaction getTransactionById(int id) {
-		checkArgument(this.transactionsAreLoaded);
-		return this.transactionCache.get(id);
-	}
-	
-	public Transaction getTransactionByIndex(int index) {
-		checkArgument(this.transactionsAreLoaded);
-		return getByIndex(index, this.transactionCache, this.transactionIndexCache);
-	}
-	
-	public List<Transaction> getTransactions() {
-		checkArgument(this.transactionsAreLoaded);
-		return Lists.newArrayList(this.transactionCache.values());
-	}
-	
-	public void loadTransactionById(int id) throws IOException {
-		checkArgument(id > 0);
-	}
-	
-	private Transaction convertToTransaction(ApiTransaction apiTransaction) {
+	// http://stackoverflow.com/questions/12885499/problems-saving-collection-using-ormlite-on-android
+	private void convertToTransaction(ApiTransaction apiTransaction) throws IOException, SQLException {
 		Transaction transaction = new Transaction();
+		ForeignCollection<TransactionItem> transactionItems = 
+			this.databaseHelper.getTransactionDao().getEmptyForeignCollection("transactionItems");
 		
 		transaction.setId(apiTransaction.id);
 		transaction.setDescription(apiTransaction.description);
 		transaction.setDateCreated(apiTransaction.date_created);
+		transaction.setTransactionItems(transactionItems);
+		transaction.setDirty(false);
+		transaction.setSynced(true);
+		
+		this.databaseHelper.getTransactionDao().create(transaction);
 		
 		for (ApiTransactionItem apiTransactionItem : apiTransaction.transaction_items) {
 			TransactionItem transactionItem = new TransactionItem();
 			
-			transactionItem.setUser(this.getUserOrGuestById(apiTransactionItem.executing_user));
-			transactionItem.setPayer(this.getUserOrGuestById(apiTransactionItem.accounted_user));
-			transactionItem.setProduct(this.getProductById(apiTransactionItem.product));
-			transactionItem.setAmount(-1 * apiTransactionItem.count);
+			transactionItem.setId(apiTransactionItem.id);
+			transactionItem.setUser(this.databaseHelper.getUserDao().queryForId(apiTransactionItem.executing_user_id));
+			transactionItem.setPayer(this.databaseHelper.getUserDao().queryForId(apiTransactionItem.accounted_user_id));
+			transactionItem.setProduct(this.databaseHelper.getProductDao().queryForId(apiTransactionItem.product_id));
+			transactionItem.setCount(apiTransactionItem.count);
+			transactionItem.setTransaction(transaction);
 			
-			// TODO: validatie
-			transaction.add(transactionItem);
+			transactionItems.add(transactionItem);
 		}
-		
-		return transaction;
 	}
 	
-	public void loadTransactions() throws IOException {
+	public void loadTransactions() throws IOException, SQLException {
 		ApiTransaction[] apiTransactions = (ApiTransaction[]) this.remoteClient.get("/transactions", null);
 		
 		for (ApiTransaction apiTransaction : apiTransactions) {
-			this.transactionCache.put(apiTransaction.id, this.convertToTransaction(apiTransaction));
+			if (!this.databaseHelper.getTransactionDao().idExists(apiTransaction.id)) {
+				this.convertToTransaction(apiTransaction);
+			}
 		}
-		
-		this.transactionsAreLoaded = true;
 	}
 	
-	public boolean saveTransaction(Transaction transaction) throws IOException {
+	public boolean saveTransaction(Transaction transaction) throws IOException, SQLException {
 		ApiTransaction apiTransaction = new ApiTransaction();
+		ForeignCollection<TransactionItem> transactionItems = transaction.getTransactionItems();
+		int i = 0;
 		
 		apiTransaction.description = transaction.getDescription();
-		apiTransaction.transaction_items = new ApiTransactionItem[transaction.size()];
+		apiTransaction.transaction_items = new ApiTransactionItem[transactionItems.size()];
 		
-		for (int i = 0; i < transaction.size(); i++) {
-			TransactionItem transactionItem = transaction.get(i);
+		for (TransactionItem transactionItem : transactionItems) {
 			ApiTransactionItem apiTransactionItem = new ApiTransactionItem();
 			
-			apiTransactionItem.accounted_user = transactionItem.getPayer().getId();
-			apiTransactionItem.executing_user = transactionItem.getUser().getId();
-			apiTransactionItem.count = -1 * transactionItem.getAmount();
-			apiTransactionItem.product = transactionItem.getProduct().getId();
+			apiTransactionItem.accounted_user_id = transactionItem.getPayer().getId();
+			apiTransactionItem.executing_user_id = transactionItem.getUser().getId();
+			apiTransactionItem.count = transactionItem.getCount();
+			apiTransactionItem.product_id = transactionItem.getProduct().getId();
 			
 			apiTransaction.transaction_items[i] = apiTransactionItem;
+			i++;
 		}
 		
 		// Send to server
@@ -261,10 +154,9 @@ public class ApiConnector {
 		// Parse result
 		if (result != null) {
 			apiTransaction = (ApiTransaction) result;
-			this.transactionCache.put(apiTransaction.id, this.convertToTransaction(apiTransaction));
 			
-			// Load new user info
-			this.loadUsersInfo();
+			// Save changes to database
+			this.databaseHelper.getTransactionDao().createOrUpdate(transaction);
 			
 			// Done
 			return true;
@@ -277,40 +169,21 @@ public class ApiConnector {
 	// Products
 	//
 	
-	public Product getProductById(int id) {
-		checkArgument(this.productsAreLoaded);
-		return this.productCache.get(id);
-	}
-	
-	public Product getProductByIndex(int index) {
-		checkArgument(this.productsAreLoaded);
-		return getByIndex(index, this.productCache, this.productIndexCache);
-	}
-	
-	public List<Product> getProducts() {
-		checkArgument(this.productsAreLoaded);
-		return Lists.newArrayList(this.productCache.values());
-	}
-	
-	public void loadProductById(int id) throws IOException {
-		checkArgument(id > 0);
-	}
-	
-	public void loadProducts() throws IOException {
+	public void loadProducts() throws IOException, SQLException {
 		ApiProduct[] apiProducts = (ApiProduct[]) this.remoteClient.get("/products", null);
 		
 		for (ApiProduct apiProduct : apiProducts) {
-			Product product = new Product();
-			
-			product.setId(apiProduct.id);
-			product.setTitle(apiProduct.title);
-			product.setCost(apiProduct.cost);
-			
-			// TODO: validation
-			this.productCache.put(apiProduct.id, product);
-			this.productIndexCache.add(apiProduct.id);
+			if (!this.databaseHelper.getProductDao().idExists(apiProduct.id)) {
+				Product product = new Product();
+				
+				product.setId(apiProduct.id);
+				product.setTitle(apiProduct.title);
+				product.setCost(apiProduct.cost);
+				product.setLogo(apiProduct.logo);
+				
+				// Save changes to database
+				this.databaseHelper.getProductDao().create(product);
+			}
 		}
-		
-		this.productsAreLoaded = true;
 	}
 }

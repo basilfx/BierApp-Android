@@ -4,10 +4,12 @@
     <string name="menu_settings">Instelllingen</string>
     
     <string name="menu_add_guest">Gast Toevoegen</string>
+    <string name="menu_delete_guest">Gast Verwijderen</string>
     
     <string name="menu_show_guests">Gasten</string>
     <string name="menu_show_transactions">Transacties</string>
     <string name="menu_show_stats">Statistieken</string>
+    <string name="menu_refresh">Vernieuwen</string>
     
     <string name="menu_clear_transaction_items">Transactie-items wissen</string>
     

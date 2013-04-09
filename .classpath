@@ -6,6 +6,7 @@
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 	<classpathentry kind="lib" path="libs/guava-13.0.1.jar"/>
 	<classpathentry kind="lib" path="libs/gson-2.2.2.jar"/>
-	<classpathentry kind="lib" path="libs/android-viewbadger.jar"/>
+	<classpathentry kind="lib" path="libs/ormlite-android-4.45.jar"/>
+	<classpathentry kind="lib" path="libs/ormlite-core-4.45.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

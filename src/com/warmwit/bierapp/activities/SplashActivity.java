@@ -1,8 +1,8 @@
 package com.warmwit.bierapp.activities;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -10,17 +10,25 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager.LayoutParams;
-import android.widget.Toast;
 
+import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.data.ApiConnector;
+import com.warmwit.bierapp.data.RemoteClient;
+import com.warmwit.bierapp.database.DatabaseHelper;
 
-public class SplashActivity extends Activity {
+public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
+	
+	private RemoteClient remoteClient;
+	private ApiConnector apiConnector;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        this.remoteClient = ((BierAppApplication) this.getApplication()).getRemoteClient();
+		this.apiConnector = new ApiConnector(remoteClient, this.getHelper());
         
         // Make splash screen full size
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -36,16 +44,15 @@ public class SplashActivity extends Activity {
     private class LoadDataTask extends AsyncTask<Void, Void, Void> {
 		@Override
 		protected Void doInBackground(Void... params) {
-			ApiConnector apiConnector = ((BierAppApplication) SplashActivity.this.getApplication()).getApiConnector();
-			
 			// Warmup cache
 			try {
-				apiConnector.loadProducts();
-				apiConnector.loadUsers();
-				apiConnector.loadGuests();
-				apiConnector.loadTransactions();
-				apiConnector.loadUsersInfo();
+				SplashActivity.this.apiConnector.loadProducts();
+				SplashActivity.this.apiConnector.loadUsers();
+				SplashActivity.this.apiConnector.loadTransactions();
+				SplashActivity.this.apiConnector.loadUserInfo();
 			} catch (IOException e) {
+				Log.e(this.getClass().getName(), e.getMessage());
+			} catch (SQLException e) {
 				Log.e(this.getClass().getName(), e.getMessage());
 			}
 	        
@@ -62,7 +69,7 @@ public class SplashActivity extends Activity {
 					Intent intent = new Intent(SplashActivity.this, HomeActivity.class);
 					startActivity(intent);             
 				}
-			}, 1000);
+			}, 1);
 		}
     }
 }
