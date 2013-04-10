@@ -16,7 +16,7 @@ public class Hosting {
 	
 	@ForeignCollectionField(eager = true)
 	private ForeignCollection<HostMapping> hosts;
-
+	
 	public int getId() {
 		return id;
 	}

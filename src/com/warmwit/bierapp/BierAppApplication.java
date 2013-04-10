@@ -13,10 +13,10 @@ public class BierAppApplication extends Application {
 	
 	public BierAppApplication() {
 		//this.remoteClient = new RemoteClient("http://beterlijst.apps.basilfx.net/apps/bierapp/api");
-		this.remoteClient = new RemoteClient("http://10.0.0.30:8000/apps/bierapp/api");
+		this.remoteClient = new RemoteClient("http://10.0.0.3:9000/apps/bierapp/api");
 	}
 	
 	public static String getHostUrl() {
-		return "http://10.0.0.30:8000";
+		return "http://10.0.0.3:9000";
 	}
 }

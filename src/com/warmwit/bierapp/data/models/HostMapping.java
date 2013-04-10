@@ -15,6 +15,9 @@ public class HostMapping {
 	@DatabaseField(foreign = true)
 	private User host;
 
+	@DatabaseField
+	private int timesPaid;
+	
 	public int getId() {
 		return id;
 	}
@@ -37,5 +40,13 @@ public class HostMapping {
 
 	public void setHost(User host) {
 		this.host = host;
+	}
+
+	public int getTimesPaid() {
+		return timesPaid;
+	}
+
+	public void setTimesPaid(int timesPaid) {
+		this.timesPaid = timesPaid;
 	}
 }

@@ -5,18 +5,14 @@ import java.util.Map.Entry;
 import java.util.Random;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.callbacks.ProductClickedCallback;
@@ -129,13 +125,16 @@ public class UserRowView extends LinearLayout {
 		
 		// Add products to the place holders
         final Map<Product, ProductInfo> productMap = user.getProducts();
+        ProductInfo productInfoMore = new ProductInfo(0, 0); 
         
         for (Entry<Product, ProductInfo> item : productMap.entrySet()) {
         	if (i >= holder.products.length) {
-        		break;
+        		// Sum the count and change for the more button
+        		productInfoMore.setChange(productInfoMore.getChange() + item.getValue().getChange());
+        		productInfoMore.setCount(productInfoMore.getCount() + item.getValue().getCount());
         	} else if (i < productMap.size()) {
         		// Set data
-        		UserRowView.this.refreshProductView(holder.products[i], item.getKey(), item.getValue());
+        		UserRowView.this.refreshProduct(holder.products[i], item.getKey(), item.getValue());
         	} else {
         		// Hide view
         		holder.products[i].setVisibility(View.GONE);
@@ -148,6 +147,10 @@ public class UserRowView extends LinearLayout {
         // Show the more button if applicable
         if (productMap.size() > holder.products.length) {
         	holder.more.setVisibility(View.VISIBLE);
+        	
+        	holder.more.setCount(productInfoMore.getCount());
+        	holder.more.setChange(productInfoMore.getChange());
+        	holder.more.setGuestProduct(this.user.getType() == User.GUEST);
         	holder.more.setProductMore();
         	
         	holder.more.setOnClickListener(new OnClickListener() {
@@ -157,7 +160,7 @@ public class UserRowView extends LinearLayout {
 					
 					for (Entry<Product, ProductInfo> item : productMap.entrySet()) {
 						ProductView productView = new ProductView(UserRowView.this.getContext());
-						UserRowView.this.refreshProductView(productView, item.getKey(), item.getValue());
+						UserRowView.this.refreshProduct(productView, item.getKey(), item.getValue());
 						view.addView(productView);
 					}
 					
@@ -174,7 +177,7 @@ public class UserRowView extends LinearLayout {
         }
 	}
 	
-	private void refreshProductView(final ProductView productView, final Product product, final ProductInfo productInfo) {
+	private void refreshProduct(final ProductView productView, final Product product, final ProductInfo productInfo) {
 		productView.setGuestProduct(this.user.getType() == User.GUEST);
 		productView.setChange(productInfo.getChange());
 		productView.setCount(productInfo.getCount());

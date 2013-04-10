@@ -5,9 +5,7 @@ import java.util.Observable;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
-import com.j256.ormlite.dao.ForeignCollection;
 import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 import com.warmwit.bierapp.utils.ProductInfo;
 
@@ -34,7 +32,7 @@ public class User extends Observable {
 	@DatabaseField
 	private int score;
 	
-	@DatabaseField(foreign = true, canBeNull = true)
+	@DatabaseField(foreign = true, canBeNull = true, foreignAutoRefresh = true, maxForeignAutoRefreshLevel = 3)
 	private Hosting hosting;
 	
 	@DatabaseField

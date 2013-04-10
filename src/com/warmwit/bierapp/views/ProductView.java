@@ -49,7 +49,7 @@ public class ProductView extends FrameLayout {
 	
 	public void setProductMore() {
 		ViewHolder holder = (ViewHolder) this.getTag();
-		holder.logo.setImageResource(R.drawable.product_beer_none);
+		holder.logo.setImageResource(android.R.drawable.ic_search_category_default);
 	}
 	
 	public void setProductLogo(String logoUrl) {

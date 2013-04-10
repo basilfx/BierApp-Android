@@ -5,10 +5,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Random;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -40,6 +40,8 @@ import com.warmwit.bierapp.callbacks.ProductClickedCallback;
 import com.warmwit.bierapp.data.ApiConnector;
 import com.warmwit.bierapp.data.RemoteClient;
 import com.warmwit.bierapp.data.adapters.UserListAdapter;
+import com.warmwit.bierapp.data.models.HostMapping;
+import com.warmwit.bierapp.data.models.Hosting;
 import com.warmwit.bierapp.data.models.Product;
 import com.warmwit.bierapp.data.models.Transaction;
 import com.warmwit.bierapp.data.models.TransactionItem;
@@ -233,7 +235,6 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	    		    });
 	    		    
 	    		    builder.show();
-	    			
 	    			return true;
     			}
     		case R.id.menu_context_remove_guest:
@@ -350,25 +351,23 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 						
 						return true;
 					case R.id.menu_purchase_show:
-						/*AlertDialog alertDialog;
-						alertDialog = new AlertDialog.Builder(HomeActivity.this).create();
-						alertDialog.setTitle("Huidige transactie");
+						AlertDialog.Builder builder = new AlertDialog.Builder(HomeActivity.this);
+						StringBuilder message = new StringBuilder();
+						
+						builder.setTitle("Huidige transactie");
+						builder.setPositiveButton("Sluiten", null);
 						
 						if (HomeActivity.this.transaction != null) {
-							Multimap<User, TransactionItem> grouped = HomeActivity.this.transaction.groupByUser();
-							StringBuilder message = new StringBuilder();
-							
-							// Walk through each transaction and display count
-							for (User user : grouped.keySet()) {
-								message.append(user.getFullName() + "\t\t" + grouped.get(user).size() + "x\n");
+							for (TransactionItem transactionItem : HomeActivity.this.transaction.getTransactionItems()) {
+								message.append(transactionItem.getUser().getFullName() + "\t\t" + transactionItem.getCount() + "x " + transactionItem.getProduct() + "\n");
 							}
 							
 							// Set the message
-							alertDialog.setMessage(message.toString());
+							builder.setMessage(message.toString());
 						}
 						
 						// Show dialog and done
-						alertDialog.show();*/
+						builder.show();
 						return true;
 					case R.id.menu_purchase_cancel:
 						// Cancel the transaction if there is one
@@ -560,6 +559,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
  			if (HomeActivity.this.transaction != null) {
  				new TransactionQuery(HomeActivity.this).delete(HomeActivity.this.transaction);
  				HomeActivity.this.transaction = null;
+ 				HomeActivity.this.amount = 0;
  			}
 		}
 		
@@ -619,6 +619,50 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		protected Integer doInBackground(Void... params) {
 			checkNotNull(HomeActivity.this.transaction);
 			
+			// For each guest transaction, set a payer
+			
+			for (TransactionItem transactionItem : HomeActivity.this.transaction.getTransactionItems()) {
+				if (transactionItem.getPayer().getType() == User.GUEST) {
+					Hosting hosting = transactionItem.getPayer().getHosting();
+					
+					// Determine the least times paid
+					int min = Integer.MAX_VALUE;
+					
+					try {
+						hosting.getHosts().refreshCollection();
+					} catch (Exception e) {
+						
+					}
+					
+					for (HostMapping host : hosting.getHosts()) {
+						if (host.getTimesPaid() < min) {
+							min = host.getTimesPaid();
+						}
+					}
+					
+					// Gather candidate payers
+					List<HostMapping> payers = Lists.newArrayList();
+					
+					for (HostMapping host : hosting.getHosts()) {
+						if (host.getTimesPaid() <= min) {
+							payers.add(host);
+						}
+					}
+					
+					// Select random payer
+					HostMapping payer = payers.get(new Random().nextInt(payers.size()));
+					transactionItem.setPayer(payer.getHost());
+					payer.setTimesPaid(payer.getTimesPaid() + 1);
+					
+					try {
+						HomeActivity.this.getHelper().getHostMappingDao().update(payer);
+					} catch (SQLException e) {
+						
+					}
+				}
+			}
+			
+			// Send transaction to the server
 			try {
 				return HomeActivity.this.apiConnector.saveTransaction(HomeActivity.this.transaction) ? 0 : 1;
 			} catch (IOException e) {
@@ -642,25 +686,9 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			switch (result) {
 				case 0: // OK
 					HomeActivity.this.transaction = null;
+					HomeActivity.this.amount = 0;
 					HomeActivity.this.refreshMenu();
-					
-					// Set each product change back to 0
-					for (User user : HomeActivity.this.inhabitants) {
-						for (ProductInfo productInfo : user.getProducts().values()) {
-							productInfo.setChange(0);
-						}
-					}
-					
-					// Refresh visible rows
-					HomeActivity.this.applyToVisibleRows(new Function<UserRowView, Boolean>() {
-						@Override
-						public Boolean apply(UserRowView view) {
-							view.refreshProducts();
-							view.refreshUser();
-							
-							return true;
-						}
-					});
+					HomeActivity.this.refreshList();
 					
 					// Done
 					Toast.makeText(HomeActivity.this, "Transactie succesvol verzonden!", Toast.LENGTH_LONG).show();

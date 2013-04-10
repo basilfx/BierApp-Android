@@ -37,7 +37,7 @@ public class RemoteClient {
 				data = EntityUtils.toString(response.getEntity());
 				
 				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-				return gson.fromJson(data, ApiTransaction.class);
+				return gson.fromJson(data, ApiTransaction[].class)[0];
 			} else {
 				return null;
 			}

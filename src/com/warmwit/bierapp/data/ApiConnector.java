@@ -15,6 +15,7 @@ import com.warmwit.bierapp.data.models.TransactionItem;
 import com.warmwit.bierapp.data.models.User;
 import com.warmwit.bierapp.database.DatabaseHelper;
 import com.warmwit.bierapp.database.ProductQuery;
+import com.warmwit.bierapp.database.TransactionQuery;
 import com.warmwit.bierapp.database.UserQuery;
 
 public class ApiConnector {
@@ -149,14 +150,20 @@ public class ApiConnector {
 		}
 		
 		// Send to server
-		Object result= this.remoteClient.post(apiTransaction, "/transactions/", null);
+		Object result = this.remoteClient.post(apiTransaction, "/transactions/", null);
 		
 		// Parse result
 		if (result != null) {
 			apiTransaction = (ApiTransaction) result;
 			
-			// Save changes to database
-			this.databaseHelper.getTransactionDao().createOrUpdate(transaction);
+			// Remove the old transaction
+			new TransactionQuery(this.databaseHelper).delete(transaction);
+			
+			// Save a new one
+			this.convertToTransaction(apiTransaction);
+			
+			// Reload new user data
+			this.loadUserInfo();
 			
 			// Done
 			return true;
