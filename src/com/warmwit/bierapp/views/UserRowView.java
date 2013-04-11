@@ -15,7 +15,7 @@ import android.widget.TextView;
 import com.google.common.base.Strings;
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
-import com.warmwit.bierapp.callbacks.ProductClickedCallback;
+import com.warmwit.bierapp.callbacks.OnProductClickListener;
 import com.warmwit.bierapp.data.models.Product;
 import com.warmwit.bierapp.data.models.User;
 import com.warmwit.bierapp.utils.ImageDownloader;
@@ -36,15 +36,19 @@ public class UserRowView extends LinearLayout {
 		
 		private ProductView[] products;
 		private ProductView more;
+		
 	}
 	
 	private User user;
-	private ProductClickedCallback callback;
+	private OnProductClickListener callback;
 	
 	public UserRowView(Context context) {
 		super(context);
 		
+		// Inflate layout
 		LayoutInflater.from(context).inflate(R.layout.listview_row_user, this);
+		
+		// Build a ViewHolder
 		ViewHolder holder = new ViewHolder();
     	
     	// Find fields
@@ -59,7 +63,7 @@ public class UserRowView extends LinearLayout {
 			(ProductView) this.findViewById(R.id.product_3)
 		};
     	
-		// Set Tag
+		// Save the holder internally
     	this.setTag(holder);
 	}
 	
@@ -71,7 +75,7 @@ public class UserRowView extends LinearLayout {
 		this.user = user;
 	}
 	
-	public void setCallback(ProductClickedCallback callback) {
+	public void setCallback(OnProductClickListener callback) {
 		this.callback = callback;
 	}
 	
@@ -109,16 +113,6 @@ public class UserRowView extends LinearLayout {
 	public void refreshUser() {
 		ViewHolder holder = (ViewHolder) this.getTag();
 		
-		// Hide or show balance/score
-        switch (user.getType()) {
-	        case User.INHABITANT:
-	        	holder.score.setVisibility(View.VISIBLE);
-	        	break;
-	        case User.GUEST:
-	        	holder.score.setVisibility(View.INVISIBLE);
-	        	break;
-        }
-		
 		// Set the name, score and XP
  		holder.name.setText(user.getName());
  		holder.score.setText(user.getScore() + " XP");
@@ -134,14 +128,11 @@ public class UserRowView extends LinearLayout {
         
         for (Entry<Product, ProductInfo> item : productMap.entrySet()) {
         	if (i >= holder.products.length) {
-        		// Sum the count and change for the more button
         		productInfoMore.setChange(productInfoMore.getChange() + item.getValue().getChange());
         		productInfoMore.setCount(productInfoMore.getCount() + item.getValue().getCount());
         	} else if (i < productMap.size()) {
-        		// Set data
-        		UserRowView.this.refreshProduct(holder.products[i], item.getKey(), item.getValue());
+        		UserRowView.this.refreshProduct(holder.products[i], item.getKey(), item.getValue(), false);
         	} else {
-        		// Hide view
         		holder.products[i].setVisibility(View.GONE);
         	}
         	
@@ -165,7 +156,7 @@ public class UserRowView extends LinearLayout {
 					
 					for (Entry<Product, ProductInfo> item : productMap.entrySet()) {
 						ProductView productView = new ProductView(UserRowView.this.getContext());
-						UserRowView.this.refreshProduct(productView, item.getKey(), item.getValue());
+						UserRowView.this.refreshProduct(productView, item.getKey(), item.getValue(), true);
 						view.addView(productView);
 					}
 					
@@ -182,7 +173,12 @@ public class UserRowView extends LinearLayout {
         }
 	}
 	
-	private void refreshProduct(final ProductView productView, final Product product, final ProductInfo productInfo) {
+	public void refreshProduct(ProductView productView, ProductInfo productInfo) {
+		productView.setChange(productInfo.getChange());
+		productView.setCount(productInfo.getCount());
+	}
+	
+	private void refreshProduct(final ProductView productView, final Product product, final ProductInfo productInfo, final boolean inDialog) {
 		productView.setGuestProduct(this.user.getType() == User.GUEST);
 		productView.setChange(productInfo.getChange());
 		productView.setCount(productInfo.getCount());
@@ -192,7 +188,7 @@ public class UserRowView extends LinearLayout {
 		productView.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				UserRowView.this.callback.onProductClicked(UserRowView.this, UserRowView.this.user, product);
+				UserRowView.this.callback.onProductClickListener(UserRowView.this, (ProductView) v, UserRowView.this.user, product, inDialog);
 			}
 		});
 		

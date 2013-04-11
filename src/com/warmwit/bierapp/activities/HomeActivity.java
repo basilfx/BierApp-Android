@@ -1,5 +1,6 @@
 package com.warmwit.bierapp.activities;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
@@ -36,7 +37,7 @@ import com.mobsandgeeks.adapters.Sectionizer;
 import com.mobsandgeeks.adapters.SimpleSectionAdapter;
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
-import com.warmwit.bierapp.callbacks.ProductClickedCallback;
+import com.warmwit.bierapp.callbacks.OnProductClickListener;
 import com.warmwit.bierapp.data.ApiConnector;
 import com.warmwit.bierapp.data.RemoteClient;
 import com.warmwit.bierapp.data.adapters.UserListAdapter;
@@ -53,13 +54,19 @@ import com.warmwit.bierapp.database.ProductQuery;
 import com.warmwit.bierapp.database.TransactionQuery;
 import com.warmwit.bierapp.database.UserQuery;
 import com.warmwit.bierapp.utils.ProductInfo;
+import com.warmwit.bierapp.utils.ProgressAsyncTask;
+import com.warmwit.bierapp.views.ProductView;
 import com.warmwit.bierapp.views.UserRowView;
 
-public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements ProductClickedCallback {
+/**
+ *
+ * 
+ * @author Bas Stottelaar
+ */
+public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements OnProductClickListener, OnMenuItemClickListener {
 	private RemoteClient remoteClient;
 	private ApiConnector apiConnector;
 	
-	private int[] userRandomAvatars;
 	private UserListAdapter userListAdapter; 
 	private ListView userListView;
 	private MenuItem purchaseMenu;
@@ -69,9 +76,13 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	private List<Product> products;
 	
 	/**
-	 * @var Reference to an on-going transaction
+	 * @var Reference to an on-going transaction.
 	 */
 	private Transaction transaction;
+	
+	/**
+	 * @var Cached total count of products in transaction.
+	 */
 	private int amount;
 	
     @Override
@@ -89,8 +100,6 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
         
         // Restore state data
  		if (savedInstanceState != null) {
- 			this.userRandomAvatars = savedInstanceState.getIntArray("userRandomAvatars");
- 			
  			try {
  				this.transaction = this.getHelper().getTransactionDao().queryForId(
  					savedInstanceState.getInt("transactionId")
@@ -99,10 +108,6 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
  			} catch (SQLException e) {
  				throw new RuntimeException(e);
  			}
- 		} else {
- 			// In advance, declare size of array
- 			int size = new UserQuery(this).count();
- 			this.userRandomAvatars = new int[size];
  		}
         
  		// Bind data
@@ -118,7 +123,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     private void initList() {
     	this.userListAdapter = new UserListAdapter(this, this);
     	
-    	// Create sectionizer to seperate guests from inhabitants
+    	// Create sectionizer to separate guests from inhabitants
     	SimpleSectionAdapter<User> sectionAdapter = new SimpleSectionAdapter<User>(
 			this, this.userListAdapter, R.layout.listview_row_header, R.id.header, new Sectionizer<User>() {
 			@Override
@@ -130,14 +135,12 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				}
 				
 				// Not good
-				return null;
+				throw new IllegalStateException();
 			}		
 		});
     	
-	    // Set the adapter and display the data
+	    // Display data and register context menu
     	this.userListView.setAdapter(sectionAdapter);
-    	
-    	// Add context menu to list
     	this.registerForContextMenu(this.userListView);
     }
 
@@ -155,6 +158,8 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
         	case User.GUEST:
         		inflater.inflate(R.menu.menu_context_home_guest, menu);
         		break;
+        	default:
+        		throw new IllegalStateException();
         }
         
         super.onCreateContextMenu(menu, v, menuInfo);
@@ -163,111 +168,132 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+		AlertDialog.Builder builder;
 		
 		final UserRowView view = (UserRowView) info.targetView;
 		final User user = view.getUser();
 		
     	switch (item.getItemId()) {
     		case R.id.menu_context_add_guest:
-    			{
-	    			final ArrayAdapter<User> adapter = new ArrayAdapter<User>(
-						this, 
-						android.R.layout.simple_list_item_single_choice, 
-						new UserQuery(this).inactiveGuests()
-	    			);
-	    			
-	    			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-	    		    builder.setTitle("Kies een gast");
-	    		    builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							final User guest = adapter.getItem(which);
-							final List<User> users = HomeActivity.this.inhabitants;
-							
-							final String[] names = new String[users.size()];
-							final boolean[] states = new boolean[users.size()];
-							
-							for (int i = 0; i < users.size(); i++) {
-								names[i] = users.get(i).getName();
-								states[i] = users.get(i) == user;
-							}
-							
-							AlertDialog.Builder builder = new AlertDialog.Builder(HomeActivity.this);
-							builder.setTitle("Kies de host(s)");
-							builder.setMultiChoiceItems(
-								names, 
-								states,
-								new DialogInterface.OnMultiChoiceClickListener() {
-									@Override
-									public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-										states[which] = isChecked;
-									}
-								}
-							);
-							builder.setPositiveButton("Toevoegen", new DialogInterface.OnClickListener() {
+				checkArgument(user.getType() == User.INHABITANT);
+				
+    			final ArrayAdapter<User> adapter = new ArrayAdapter<User>(
+					this, 
+					android.R.layout.simple_list_item_single_choice, 
+					new UserQuery(this).inactiveGuests()
+    			);
+    			
+    			builder = new AlertDialog.Builder(this);
+    		    builder.setTitle("Kies een gast");
+    		    builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						final User guest = adapter.getItem(which);
+						final List<User> users = HomeActivity.this.inhabitants;
+						
+						final String[] names = new String[users.size()];
+						final boolean[] states = new boolean[users.size()];
+						
+						for (int i = 0; i < users.size(); i++) {
+							names[i] = users.get(i).getName();
+							states[i] = users.get(i) == user;
+						}
+						
+						AlertDialog.Builder builder = new AlertDialog.Builder(HomeActivity.this);
+						builder.setTitle("Kies de host(s)");
+						builder.setMultiChoiceItems(
+							names, 
+							states,
+							new DialogInterface.OnMultiChoiceClickListener() {
 								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									List<User> hosts = Lists.newArrayList();
-									
-									for (int i = 0; i < states.length; i++) {
-										if (states[i])
-											hosts.add(users.get(i));
-									}
-	
-									if (hosts.size() > 0) {
-										HostQuery hostQuery = new HostQuery(HomeActivity.this);
-										hostQuery.create(guest, hosts);
-										
-										// Reload data
-										HomeActivity.this.refreshList();
-										
-										// Done
-										Toast.makeText(HomeActivity.this, guest.getName() + " als gast toegevoegd.", Toast.LENGTH_LONG).show();
-									} else {
-										// Done
-										Toast.makeText(HomeActivity.this, "Gast niet toegevoegd omdat er geen hosts geselecteerd zijn.", Toast.LENGTH_LONG).show();
-									}
+								public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+									states[which] = isChecked;
 								}
-							});
-							builder.setNegativeButton("Annuleren", null);
-							builder.show();
-						}
-	    		    });
-	    		    
-	    		    builder.show();
-	    			return true;
-    			}
+							}
+						);
+						builder.setPositiveButton("Toevoegen", new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								List<User> hosts = Lists.newArrayList();
+								
+								for (int i = 0; i < states.length; i++) {
+									if (states[i])
+										hosts.add(users.get(i));
+								}
+
+								if (hosts.size() > 0) {
+									HostQuery hostQuery = new HostQuery(HomeActivity.this);
+									hostQuery.create(guest, hosts);
+									
+									// Reload data
+									HomeActivity.this.refreshList();
+									
+									// Done
+									Toast.makeText(HomeActivity.this, guest.getName() + " als gast toegevoegd.", Toast.LENGTH_LONG).show();
+								} else {
+									// Done
+									Toast.makeText(HomeActivity.this, "Gast niet toegevoegd omdat er geen hosts geselecteerd zijn.", Toast.LENGTH_LONG).show();
+								}
+							}
+						});
+						builder.setNegativeButton("Annuleren", null);
+						builder.show();
+					}
+    		    });
+    		    
+    		    builder.show();
+    			return true;
     		case R.id.menu_context_remove_guest:
-    			{
-	    			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-	    		    builder.setMessage("Weet je zeker dat je " + user.getName() + " wilt verwijderen?");
-	    		    builder.setNegativeButton(android.R.string.no, null);
-	    		    builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							// Cancel transactions for this user
-							HomeActivity.this.cancelTransaction(user);
-							
-							HostQuery hostQuery = new HostQuery(HomeActivity.this);
-							hostQuery.delete(user);
-							
-							// Reload data
-							HomeActivity.this.refreshList();
-							HomeActivity.this.refreshMenu();
-							
-							// Done
-							Toast.makeText(HomeActivity.this, user.getName() + " is verwijderd.", Toast.LENGTH_LONG).show();
-						}
-					});
-	    		    
-	    			builder.show();
-	    		    
-	    			return true;
-    			}
+				checkArgument(user.getType() == User.GUEST);
+				
+				// Create a dialog
+    			builder = new AlertDialog.Builder(this);
+    			
+    		    builder.setMessage("Weet je zeker dat je " + user.getName() + " wilt verwijderen?");
+    		    builder.setNegativeButton(android.R.string.no, null);
+    		    builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						// Cancel transactions for this user
+						HomeActivity.this.cancelTransaction(user);
+						
+						HostQuery hostQuery = new HostQuery(HomeActivity.this);
+						hostQuery.delete(user);
+						
+						// Reload data
+						HomeActivity.this.refreshList();
+						HomeActivity.this.refreshMenu();
+						
+						// Done
+						Toast.makeText(HomeActivity.this, user.getName() + " is verwijderd.", Toast.LENGTH_LONG).show();
+					}
+				});
+    			builder.show();
+    		    
+    			return true;
+    		case R.id.menu_context_show_hosts:
+				checkArgument(user.getType() == User.GUEST);
+				checkNotNull(user.getHosting());
+				
+				// Build a list of hosts
+				StringBuilder message = new StringBuilder();
+				
+				for (HostMapping host : user.getHosting().getHosts()) {
+					message.append(host.getHost().getFullName() + "\n");
+				}
+				
+				// Create a dialog
+				builder = new AlertDialog.Builder(this);
+    		    builder.setMessage(message.toString());
+    		    builder.setPositiveButton(android.R.string.ok, null);
+    			builder.show();
+    			
+    			// Done
+    			return true;
     		case R.id.menu_context_clear_transaction_items:
     		    if (this.transaction != null) {
 					// Set each product info to 0
-					HomeActivity.this.cancelTransaction(user);
+					this.cancelTransaction(user);
 					
 					// Refresh view
 					view.refreshProducts();
@@ -282,143 +308,120 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     			return super.onContextItemSelected(item);
     	}
 	}
+	
+	@Override
+	public boolean onMenuItemClick(MenuItem item) {
+		switch (item.getItemId()) {
+			case R.id.menu_show_guests:
+				// Switch to guests activity
+				startActivity(new Intent(this, GuestsActivity.class)); 
+				return true;
+			case R.id.menu_show_transactions:
+				// Switch to guests activity
+				startActivity(new Intent(this, TransactionActivity.class)); 
+				return true;
+			case R.id.menu_show_stats:
+				// Switch to guests activity
+				startActivity(new Intent(this, StatsActivity.class)); 
+				return true;
+			case R.id.menu_refresh:
+				// Refresh data
+				if (this.transaction != null) {
+					AlertDialog.Builder builder = new AlertDialog.Builder(this);
+					builder.setMessage("Er is een huidige transactie gaande die gewist zal worden. Wil je doorgaan?");
+					builder.setNegativeButton(android.R.string.no, null);
+					builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							new LoadDataTask().execute();
+						}
+					});
+					
+					builder.show();
+				} else {
+					new LoadDataTask().execute();
+				}
+				
+				return true;
+			case R.id.menu_purchase_confirm:
+				if (this.transaction != null) {
+					new SaveTransactionTask().execute();
+				}
+				
+				return true;
+			case R.id.menu_purchase_show:
+				AlertDialog.Builder builder = new AlertDialog.Builder(this);
+				StringBuilder message = new StringBuilder();
+				
+				builder.setTitle("Huidige transactie");
+				builder.setPositiveButton("Sluiten", null);
+				
+				if (this.transaction != null) {
+					for (TransactionItem transactionItem : this.transaction.getTransactionItems()) {
+						message.append(transactionItem.getUser().getFullName() + "\t\t" + transactionItem.getCount() + "x " + transactionItem.getProduct() + "\n");
+					}
+					
+					// Set the message
+					builder.setMessage(message.toString());
+				}
+				
+				// Show dialog and done
+				builder.show();
+				return true;
+			case R.id.menu_purchase_cancel:
+				// Cancel the transaction if there is one
+				if (this.transaction != null) {
+					TransactionQuery transactionQuery = new TransactionQuery(this);
+					
+					transactionQuery.delete(this.transaction);
+					this.transaction = null;
+				}
+				
+				for (User user : this.inhabitants) {
+					this.cancelTransaction(user);
+				}
+				
+				// Refresh visible rows
+				HomeActivity.this.applyToVisibleRows(new Function<UserRowView, Boolean>() {
+					@Override
+					public Boolean apply(UserRowView view) {
+						view.refreshProducts();
+						return true;
+					}
+				});
+				
+				// Refresh global
+				this.amount = 0;
+				this.refreshMenu();
+				
+				// Display toast message
+				Toast.makeText(HomeActivity.this, "Transactie gewist", Toast.LENGTH_LONG).show();
+				
+				return true;
+			default:
+				// Nothing to do
+				return false;
+		}
+	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
     	MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_home, menu);
-        
-        // Create normal menu handler
-        OnMenuItemClickListener generalHandler = new OnMenuItemClickListener() {
-        	@Override
-			public boolean onMenuItemClick(MenuItem item) {
-        		Intent intent;
-        		
-				switch (item.getItemId()) {
-					case R.id.menu_show_guests:
-						// Switch to guests activity
-						intent = new Intent(HomeActivity.this, GuestsActivity.class);
-						startActivity(intent); 
-						
-						return true;
-					case R.id.menu_show_transactions:
-						// Switch to guests activity
-						intent = new Intent(HomeActivity.this, TransactionActivity.class);
-						startActivity(intent); 
-						
-						return true;
-					case R.id.menu_show_stats:
-						// Switch to guests activity
-						intent = new Intent(HomeActivity.this, StatsActivity.class);
-						startActivity(intent); 
-						
-						return true;
-					case R.id.menu_refresh:
-						// Refresh data
-						if (HomeActivity.this.transaction != null) {
-							AlertDialog.Builder builder = new AlertDialog.Builder(HomeActivity.this);
-							builder.setMessage("Er is een huidige transactie gaande die gewist zal worden. Wil je doorgaan?");
-							builder.setNegativeButton(android.R.string.no, null);
-							builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which) {
-									new LoadDataTask().execute();
-								}
-							});
-							
-							builder.show();
-						} else {
-							new LoadDataTask().execute();
-						}
-						
-						return true;
-					default:
-						// Nothing to do
-						return false;
-				}
-			}
-		};
-        
-        // Create purchase menu handler
-        OnMenuItemClickListener purchaseHandler = new OnMenuItemClickListener() {
-			@Override
-			public boolean onMenuItemClick(MenuItem menuItem) {
-				switch (menuItem.getItemId()) {
-					case R.id.menu_purchase_confirm:
-						if (HomeActivity.this.transaction != null) {
-							new SaveTransactionTask().execute();
-						}
-						
-						return true;
-					case R.id.menu_purchase_show:
-						AlertDialog.Builder builder = new AlertDialog.Builder(HomeActivity.this);
-						StringBuilder message = new StringBuilder();
-						
-						builder.setTitle("Huidige transactie");
-						builder.setPositiveButton("Sluiten", null);
-						
-						if (HomeActivity.this.transaction != null) {
-							for (TransactionItem transactionItem : HomeActivity.this.transaction.getTransactionItems()) {
-								message.append(transactionItem.getUser().getFullName() + "\t\t" + transactionItem.getCount() + "x " + transactionItem.getProduct() + "\n");
-							}
-							
-							// Set the message
-							builder.setMessage(message.toString());
-						}
-						
-						// Show dialog and done
-						builder.show();
-						return true;
-					case R.id.menu_purchase_cancel:
-						// Cancel the transaction if there is one
-						if (HomeActivity.this.transaction != null) {
-							TransactionQuery transactionQuery = new TransactionQuery(HomeActivity.this);
-							
-							transactionQuery.delete(HomeActivity.this.transaction);
-							HomeActivity.this.transaction = null;
-						}
-						
-						for (User user : HomeActivity.this.inhabitants) {
-							HomeActivity.this.cancelTransaction(user);
-						}
-						
-						// Refresh visible rows
-						HomeActivity.this.applyToVisibleRows(new Function<UserRowView, Boolean>() {
-							@Override
-							public Boolean apply(UserRowView view) {
-								view.refreshProducts();
-								return true;
-							}
-						});
-						
-						// Refresh global
-						HomeActivity.this.amount = 0;
-						HomeActivity.this.refreshMenu();
-						
-						// Display toast message
-						Toast.makeText(HomeActivity.this, "Transactie gewist", Toast.LENGTH_LONG).show();
-						
-						return true;
-					default:
-						// Nothing to do
-						return false;
-				}
-			}
-		};
 		
 		// Save reference to purchase menu to hide/update it
 		this.purchaseMenu = menu.findItem(R.id.menu_purchase);
 		
 		// Add handler to general menu
-		menu.findItem(R.id.menu_show_guests).setOnMenuItemClickListener(generalHandler);
-		menu.findItem(R.id.menu_show_stats).setOnMenuItemClickListener(generalHandler);
-		menu.findItem(R.id.menu_show_transactions).setOnMenuItemClickListener(generalHandler);
-		menu.findItem(R.id.menu_refresh).setOnMenuItemClickListener(generalHandler);
+		menu.findItem(R.id.menu_show_guests).setOnMenuItemClickListener(this);
+		menu.findItem(R.id.menu_show_stats).setOnMenuItemClickListener(this);
+		menu.findItem(R.id.menu_show_transactions).setOnMenuItemClickListener(this);
+		menu.findItem(R.id.menu_refresh).setOnMenuItemClickListener(this);
 		
 		// Add handler to purchase menu
-		menu.findItem(R.id.menu_purchase_confirm).setOnMenuItemClickListener(purchaseHandler);
-		menu.findItem(R.id.menu_purchase_show).setOnMenuItemClickListener(purchaseHandler);
-		menu.findItem(R.id.menu_purchase_cancel).setOnMenuItemClickListener(purchaseHandler);
+		menu.findItem(R.id.menu_purchase_confirm).setOnMenuItemClickListener(this);
+		menu.findItem(R.id.menu_purchase_show).setOnMenuItemClickListener(this);
+		menu.findItem(R.id.menu_purchase_cancel).setOnMenuItemClickListener(this);
         
 		// Set initial text
 		this.refreshMenu();
@@ -430,9 +433,6 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
-		
-		// Save all userRowItems to the bundle
-		outState.putIntArray("userRandomAvatars", this.userRandomAvatars);
 		
 		// Save an on-going transaction, if any
 		if (this.transaction != null) {
@@ -513,9 +513,9 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     }
 	
 	@Override
-	public void onProductClicked(UserRowView view, User user, Product product) {
+	public void onProductClickListener(UserRowView userView, ProductView productView, User user, Product product, boolean inDialog) {		
 		// Start a new transaction if needed
-		if (HomeActivity.this.transaction == null) {
+		if (this.transaction == null) {
 			TransactionQuery transactionQuery = new TransactionQuery(this); 
 			this.transaction = transactionQuery.create("Verkoop vanaf Tablet");
 		}
@@ -532,30 +532,33 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		// Add to the list
 		this.transaction.getTransactionItems().add(transactionItem);
 		
-		// Refresh view
-		this.amount--;
-		this.refreshMenu();
-		
+		// Update counts
 		ProductInfo productInfo = user.getProducts().get(product);
 		productInfo.setChange(productInfo.getChange() - 1);
+		this.amount--;
 		
-		// Refresh the row
-		view.refreshProducts();
+		// Dialog items are not in the list, so invoke a custom refresh
+		if (inDialog) {
+			userView.refreshProduct(productView, productInfo);
+		}
+		
+		// Refresh UI
+		userView.refreshProducts();
+		this.refreshMenu();
 	}
 
-	private class LoadDataTask extends AsyncTask<Void, Void, Integer> {
-		private ProgressDialog dialog;
-		
+	
+	private class LoadDataTask extends ProgressAsyncTask<Void, Void, Integer> {
 		public LoadDataTask() {
-	        this.dialog = new ProgressDialog(HomeActivity.this);
-	        this.dialog.setMessage("Gegevens herladen");
+	        super(HomeActivity.this);
+	        this.setMessage("Gegevens herladen");
 	    }
 		
 		@Override
 		protected void onPreExecute() {
-	        this.dialog.show();
+			super.onPreExecute();
 	        
-	        // Stop ongoing transaction
+	        // Stop an ongoing transaction
  			if (HomeActivity.this.transaction != null) {
  				new TransactionQuery(HomeActivity.this).delete(HomeActivity.this.transaction);
  				HomeActivity.this.transaction = null;
@@ -587,33 +590,30 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		protected void onPostExecute(Integer result) {
 			checkNotNull(result);
 			
-			// Hide popup dialog
-			if (this.dialog.isShowing()) {
-				this.dialog.dismiss();
-			}
-			
 			switch (result) {
-			
+				case 0:
+					break;
+				case 1:
+					break;
+				case 2:
+					break;
+				default:
+					throw new IllegalStateException();
 			}
 			
 			// Update view
 			HomeActivity.this.refreshList();
 			HomeActivity.this.refreshMenu();
+			
+			super.onPostExecute(result);
 		}
 	}
 	
-	private class SaveTransactionTask extends AsyncTask<Void, Void, Integer> {
-	    private ProgressDialog dialog;
-		
+	private class SaveTransactionTask extends ProgressAsyncTask<Void, Void, Integer> {
 		public SaveTransactionTask() {
-			this.dialog = new ProgressDialog(HomeActivity.this);
-			this.dialog.setMessage("Transactie versturen");
+			super(HomeActivity.this);
+			this.setMessage("Transactie versturen");
 	    }
-		
-		@Override
-		protected void onPreExecute() {
-	        this.dialog.show();
-		}
 
 		@Override
 		protected Integer doInBackground(Void... params) {
@@ -678,11 +678,6 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		protected void onPostExecute(Integer result) {
 			checkNotNull(result);
 			
-			// Hide popup dialog
-			if (this.dialog.isShowing()) {
-				this.dialog.dismiss();
-			}
-			
 			switch (result) {
 				case 0: // OK
 					HomeActivity.this.transaction = null;
@@ -709,10 +704,11 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 						.show();
 					
 					break;
-					
+				default:
+					throw new IllegalStateException();
 			}
+			
+			super.onPostExecute(result);
 		}
-
 	}
-
 }

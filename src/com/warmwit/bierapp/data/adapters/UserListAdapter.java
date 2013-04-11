@@ -6,14 +6,14 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 
 import com.warmwit.bierapp.R;
-import com.warmwit.bierapp.callbacks.ProductClickedCallback;
+import com.warmwit.bierapp.callbacks.OnProductClickListener;
 import com.warmwit.bierapp.data.models.User;
 import com.warmwit.bierapp.views.UserRowView;
 
 public class UserListAdapter extends ArrayAdapter<User> {
-	private ProductClickedCallback callback;
+	private OnProductClickListener callback;
 	
-    public UserListAdapter(Activity context, ProductClickedCallback callback){  
+    public UserListAdapter(Activity context, OnProductClickListener callback){  
         super(context, R.layout.listview_row_user);
         
         this.callback = callback;

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
     <item android:id="@+id/menu_context_remove_guest" android:title="@string/menu_delete_guest"></item>
+    <item android:id="@+id/menu_context_show_hosts" android:title="@string/menu_show_hosts"></item>
     <item android:id="@+id/menu_context_clear_transaction_items" android:title="@string/menu_clear_transaction_items"></item>
 </menu>

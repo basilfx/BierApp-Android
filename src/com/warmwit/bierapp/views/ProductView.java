@@ -90,9 +90,6 @@ public class ProductView extends FrameLayout {
 		ViewHolder holder = (ViewHolder) this.getTag();
 		
 		// Update content
-		if (holder.count.getVisibility() == View.VISIBLE) {
-			holder.count.setTextColor(count < 0 ? Color.RED : Color.WHITE);
-			holder.count.setText(count + "");
-		}
+		holder.count.setText(count + "");
 	}
 }
