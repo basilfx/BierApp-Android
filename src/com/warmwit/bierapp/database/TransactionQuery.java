@@ -76,7 +76,7 @@ public class TransactionQuery extends QueryHelper {
 			return null;
 		}
 			
-		transaction.setDescription("Verkoop via Tablet");
+		transaction.setDescription(description);
 		transaction.setTransactionItems(transactionItems);
 		transaction.setDirty(true);
 		transaction.setSynced(false);
@@ -146,6 +146,35 @@ public class TransactionQuery extends QueryHelper {
 			this.transactionDao.delete(transaction);
 		} catch (SQLException e) {
 			this.handleException(e);
+		}
+	}
+	
+	public Transaction resumeById(int id) {
+		try {
+			QueryBuilder<Transaction, Integer> queryBuilder = this.transactionDao.queryBuilder();
+			queryBuilder.where()
+						.eq("transaction_id", id)
+						.and()
+						.eq("synced", false);
+						
+			return this.transactionDao.queryForFirst(queryBuilder.prepare());
+		} catch (SQLException e) {
+			this.handleException(e);
+			return null;
+		}
+	}
+	
+	public Transaction resumeLatest() {
+		try {
+			QueryBuilder<Transaction, Integer> queryBuilder = this.transactionDao.queryBuilder();
+			queryBuilder.orderBy("id", false)
+						.where()
+						.eq("synced", false);
+						
+			return this.transactionDao.queryForFirst(queryBuilder.prepare());
+		} catch (SQLException e) {
+			this.handleException(e);
+			return null;
 		}
 	}
 }

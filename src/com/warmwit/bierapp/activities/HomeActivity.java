@@ -12,6 +12,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -37,7 +38,6 @@ import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.callbacks.OnProductClickListener;
 import com.warmwit.bierapp.data.ApiConnector;
-import com.warmwit.bierapp.data.RemoteClient;
 import com.warmwit.bierapp.data.adapters.UserListAdapter;
 import com.warmwit.bierapp.data.models.HostMapping;
 import com.warmwit.bierapp.data.models.Hosting;
@@ -51,7 +51,6 @@ import com.warmwit.bierapp.database.HostQuery;
 import com.warmwit.bierapp.database.ProductQuery;
 import com.warmwit.bierapp.database.TransactionQuery;
 import com.warmwit.bierapp.database.UserQuery;
-import com.warmwit.bierapp.utils.ImageDownloader;
 import com.warmwit.bierapp.utils.LogUtils;
 import com.warmwit.bierapp.utils.ProductInfo;
 import com.warmwit.bierapp.utils.ProgressAsyncTask;
@@ -90,6 +89,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
+        // Connect to API
 		this.apiConnector = new ApiConnector(BierAppApplication.remoteClient, this.getHelper());
         
         // Set content
@@ -100,24 +100,20 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
         
         // Restore state data
  		if (savedInstanceState != null) {
- 			try {
- 				this.transaction = this.getHelper().getTransactionDao().queryForId(
- 					savedInstanceState.getInt("transactionId")
-				);
- 				
- 			} catch (SQLException e) {
- 				throw new RuntimeException(e);
- 			}
+ 			this.transaction = new TransactionQuery(this).resumeById(savedInstanceState.getInt("transactionId"));
+ 		} else {
+ 			// TODO: Ask user if it wants to continue a old transaction
+ 			this.transaction = new TransactionQuery(this).resumeLatest();
  		}
-        
- 		// Bind data
- 		this.initList();
-    	this.refreshList();
-    	
-    	if (this.transaction != null) {
+ 		
+ 		if (this.transaction != null) {
     		TransactionQuery transactionQuery = new TransactionQuery(this);
     		this.amount = transactionQuery.costByTransaction(this.transaction); 
     	}
+ 		
+ 		// Bind data
+ 		this.initList();
+    	this.refreshList();
     }
     
     private void initList() {
@@ -128,14 +124,15 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			this, this.userListAdapter, R.layout.listview_row_header, R.id.header, new Sectionizer<User>() {
 			@Override
 			public String getSectionTitleForItem(User instance) {
-				if (instance.getType() == User.INHABITANT) {
-					return "Bewoners";
-				} else if (instance.getType() == User.GUEST) {
-					return "Gasten";
+				switch (instance.getType()) {
+					case User.INHABITANT:
+						return "Bewoners";
+					case User.GUEST:
+						return "Gasten";
+					default:
+						Log.e(LOG_TAG, "Requested user type " + instance.getType());
+						throw new IllegalStateException();
 				}
-				
-				// Not good
-				throw new IllegalStateException();
 			}		
 		});
     	
@@ -159,7 +156,8 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
         		inflater.inflate(R.menu.menu_context_home_guest, menu);
         		break;
         	default:
-        		throw new IllegalStateException();
+				Log.e(LOG_TAG, "Requested user type " + user.getType());
+				throw new IllegalStateException();
         }
         
         super.onCreateContextMenu(menu, v, menuInfo);
@@ -168,8 +166,6 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
-		AlertDialog.Builder builder;
-		
 		final UserRowView view = (UserRowView) info.targetView;
 		final User user = view.getUser();
 		
@@ -177,71 +173,75 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     		case R.id.menu_context_add_guest:
 				checkArgument(user.getType() == User.INHABITANT);
 				
+				// Create list of inactive guests
     			final ArrayAdapter<User> adapter = new ArrayAdapter<User>(
 					this, 
 					android.R.layout.simple_list_item_single_choice, 
 					new UserQuery(this).inactiveGuests()
     			);
     			
-    			builder = new AlertDialog.Builder(this);
-    		    builder.setTitle("Kies een gast");
-    		    builder.setAdapter(adapter, new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						final User guest = adapter.getItem(which);
-						final List<User> users = HomeActivity.this.inhabitants;
-						
-						final String[] names = new String[users.size()];
-						final boolean[] states = new boolean[users.size()];
-						
-						for (int i = 0; i < users.size(); i++) {
-							names[i] = users.get(i).getName();
-							states[i] = users.get(i) == user;
+    			// Create list of hosts
+				final List<User> users = this.inhabitants;
+				final String[] names = new String[users.size()];
+				final boolean[] states = new boolean[users.size()];
+				
+				for (int i = 0; i < users.size(); i++) {
+					names[i] = users.get(i).getName();
+					states[i] = users.get(i) == user;
+				}
+    			
+				// Create the first dialog
+    			new AlertDialog.Builder(this)
+    		    	.setTitle("Kies een gast")
+    		    	.setAdapter(adapter, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							final User guest = adapter.getItem(which);
+							
+							// Create the second dialog
+							new AlertDialog.Builder(HomeActivity.this)
+								.setTitle("Kies de host(s)")
+								.setMultiChoiceItems(
+									names, 
+									states,
+									new DialogInterface.OnMultiChoiceClickListener() {
+										@Override
+										public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+											states[which] = isChecked;
+										}
+									}
+								)
+								.setPositiveButton("Toevoegen", new DialogInterface.OnClickListener() {
+									@Override
+									public void onClick(DialogInterface dialog, int which) {
+										List<User> hosts = Lists.newArrayList();
+										
+										for (int i = 0; i < states.length; i++) {
+											if (states[i])
+												hosts.add(users.get(i));
+										}
+		
+										if (hosts.size() > 0) {
+											HostQuery hostQuery = new HostQuery(HomeActivity.this);
+											hostQuery.create(guest, hosts);
+											
+											// Reload data
+											HomeActivity.this.refreshList();
+											
+											// Done
+											Toast.makeText(HomeActivity.this, guest.getName() + " als gast toegevoegd.", Toast.LENGTH_LONG).show();
+										} else {
+											// Done
+											Toast.makeText(HomeActivity.this, "Gast niet toegevoegd omdat er geen hosts geselecteerd zijn.", Toast.LENGTH_LONG).show();
+										}
+									}
+								})
+								.setNegativeButton("Annuleren", null)
+								.show();
 						}
-						
-						AlertDialog.Builder builder = new AlertDialog.Builder(HomeActivity.this);
-						builder.setTitle("Kies de host(s)");
-						builder.setMultiChoiceItems(
-							names, 
-							states,
-							new DialogInterface.OnMultiChoiceClickListener() {
-								@Override
-								public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-									states[which] = isChecked;
-								}
-							}
-						);
-						builder.setPositiveButton("Toevoegen", new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								List<User> hosts = Lists.newArrayList();
-								
-								for (int i = 0; i < states.length; i++) {
-									if (states[i])
-										hosts.add(users.get(i));
-								}
-
-								if (hosts.size() > 0) {
-									HostQuery hostQuery = new HostQuery(HomeActivity.this);
-									hostQuery.create(guest, hosts);
-									
-									// Reload data
-									HomeActivity.this.refreshList();
-									
-									// Done
-									Toast.makeText(HomeActivity.this, guest.getName() + " als gast toegevoegd.", Toast.LENGTH_LONG).show();
-								} else {
-									// Done
-									Toast.makeText(HomeActivity.this, "Gast niet toegevoegd omdat er geen hosts geselecteerd zijn.", Toast.LENGTH_LONG).show();
-								}
-							}
-						});
-						builder.setNegativeButton("Annuleren", null);
-						builder.show();
-					}
-    		    });
-    		    
-    		    builder.show();
+	    		    })
+	    		    .show();
+    			
     			return true;
     		case R.id.menu_context_remove_guest:
 				checkArgument(user.getType() == User.GUEST);
@@ -327,6 +327,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				// Refresh data
 				if (this.transaction != null) {
 					new AlertDialog.Builder(this)
+						.setTitle("Vernieuwen")
 						.setMessage("Er is een huidige transactie gaande die gewist zal worden. Wil je doorgaan?")
 						.setNegativeButton(android.R.string.no, null)
 						.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
@@ -366,12 +367,12 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			case R.id.menu_purchase_cancel:
 				checkNotNull(this.transaction);
 
+				// Delete query
 				TransactionQuery transactionQuery = new TransactionQuery(this);
-				
 				transactionQuery.delete(this.transaction);
 				this.transaction = null;
 				
-				for (User user : this.inhabitants) {
+				for (User user : Iterables.concat(this.inhabitants, this.guests)) {
 					this.cancelTransaction(user);
 				}
 				
@@ -584,6 +585,13 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			
 			switch (result) {
 				case 0:
+					// Update view
+					HomeActivity.this.refreshList();
+					HomeActivity.this.refreshMenu();
+					
+					// Inform user
+					Toast.makeText(HomeActivity.this, "Data vernieuwd", Toast.LENGTH_LONG).show();
+					
 					break;
 				case 1:
 					break;
@@ -592,10 +600,6 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				default:
 					throw new IllegalStateException();
 			}
-			
-			// Update view
-			HomeActivity.this.refreshList();
-			HomeActivity.this.refreshMenu();
 			
 			super.onPostExecute(result);
 		}

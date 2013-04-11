@@ -9,13 +9,13 @@ public class TransactionItem {
 	@DatabaseField(index = true, generatedId = true)
 	private int id;
 	
-	@DatabaseField(foreign = true)
+	@DatabaseField(foreign = true, foreignAutoRefresh = true)
 	private User user;
 	
-	@DatabaseField(foreign = true)
+	@DatabaseField(foreign = true, foreignAutoRefresh = true)
 	private User payer;
 	
-	@DatabaseField(foreign = true)
+	@DatabaseField(foreign = true, foreignAutoRefresh = true)
 	private Product product;
 	
 	@DatabaseField
