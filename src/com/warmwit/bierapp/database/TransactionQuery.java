@@ -153,7 +153,7 @@ public class TransactionQuery extends QueryHelper {
 		try {
 			QueryBuilder<Transaction, Integer> queryBuilder = this.transactionDao.queryBuilder();
 			queryBuilder.where()
-						.eq("transaction_id", id)
+						.eq("id", id)
 						.and()
 						.eq("synced", false);
 						
