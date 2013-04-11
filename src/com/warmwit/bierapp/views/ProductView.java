@@ -28,8 +28,6 @@ public class ProductView extends FrameLayout {
 		private RelativeLayout bar;	
 	}
 	
-	private ImageDownloader downloader;
-	
 	public ProductView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 		
