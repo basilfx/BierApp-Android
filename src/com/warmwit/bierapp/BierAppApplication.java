@@ -31,17 +31,22 @@ public class BierAppApplication extends Application {
 	private void initCaches() {
 		// Resolve general cache
         if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-            generalCache = new File(Environment.getExternalStorageDirectory(), "BierApp");
+        	BierAppApplication.generalCache = new File(Environment.getExternalStorageDirectory(), "BierApp");
         } else {
-        	generalCache = this.getCacheDir();
+        	BierAppApplication.generalCache = this.getCacheDir();
         }
         
         // Resolve image cache
-        imageCache = new File(generalCache, "images");
+        BierAppApplication.imageCache = new File(generalCache, "images");
         
         // Make sure directories exist
-        if (!generalCache.exists()) generalCache.mkdirs();
-        if (!imageCache.exists()) imageCache.mkdirs();
+        if (!BierAppApplication.generalCache.exists()) { 
+        	BierAppApplication.generalCache.mkdirs();
+        }
+        
+        if (!BierAppApplication.imageCache.exists()) {
+        	BierAppApplication.imageCache.mkdirs();
+        }
 	}
 	
 	public static String getHostUrl() {

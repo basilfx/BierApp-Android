@@ -4,8 +4,10 @@ import android.util.Log;
 
 public class LogUtils {
 	/**
-	 * Internal helper to log exception and return a return value.
+	 * Helper to log exception and return a return value. Useful for one liners
+	 * in switch statements.
 	 * 
+	 * @param tag Log tag
 	 * @param exception Caught exception
 	 * @param returnValue Integer return value
 	 * @return given returnValue
