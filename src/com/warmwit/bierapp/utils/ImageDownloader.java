@@ -4,8 +4,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.ref.SoftReference;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Stack;
@@ -16,19 +18,23 @@ import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.widget.ImageView;
 
-public class ImageDownloader
-{
+public class ImageDownloader {
 	private static String LOG_TAG = "ImageDownloader";
 	
-	// the simplest in-memory cache implementation. This should be replaced with
-	// something like SoftReference or BitmapOptions.inPurgeable(since 1.6)
 	private HashMap<String, Bitmap> cache = new HashMap<String, Bitmap>();
+	
+	private PhotosQueue photosQueue;
+	
+	private PhotosLoader photoLoaderThread;
 
 	private File cacheDir;
 
 	public ImageDownloader(File cacheDir) {
-		this.photoLoaderThread.setPriority(Thread.NORM_PRIORITY - 1);
+		this.photosQueue = new PhotosQueue();
+		this.photoLoaderThread = new PhotosLoader();
 		this.cacheDir = cacheDir;
+		
+		this.photoLoaderThread.setPriority(Thread.NORM_PRIORITY - 1);
 	}
 
 	public void download(String url, ImageView imageView){
@@ -37,6 +43,7 @@ public class ImageDownloader
 		imageView.setTag(url);
 		
 		if (cache.containsKey(url)) {
+			Log.d(LOG_TAG, "Image in cache");
 			imageView.setImageBitmap(cache.get(url));
 		} else {
 			queuePhoto(url, imageView);
@@ -46,8 +53,8 @@ public class ImageDownloader
 	private void queuePhoto(String url, ImageView imageView) {
 		// This ImageView may be used for other images before. So there may be
 		// some old tasks in the queue. We need to discard them.
-		photosQueue.Clean(imageView);
-		PhotoToLoad p = new PhotoToLoad(url, imageView);
+		photosQueue.clean(imageView);
+		PhotoToLoad p = new PhotoToLoad(url, new SoftReference<ImageView>(imageView));
 		
 		synchronized (photosQueue.photosToLoad)
 		{
@@ -70,20 +77,25 @@ public class ImageDownloader
 
 		// from SD cache
 		Bitmap b = decodeFile(f);
-		if (b != null)
+		if (b != null) {
+			Log.d(LOG_TAG, "Image from storage");
 			return b;
+		}
 
 		// from web
 		try {
-			Bitmap bitmap = null;
+			Log.d(LOG_TAG, "Downloading image from web");
+			
+			// Download image
 			InputStream is = new URL(url).openStream();
 			OutputStream os = new FileOutputStream(f);
 			CopyStream(is, os);
 			os.close();
-			bitmap = decodeFile(f);
-			return bitmap;
-		} catch (Exception ex) {
-			Log.w(LOG_TAG, "Exception while downloading " + url + ": " + ex.getMessage());
+			
+			// Done
+			return decodeFile(f);
+		} catch (IOException ex) {
+			Log.w(LOG_TAG, "Caught exception: " + ex.getMessage());
 			return null;
 		}
 	}
@@ -96,6 +108,8 @@ public class ImageDownloader
 			// decode image size
 			BitmapFactory.Options o = new BitmapFactory.Options();
 			o.inJustDecodeBounds = true;
+			o.inPurgeable = true;
+			
 			BitmapFactory.decodeStream(new FileInputStream(f), null, o);
 
 			// Find the correct scale value. It should be the power of 2.
@@ -114,11 +128,13 @@ public class ImageDownloader
 			// decode with inSampleSize
 			BitmapFactory.Options o2 = new BitmapFactory.Options();
 			o2.inSampleSize = scale;
+			o2.inPurgeable = true;
+			
 			return BitmapFactory.decodeStream(new FileInputStream(f), null, o2);
-		} catch (FileNotFoundException e)
-		{
-			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			Log.w(LOG_TAG, "Caught exception: " + e);
 		}
+		
 		return null;
 	}
 
@@ -126,16 +142,14 @@ public class ImageDownloader
 	private class PhotoToLoad
 	{
 		public String url;
-		public ImageView imageView;
+		public SoftReference<ImageView> imageView;
 
-		public PhotoToLoad(String u, ImageView i)
+		public PhotoToLoad(String u, SoftReference<ImageView> i)
 		{
-			url = u;
-			imageView = i;
+			this.url = u;
+			this.imageView = i;
 		}
 	}
-
-	PhotosQueue photosQueue = new PhotosQueue();
 
 	public void stopThread()
 	{
@@ -147,15 +161,16 @@ public class ImageDownloader
 	{
 		private Stack<PhotoToLoad> photosToLoad = new Stack<PhotoToLoad>();
 
-		// removes all instances of this ImageView
-		public void Clean(ImageView image)
-		{
-			for (int j = 0; j < photosToLoad.size();)
-			{
-				if (photosToLoad.get(j).imageView == image)
+		// Removes all instances of this ImageView
+		public void clean(ImageView image) {
+			for (int j = 0; j < photosToLoad.size();) {
+				ImageView imageView = photosToLoad.get(j).imageView.get();
+				
+				if (imageView != null && imageView == image) {
 					photosToLoad.remove(j);
-				else
+				} else {
 					++j;
+				}
 			}
 		};
 	}
@@ -182,14 +197,19 @@ public class ImageDownloader
 						{
 							photoToLoad = photosQueue.photosToLoad.pop();
 						}
-						Bitmap bmp = getBitmap(photoToLoad.url);
-						cache.put(photoToLoad.url, bmp);
-						Object tag = photoToLoad.imageView.getTag();
-						if (tag != null && ((String) tag).equals(photoToLoad.url))
-						{
-							BitmapDisplayer bd = new BitmapDisplayer(bmp, photoToLoad.imageView);
-							Activity a = (Activity) photoToLoad.imageView.getContext();
-							a.runOnUiThread(bd);
+						
+						if (photoToLoad.imageView.get() != null) {
+							ImageView imageView = photoToLoad.imageView.get();
+							
+							Bitmap bmp = getBitmap(photoToLoad.url);
+							cache.put(photoToLoad.url, bmp);
+							Object tag = imageView.getTag();
+							
+							if (tag != null && ((String) tag).equals(photoToLoad.url)) {
+								BitmapDisplayer bd = new BitmapDisplayer(bmp, imageView);
+								Activity a = (Activity) imageView.getContext();
+								a.runOnUiThread(bd);
+							}
 						}
 					}
 					if (Thread.interrupted())
@@ -201,8 +221,6 @@ public class ImageDownloader
 			}
 		}
 	}
-
-	PhotosLoader photoLoaderThread = new PhotosLoader();
 
 	// Used to display bitmap in the UI thread
 	class BitmapDisplayer implements Runnable
@@ -226,13 +244,13 @@ public class ImageDownloader
 
 	public void clearCache()
 	{
-		// clear memory cache
-		cache.clear();
+		// Clear memory cache
+		this.cache.clear();
 
-		// clear SD cache
-		File[] files = cacheDir.listFiles();
-		for (File f : files)
+		// Clear cache
+		for (File f : cacheDir.listFiles()) {
 			f.delete();
+		}
 	}
 
 	public static void CopyStream(InputStream is, OutputStream os)
