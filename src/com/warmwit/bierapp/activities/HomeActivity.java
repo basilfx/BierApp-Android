@@ -25,6 +25,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.common.base.Function;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Iterables;
@@ -246,28 +247,27 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				checkArgument(user.getType() == User.GUEST);
 				
 				// Create a dialog
-    			builder = new AlertDialog.Builder(this);
-    			
-    		    builder.setMessage("Weet je zeker dat je " + user.getName() + " wilt verwijderen?");
-    		    builder.setNegativeButton(android.R.string.no, null);
-    		    builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						// Cancel transactions for this user
-						HomeActivity.this.cancelTransaction(user);
-						
-						HostQuery hostQuery = new HostQuery(HomeActivity.this);
-						hostQuery.delete(user);
-						
-						// Reload data
-						HomeActivity.this.refreshList();
-						HomeActivity.this.refreshMenu();
-						
-						// Done
-						Toast.makeText(HomeActivity.this, user.getName() + " is verwijderd.", Toast.LENGTH_LONG).show();
-					}
-				});
-    			builder.show();
+    			new AlertDialog.Builder(this)
+    		    	.setMessage("Weet je zeker dat je " + user.getName() + " wilt verwijderen?")
+    		    	.setNegativeButton(android.R.string.no, null)
+    		    	.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							// Cancel transactions for this user
+							HomeActivity.this.cancelTransaction(user);
+							
+							HostQuery hostQuery = new HostQuery(HomeActivity.this);
+							hostQuery.delete(user);
+							
+							// Reload data
+							HomeActivity.this.refreshList();
+							HomeActivity.this.refreshMenu();
+							
+							// Done
+							Toast.makeText(HomeActivity.this, user.getName() + " is verwijderd.", Toast.LENGTH_LONG).show();
+						}
+					})
+	    			.show();
     		    
     			return true;
     		case R.id.menu_context_show_hosts:
@@ -275,17 +275,17 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				checkNotNull(user.getHosting());
 				
 				// Build a list of hosts
-				StringBuilder message = new StringBuilder();
+				List<String> message = Lists.newArrayList();
 				
 				for (HostMapping host : user.getHosting().getHosts()) {
-					message.append(host.getHost().getFullName() + "\n");
+					message.add(host.getHost().getFullName());
 				}
 				
 				// Create a dialog
-				builder = new AlertDialog.Builder(this);
-    		    builder.setMessage(message.toString());
-    		    builder.setPositiveButton(android.R.string.ok, null);
-    			builder.show();
+				new AlertDialog.Builder(this)
+    		    	.setMessage(Joiner.on("\n").join(message))
+    		    	.setPositiveButton(android.R.string.ok, null)
+    				.show();
     			
     			// Done
     			return true;
@@ -326,17 +326,16 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			case R.id.menu_refresh:
 				// Refresh data
 				if (this.transaction != null) {
-					AlertDialog.Builder builder = new AlertDialog.Builder(this);
-					builder.setMessage("Er is een huidige transactie gaande die gewist zal worden. Wil je doorgaan?");
-					builder.setNegativeButton(android.R.string.no, null);
-					builder.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							new LoadDataTask().execute();
-						}
-					});
-					
-					builder.show();
+					new AlertDialog.Builder(this)
+						.setMessage("Er is een huidige transactie gaande die gewist zal worden. Wil je doorgaan?")
+						.setNegativeButton(android.R.string.no, null)
+						.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								new LoadDataTask().execute();
+							}
+						})
+						.show();
 				} else {
 					new LoadDataTask().execute();
 				}
@@ -349,32 +348,28 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				
 				return true;
 			case R.id.menu_purchase_show:
-				AlertDialog.Builder builder = new AlertDialog.Builder(this);
-				StringBuilder message = new StringBuilder();
+				checkNotNull(this.transaction);
+				List<String> message = Lists.newArrayList();
 				
-				builder.setTitle("Huidige transactie");
-				builder.setPositiveButton("Sluiten", null);
-				
-				if (this.transaction != null) {
-					for (TransactionItem transactionItem : this.transaction.getTransactionItems()) {
-						message.append(transactionItem.getUser().getFullName() + "\t\t" + transactionItem.getCount() + "x " + transactionItem.getProduct() + "\n");
-					}
-					
-					// Set the message
-					builder.setMessage(message.toString());
+				for (TransactionItem transactionItem : this.transaction.getTransactionItems()) {
+					message.add(transactionItem.getUser().getFullName() + "\t\t" + transactionItem.getCount() + "x " + transactionItem.getProduct());
 				}
 				
-				// Show dialog and done
-				builder.show();
+				// Set the message
+				new AlertDialog.Builder(this)
+					.setTitle("Huidige transactie")
+					.setPositiveButton("Sluiten", null)
+					.setMessage(Joiner.on("\n").join(message))
+					.show();
+				
 				return true;
 			case R.id.menu_purchase_cancel:
-				// Cancel the transaction if there is one
-				if (this.transaction != null) {
-					TransactionQuery transactionQuery = new TransactionQuery(this);
-					
-					transactionQuery.delete(this.transaction);
-					this.transaction = null;
-				}
+				checkNotNull(this.transaction);
+
+				TransactionQuery transactionQuery = new TransactionQuery(this);
+				
+				transactionQuery.delete(this.transaction);
+				this.transaction = null;
 				
 				for (User user : this.inhabitants) {
 					this.cancelTransaction(user);
@@ -690,6 +685,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 						.setTitle("Transactiefout")
 						.create()
 						.show();
+					
 					break;
 				case 2: // Exception
 					new AlertDialog.Builder(HomeActivity.this)
