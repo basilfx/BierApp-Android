@@ -6,10 +6,12 @@ import java.util.Random;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.NumberPicker;
 import android.widget.TextView;
 
 import com.google.common.base.Strings;
@@ -185,15 +187,32 @@ public class UserRowView extends LinearLayout {
 		productView.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				UserRowView.this.callback.onProductClickListener(UserRowView.this, (ProductView) v, UserRowView.this.user, product, inDialog);
+				UserRowView.this.callback.onProductClickListener(UserRowView.this, (ProductView) v, UserRowView.this.user, inDialog, product, 1);
 			}
 		});
 		
 		// Prevent long clicks
 		productView.setOnLongClickListener(new OnLongClickListener() {
 			@Override
-			public boolean onLongClick(View v) {
-				return false;
+			public boolean onLongClick(final View v) {
+				final NumberPicker picker = new NumberPicker(UserRowView.this.getContext());
+				
+				picker.setMinValue(1);
+				picker.setMaxValue(100);
+				
+				new AlertDialog.Builder(UserRowView.this.getContext())
+					.setTitle("Aantal " + product.getTitle() + " selecteren")
+					.setView(picker)
+					.setNegativeButton(android.R.string.cancel, null)
+					.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							UserRowView.this.callback.onProductClickListener(UserRowView.this, (ProductView) v, UserRowView.this.user, inDialog, product, picker.getValue());
+						}
+					})
+					.show();
+				
+				return true;
 			}
 		});
 	}

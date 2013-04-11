@@ -42,7 +42,7 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 	/**
 	 * @const Timeout before advancing to next screen in ms
 	 */
-	public static final int SPLASH_TIMEOUT = 500;
+	public static final int SPLASH_TIMEOUT = 250;
 	
 	/**
 	 * @var Reference to API connector

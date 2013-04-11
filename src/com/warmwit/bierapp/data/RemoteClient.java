@@ -50,11 +50,6 @@ public class RemoteClient {
 	public Object get(String url, String query) throws IOException {
 		checkNotNull(url);
 		
-		// Remove last slash
-		if (url.endsWith("/")) {
-			url = url.substring(1, url.length() - 1);
-		}
-		
 		// Build complete URL
 		String completeUrl = url + (query != null ? "?" + query : "");
 		

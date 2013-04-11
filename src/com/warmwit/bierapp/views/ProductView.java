@@ -55,7 +55,9 @@ public class ProductView extends FrameLayout {
 	
 	public void setProductMore() {
 		ViewHolder holder = (ViewHolder) this.getTag();
+		
 		holder.logo.setImageResource(android.R.drawable.ic_search_category_default);
+		holder.count.setVisibility(View.INVISIBLE);
 	}
 	
 	public void setProductLogo(String logoUrl) {

@@ -508,7 +508,12 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     }
 	
 	@Override
-	public void onProductClickListener(UserRowView userView, ProductView productView, User user, Product product, boolean inDialog) {		
+	public void onProductClickListener(UserRowView userView, ProductView productView, User user, boolean inDialog, Product product, int count) {
+		// Don't do anything in case of zero
+		if (count == 0) {
+			return;
+		}
+		
 		// Start a new transaction if needed
 		if (this.transaction == null) {
 			TransactionQuery transactionQuery = new TransactionQuery(this); 
@@ -518,7 +523,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		// Create a transaction
 		TransactionItem transactionItem = new TransactionItem();
 		
-		transactionItem.setCount(-1);
+		transactionItem.setCount(-1 * count);
 		transactionItem.setPayer(user);
 		transactionItem.setUser(user);
 		transactionItem.setProduct(product);
@@ -529,8 +534,8 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		
 		// Update counts
 		ProductInfo productInfo = user.getProducts().get(product);
-		productInfo.setChange(productInfo.getChange() - 1);
-		this.amount--;
+		productInfo.setChange(productInfo.getChange() - count);
+		this.amount = this.amount - count;
 		
 		// Dialog items are not in the list, so invoke a custom refresh
 		if (inDialog) {

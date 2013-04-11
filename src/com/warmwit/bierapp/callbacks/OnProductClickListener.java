@@ -6,5 +6,5 @@ import com.warmwit.bierapp.views.ProductView;
 import com.warmwit.bierapp.views.UserRowView;
 
 public interface OnProductClickListener {
-	public void onProductClickListener(UserRowView userView, ProductView productView, User user, Product product, boolean inDialog);
+	public void onProductClickListener(UserRowView userView, ProductView productView, User user, boolean inDialog, Product product, int count);
 }
