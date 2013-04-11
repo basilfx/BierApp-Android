@@ -66,18 +66,8 @@ public class TransactionQuery extends QueryHelper {
 	
 	public Transaction create(String description) {
 		Transaction transaction = new Transaction();
-		ForeignCollection<TransactionItem> transactionItems;
 		
-		try {
-			transactionItems =
-				this.transactionDao.getEmptyForeignCollection("transactionItems");
-		} catch (SQLException e) {
-			this.handleException(e);
-			return null;
-		}
-			
 		transaction.setDescription(description);
-		transaction.setTransactionItems(transactionItems);
 		transaction.setDirty(true);
 		transaction.setSynced(false);
 		
@@ -142,7 +132,7 @@ public class TransactionQuery extends QueryHelper {
 		checkArgument(transaction.isSynced() == false);
 		
 		try {
-			this.transactionItemDao.delete(transaction.getTransactionItems());
+			this.transactionItemDao.delete(this.transactionItemDao.queryForEq("transaction_id", transaction.getId()));
 			this.transactionDao.delete(transaction);
 		} catch (SQLException e) {
 			this.handleException(e);
@@ -175,6 +165,41 @@ public class TransactionQuery extends QueryHelper {
 		} catch (SQLException e) {
 			this.handleException(e);
 			return null;
+		}
+	}
+	
+	public void addTransactionItem(Transaction transaction, Product product, User user, User payer, int count) {
+		try {
+			QueryBuilder<TransactionItem, Integer> queryBuilder = this.transactionItemDao.queryBuilder();
+			queryBuilder.where()
+						.eq("transaction_id", transaction.getId())
+						.and()
+						.eq("user_id", user.getId())
+						.and()
+						.eq("payer_id", user.getId())
+						.and()
+						.eq("product_id", product.getId());
+		
+			TransactionItem transactionItem = this.transactionItemDao.queryForFirst(queryBuilder.prepare());
+			
+			if (transactionItem != null) {
+				// Increment the count
+				transactionItem.setCount(transactionItem.getCount() + count);
+				this.transactionItemDao.update(transactionItem);
+			} else {
+				// Create new transaction
+				transactionItem = new TransactionItem();
+				
+				transactionItem.setCount(count);
+				transactionItem.setUser(user);
+				transactionItem.setPayer(payer);
+				transactionItem.setProduct(product);
+				transactionItem.setTransaction(transaction);
+				
+				this.transactionItemDao.create(transactionItem);
+			}
+		} catch (SQLException e) {
+			this.handleException(e);
 		}
 	}
 }

@@ -4,17 +4,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.List;
 
-import android.util.Log;
-
-import com.j256.ormlite.dao.ForeignCollection;
 import com.warmwit.bierapp.data.models.Product;
-import com.warmwit.bierapp.data.models.UserInfo;
 import com.warmwit.bierapp.data.models.Transaction;
 import com.warmwit.bierapp.data.models.TransactionItem;
 import com.warmwit.bierapp.data.models.User;
+import com.warmwit.bierapp.data.models.UserInfo;
 import com.warmwit.bierapp.database.DatabaseHelper;
 import com.warmwit.bierapp.database.ProductQuery;
+import com.warmwit.bierapp.database.TransactionItemQuery;
 import com.warmwit.bierapp.database.TransactionQuery;
 import com.warmwit.bierapp.database.UserQuery;
 
@@ -33,7 +32,7 @@ public class ApiConnector {
 	//
 	
 	public void loadUsers() throws IOException, SQLException {
-		ApiUser[] apiUsers = (ApiUser[]) this.remoteClient.get("/users", null);
+		ApiUser[] apiUsers = (ApiUser[]) this.remoteClient.get("/users/", null);
 		
 		for (ApiUser apiUser : apiUsers) {
 			if (!this.databaseHelper.getUserDao().idExists(apiUser.id)) {
@@ -58,7 +57,7 @@ public class ApiConnector {
 		UserQuery userQuery = new UserQuery(this.databaseHelper);
 		ProductQuery productQuery = new ProductQuery(this.databaseHelper);
 		
-		ApiUser[] apiUsers = (ApiUser[]) this.remoteClient.get("/users/info", null);
+		ApiUser[] apiUsers = (ApiUser[]) this.remoteClient.get("/users/info/", null);
 		
 		for (ApiUser apiUser : apiUsers) {
 			User user = userQuery.byId(apiUser.id);
@@ -93,13 +92,10 @@ public class ApiConnector {
 	// http://stackoverflow.com/questions/12885499/problems-saving-collection-using-ormlite-on-android
 	private void convertToTransaction(ApiTransaction apiTransaction) throws IOException, SQLException {
 		Transaction transaction = new Transaction();
-		ForeignCollection<TransactionItem> transactionItems = 
-			this.databaseHelper.getTransactionDao().getEmptyForeignCollection("transactionItems");
 		
 		transaction.setId(apiTransaction.id);
 		transaction.setDescription(apiTransaction.description);
 		transaction.setDateCreated(apiTransaction.date_created);
-		transaction.setTransactionItems(transactionItems);
 		transaction.setDirty(false);
 		transaction.setSynced(true);
 		
@@ -114,13 +110,11 @@ public class ApiConnector {
 			transactionItem.setProduct(this.databaseHelper.getProductDao().queryForId(apiTransactionItem.product_id));
 			transactionItem.setCount(apiTransactionItem.count);
 			transactionItem.setTransaction(transaction);
-			
-			transactionItems.add(transactionItem);
 		}
 	}
 	
 	public void loadTransactions() throws IOException, SQLException {
-		ApiTransaction[] apiTransactions = (ApiTransaction[]) this.remoteClient.get("/transactions", null);
+		ApiTransaction[] apiTransactions = (ApiTransaction[]) this.remoteClient.get("/transactions/", null);
 		
 		for (ApiTransaction apiTransaction : apiTransactions) {
 			if (!this.databaseHelper.getTransactionDao().idExists(apiTransaction.id)) {
@@ -131,8 +125,9 @@ public class ApiConnector {
 	
 	public boolean saveTransaction(Transaction transaction) throws IOException, SQLException {
 		ApiTransaction apiTransaction = new ApiTransaction();
-		ForeignCollection<TransactionItem> transactionItems = transaction.getTransactionItems();
 		int i = 0;
+		
+		List<TransactionItem> transactionItems = new TransactionItemQuery(this.databaseHelper).byTransaction(transaction);
 		
 		apiTransaction.description = transaction.getDescription();
 		apiTransaction.transaction_items = new ApiTransactionItem[transactionItems.size()];
@@ -177,7 +172,7 @@ public class ApiConnector {
 	//
 	
 	public void loadProducts() throws IOException, SQLException {
-		ApiProduct[] apiProducts = (ApiProduct[]) this.remoteClient.get("/products", null);
+		ApiProduct[] apiProducts = (ApiProduct[]) this.remoteClient.get("/products/", null);
 		
 		for (ApiProduct apiProduct : apiProducts) {
 			if (!this.databaseHelper.getProductDao().idExists(apiProduct.id)) {

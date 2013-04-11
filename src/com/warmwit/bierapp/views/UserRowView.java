@@ -101,11 +101,11 @@ public class UserRowView extends LinearLayout {
 			R.drawable.avatar_10
 		};
 		
-		holder.avatar.setImageResource(avatars[new Random().nextInt(avatars.length - 1)]);
-		
-		// Download ad second, if any
+		// Download at second, if any
  		if (!Strings.isNullOrEmpty(user.getAvatarUrl())) {
  			BierAppApplication.imageDownloader.download(BierAppApplication.getHostUrl() + user.getAvatarUrl(), holder.avatar);
+ 		} else {
+ 			holder.avatar.setImageResource(avatars[new Random().nextInt(avatars.length - 1)]);
  		}
 	}
 	
@@ -159,11 +159,11 @@ public class UserRowView extends LinearLayout {
 						view.addView(productView);
 					}
 					
-	        		AlertDialog.Builder builder = new AlertDialog.Builder(UserRowView.this.getContext());
-	    		    builder.setView(view);
-	    		    builder.setTitle("Alle producten");
-	    		    builder.setPositiveButton("Sluiten", null);
-	    		    builder.show();
+	        		new AlertDialog.Builder(UserRowView.this.getContext())
+	    		    	.setView(view)
+	    		    	.setTitle("Alle producten")
+	    		    	.setPositiveButton("Sluiten", null)
+	    		    	.show();
 				}
 			});
         } else {

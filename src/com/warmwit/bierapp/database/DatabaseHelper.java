@@ -21,7 +21,7 @@ import com.warmwit.bierapp.data.models.UserInfo;
 public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 
 	private static final String DATABASE_NAME = "database.db";
-	private static final int DATABASE_VERSION = 17;
+	private static final int DATABASE_VERSION = 18;
 
 	private Dao<User, Integer> userDao;
 	private Dao<UserInfo, Integer> userInfoDao;

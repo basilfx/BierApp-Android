@@ -19,26 +19,12 @@ public class Transaction {
 	
 	@DatabaseField(canBeNull = true)
 	private Date dateCreated;
-	
-	@ForeignCollectionField(eager = true)
-	private ForeignCollection<TransactionItem> transactionItems;
 
 	@DatabaseField
 	private boolean dirty;
 	
 	@DatabaseField
 	private boolean synced;
-	
-	public Transaction() {}
-	
-	public ForeignCollection<TransactionItem> getTransactionItems() {
-		return transactionItems;
-	}
-
-	public void setTransactionItems(
-			ForeignCollection<TransactionItem> transactionItems) {
-		this.transactionItems = transactionItems;
-	}
 
 	public Date getDateCreated() {
 		return dateCreated;

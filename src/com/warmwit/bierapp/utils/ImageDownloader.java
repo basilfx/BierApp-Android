@@ -37,13 +37,10 @@ public class ImageDownloader {
 		this.photoLoaderThread.setPriority(Thread.NORM_PRIORITY - 1);
 	}
 
-	public void download(String url, ImageView imageView){
-		Log.d(LOG_TAG, "Requested image " + url);
-		
+	public void download(String url, ImageView imageView) {
 		imageView.setTag(url);
 		
 		if (cache.containsKey(url)) {
-			Log.d(LOG_TAG, "Image in cache");
 			imageView.setImageBitmap(cache.get(url));
 		} else {
 			queuePhoto(url, imageView);
@@ -108,7 +105,7 @@ public class ImageDownloader {
 			// decode image size
 			BitmapFactory.Options o = new BitmapFactory.Options();
 			o.inJustDecodeBounds = true;
-			o.inPurgeable = true;
+			//o.inPurgeable = true;
 			
 			BitmapFactory.decodeStream(new FileInputStream(f), null, o);
 
@@ -128,7 +125,7 @@ public class ImageDownloader {
 			// decode with inSampleSize
 			BitmapFactory.Options o2 = new BitmapFactory.Options();
 			o2.inSampleSize = scale;
-			o2.inPurgeable = true;
+			//o2.inPurgeable = true;
 			
 			return BitmapFactory.decodeStream(new FileInputStream(f), null, o2);
 		} catch (FileNotFoundException e) {

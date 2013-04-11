@@ -49,6 +49,7 @@ import com.warmwit.bierapp.data.models.UserInfo;
 import com.warmwit.bierapp.database.DatabaseHelper;
 import com.warmwit.bierapp.database.HostQuery;
 import com.warmwit.bierapp.database.ProductQuery;
+import com.warmwit.bierapp.database.TransactionItemQuery;
 import com.warmwit.bierapp.database.TransactionQuery;
 import com.warmwit.bierapp.database.UserQuery;
 import com.warmwit.bierapp.utils.LogUtils;
@@ -256,8 +257,8 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 							// Cancel transactions for this user
 							HomeActivity.this.cancelTransaction(user);
 							
-							HostQuery hostQuery = new HostQuery(HomeActivity.this);
-							hostQuery.delete(user);
+							new TransactionItemQuery(HomeActivity.this).deleteByTransactionAndUser(HomeActivity.this.transaction, user);
+							new HostQuery(HomeActivity.this).delete(user);
 							
 							// Reload data
 							HomeActivity.this.refreshList();
@@ -290,17 +291,18 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     			// Done
     			return true;
     		case R.id.menu_context_clear_transaction_items:
-    		    if (this.transaction != null) {
-					// Set each product info to 0
-					this.cancelTransaction(user);
-					
-					// Refresh view
-					view.refreshProducts();
-					this.refreshMenu();
-					
-					// Done
-					Toast.makeText(HomeActivity.this, "Transactie-items voor " + user.getName() + " gewist.", Toast.LENGTH_LONG).show();
-    		    }
+    			checkNotNull(this.transaction);
+    			
+				// Set each product info to 0
+    			new TransactionItemQuery(HomeActivity.this).deleteByTransactionAndUser(HomeActivity.this.transaction, user);
+				this.cancelTransaction(user);
+				
+				// Refresh view
+				view.refreshProducts();
+				this.refreshMenu();
+				
+				// Done
+				Toast.makeText(HomeActivity.this, "Transactie-items voor " + user.getName() + " gewist.", Toast.LENGTH_LONG).show();
     		    
     			return true;
     		default:
@@ -352,7 +354,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				checkNotNull(this.transaction);
 				List<String> message = Lists.newArrayList();
 				
-				for (TransactionItem transactionItem : this.transaction.getTransactionItems()) {
+				for (TransactionItem transactionItem : new TransactionItemQuery(this).byTransaction(this.transaction)) {
 					message.add(transactionItem.getUser().getFullName() + "\t\t" + transactionItem.getCount() + "x " + transactionItem.getProduct());
 				}
 				
@@ -514,23 +516,15 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			return;
 		}
 		
+		TransactionQuery transactionQuery = new TransactionQuery(this);
+		
 		// Start a new transaction if needed
 		if (this.transaction == null) {
-			TransactionQuery transactionQuery = new TransactionQuery(this); 
 			this.transaction = transactionQuery.create("Verkoop vanaf Tablet");
 		}
 		
-		// Create a transaction
-		TransactionItem transactionItem = new TransactionItem();
-		
-		transactionItem.setCount(-1 * count);
-		transactionItem.setPayer(user);
-		transactionItem.setUser(user);
-		transactionItem.setProduct(product);
-		transactionItem.setTransaction(this.transaction);
-		
-		// Add to the list
-		this.transaction.getTransactionItems().add(transactionItem);
+		// Create (or update an existing) transaction item
+		transactionQuery.addTransactionItem(this.transaction, product, user, user, -1 * count);
 		
 		// Update counts
 		ProductInfo productInfo = user.getProducts().get(product);
@@ -621,8 +615,10 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			checkNotNull(HomeActivity.this.transaction);
 			
 			// For each guest transaction, set a payer
+			TransactionItemQuery transactionItemQuery = new TransactionItemQuery(HomeActivity.this);
+			List<TransactionItem> transactionItems = transactionItemQuery.byTransaction(HomeActivity.this.transaction);
 			
-			for (TransactionItem transactionItem : HomeActivity.this.transaction.getTransactionItems()) {
+			for (TransactionItem transactionItem : transactionItems) {
 				if (transactionItem.getPayer().getType() == User.GUEST) {
 					Hosting hosting = transactionItem.getPayer().getHosting();
 					
@@ -656,6 +652,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 					payer.setTimesPaid(payer.getTimesPaid() + 1);
 					
 					try {
+						HomeActivity.this.getHelper().getTransactionItemDao().update(transactionItem);
 						HomeActivity.this.getHelper().getHostMappingDao().update(payer);
 					} catch (SQLException e) {
 						

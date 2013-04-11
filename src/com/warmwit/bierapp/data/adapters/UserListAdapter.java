@@ -1,6 +1,7 @@
 package com.warmwit.bierapp.data.adapters;
 
 import android.app.Activity;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -15,7 +16,6 @@ public class UserListAdapter extends ArrayAdapter<User> {
 	
     public UserListAdapter(Activity context, OnProductClickListener callback){  
         super(context, R.layout.listview_row_user);
-        
         this.callback = callback;
     }
     
@@ -31,11 +31,11 @@ public class UserListAdapter extends ArrayAdapter<User> {
         }
         
         // Bind data
-        view.setUser(this.getItem(pos));
-        view.setCallback(this.callback);
+    	view.setUser(this.getItem(pos));
+    	view.setCallback(this.callback);
         
-        // Display data
-        view.refreshAll();
+    	// Display data
+    	view.refreshAll();
         
         // Done
         return view;

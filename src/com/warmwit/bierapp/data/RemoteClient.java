@@ -53,6 +53,11 @@ public class RemoteClient {
 		// Build complete URL
 		String completeUrl = url + (query != null ? "?" + query : "");
 		
+		// Remove last slash
+		if (url.endsWith("/")) {
+			url = url.substring(0, url.length() - 1);
+		}
+		
 		// Request URL. Throws IOException on error
 		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 		InputStreamReader reader = getInputStream(completeUrl);

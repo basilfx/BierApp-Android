@@ -23,8 +23,6 @@ public class TransactionItem {
 	
 	@DatabaseField(foreign = true)
 	private Transaction transaction;
-
-	public TransactionItem() {}
 	
 	public int getCount() {
 		return this.count;
