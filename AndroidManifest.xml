@@ -25,7 +25,7 @@
             </intent-filter>
         </activity>
         
-        <activity android:name=".activities.HomeActivity"></activity>
+        <activity android:name=".activities.HomeActivity" android:alwaysRetainTaskState="true"></activity>
         <activity android:name=".activities.GuestsActivity"></activity>
         <activity android:name=".activities.TransactionActivity"></activity>
         <activity android:name=".activities.StatsActivity"></activity>
