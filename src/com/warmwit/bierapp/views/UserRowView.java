@@ -21,6 +21,11 @@ import com.warmwit.bierapp.data.models.User;
 import com.warmwit.bierapp.utils.ImageDownloader;
 import com.warmwit.bierapp.utils.ProductInfo;
 
+/**
+ *
+ * 
+ * @author Bas Stottelaar
+ */
 public class UserRowView extends LinearLayout {
 	private static ImageDownloader downloader = new ImageDownloader();
 	

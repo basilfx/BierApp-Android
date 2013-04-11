@@ -4,6 +4,11 @@ import android.app.Application;
 
 import com.warmwit.bierapp.data.RemoteClient;
 
+/**
+ *
+ * 
+ * @author Bas Stottelaar
+ */
 public class BierAppApplication extends Application {
 	private RemoteClient remoteClient;
 	

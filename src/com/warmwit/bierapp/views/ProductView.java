@@ -15,6 +15,11 @@ import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.utils.ImageDownloader;
 
+/**
+ *
+ * 
+ * @author Bas Stottelaar
+ */
 public class ProductView extends FrameLayout {
 	private static ImageDownloader downloader = new ImageDownloader();
 	

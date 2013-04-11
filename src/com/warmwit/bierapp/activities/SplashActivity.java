@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 import android.app.AlertDialog;
-import android.app.AlertDialog.Builder;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -144,7 +143,7 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 		/**
 		 * Internal helper to log exception and return a return value.
 		 * 
-		 * @param exception Caugh exception
+		 * @param exception Caught exception
 		 * @param returnValue Integer return value
 		 * @return given returnValue
 		 */
