@@ -18,7 +18,6 @@ import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.callbacks.OnProductClickListener;
 import com.warmwit.bierapp.data.models.Product;
 import com.warmwit.bierapp.data.models.User;
-import com.warmwit.bierapp.utils.ImageDownloader;
 import com.warmwit.bierapp.utils.ProductInfo;
 
 /**
@@ -26,9 +25,7 @@ import com.warmwit.bierapp.utils.ProductInfo;
  * 
  * @author Bas Stottelaar
  */
-public class UserRowView extends LinearLayout {
-	private static ImageDownloader downloader = new ImageDownloader();
-	
+public class UserRowView extends LinearLayout {	
 	private static class ViewHolder { 
 		private TextView name;
 		private TextView score;
@@ -106,7 +103,7 @@ public class UserRowView extends LinearLayout {
 		
 		// Download ad second, if any
  		if (!Strings.isNullOrEmpty(user.getAvatarUrl())) {
- 			UserRowView.downloader.download(BierAppApplication.getHostUrl() + user.getAvatarUrl(), holder.avatar);
+ 			BierAppApplication.imageDownloader.download(BierAppApplication.getHostUrl() + user.getAvatarUrl(), holder.avatar);
  		}
 	}
 	

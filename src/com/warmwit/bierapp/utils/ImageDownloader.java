@@ -1,240 +1,255 @@
 package com.warmwit.bierapp.utils;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.lang.ref.WeakReference;
+import java.io.OutputStream;
+import java.net.URL;
 import java.util.HashMap;
-import java.util.Map;
+import java.util.Stack;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.HttpVersion;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.CoreProtocolPNames;
-import org.apache.http.params.HttpParams;
-
-import android.content.Context;
+import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.ImageView;
 
-public class ImageDownloader {
+public class ImageDownloader
+{
+	private static String LOG_TAG = "ImageDownloader";
+	
+	// the simplest in-memory cache implementation. This should be replaced with
+	// something like SoftReference or BitmapOptions.inPurgeable(since 1.6)
+	private HashMap<String, Bitmap> cache = new HashMap<String, Bitmap>();
 
-	Map<String,Bitmap> imageCache;
-	
-	public ImageDownloader(){
-		imageCache = new HashMap<String, Bitmap>();
-	}
-	
-	//download function
-	public void download(String url, ImageView imageView) {
-	     if (cancelPotentialDownload(url, imageView)) {
-	    	 
-	    	 //Caching code right here
-	    	 String filename = String.valueOf(url.hashCode());
-	    	 File f = new File(getCacheDirectory(imageView.getContext()), filename);
+	private File cacheDir;
 
-	    	  // Is the bitmap in our memory cache?
-	    	 Bitmap bitmap = null;
-	    	 
-	    	  bitmap = (Bitmap)imageCache.get(f.getPath());
-	    	  
-	    	  if(bitmap == null){
-	    	 
-	    		  bitmap = BitmapFactory.decodeFile(f.getPath());
-	    		  
-	    		  if(bitmap != null){
-	    			  imageCache.put(f.getPath(), bitmap);
-	    		  }
-	    	  
-	    	  }
-	    	  //No? download it
-	    	  if(bitmap == null){
-	    		  BitmapDownloaderTask task = new BitmapDownloaderTask(imageView);
-	    		  DownloadedDrawable downloadedDrawable = new DownloadedDrawable(task);
-	    		  imageView.setImageDrawable(downloadedDrawable);
-	    		  task.execute(url);
-	    	  }else{
-	    		  //Yes? set the image
-	    		  imageView.setImageBitmap(bitmap);
-	    	  }
-	     }
+	public ImageDownloader(File cacheDir) {
+		this.photoLoaderThread.setPriority(Thread.NORM_PRIORITY - 1);
+		this.cacheDir = cacheDir;
 	}
-	
-	//cancel a download (internal only)
-	private static boolean cancelPotentialDownload(String url, ImageView imageView) {
-	    BitmapDownloaderTask bitmapDownloaderTask = getBitmapDownloaderTask(imageView);
 
-	    if (bitmapDownloaderTask != null) {
-	        String bitmapUrl = bitmapDownloaderTask.url;
-	        if ((bitmapUrl == null) || (!bitmapUrl.equals(url))) {
-	            bitmapDownloaderTask.cancel(true);
-	        } else {
-	            // The same URL is already being downloaded.
-	            return false;
-	        }
-	    }
-	    return true;
-	}
-	
-	//gets an existing download if one exists for the imageview
-	private static BitmapDownloaderTask getBitmapDownloaderTask(ImageView imageView) {
-	    if (imageView != null) {
-	        Drawable drawable = imageView.getDrawable();
-	        if (drawable instanceof DownloadedDrawable) {
-	            DownloadedDrawable downloadedDrawable = (DownloadedDrawable)drawable;
-	            return downloadedDrawable.getBitmapDownloaderTask();
-	        }
-	    }
-	    return null;
-	}
- 
-	//our caching functions
-	// Find the dir to save cached images
-	private static File getCacheDirectory(Context context){
-		String sdState = android.os.Environment.getExternalStorageState();
-		File cacheDir;
-    
-		if (sdState.equals(android.os.Environment.MEDIA_MOUNTED)) {
-			File sdDir = android.os.Environment.getExternalStorageDirectory();  
-			
-			//TODO : Change your direcory here
-			cacheDir = new File(sdDir, "data/tac/images");
+	public void download(String url, ImageView imageView){
+		Log.d(LOG_TAG, "Requested image " + url);
+		
+		imageView.setTag(url);
+		
+		if (cache.containsKey(url)) {
+			imageView.setImageBitmap(cache.get(url));
+		} else {
+			queuePhoto(url, imageView);
 		}
-		else
-			cacheDir = context.getCacheDir();
-
-		if(!cacheDir.exists())
-			cacheDir.mkdirs();
-			return cacheDir;
 	}
-	
-	private void writeFile(Bitmap bmp, File f) {
-		  FileOutputStream out = null;
 
-		  try {
-		    out = new FileOutputStream(f);
-		    bmp.compress(Bitmap.CompressFormat.PNG, 80, out);
-		  } catch (Exception e) {
-		    e.printStackTrace();
-		  }
-		  finally { 
-		    try { if (out != null ) out.close(); }
-		    catch(Exception ex) {} 
-		  }
+	private void queuePhoto(String url, ImageView imageView) {
+		// This ImageView may be used for other images before. So there may be
+		// some old tasks in the queue. We need to discard them.
+		photosQueue.Clean(imageView);
+		PhotoToLoad p = new PhotoToLoad(url, imageView);
+		
+		synchronized (photosQueue.photosToLoad)
+		{
+			photosQueue.photosToLoad.push(p);
+			photosQueue.photosToLoad.notifyAll();
+		}
+
+		// start thread if it's not started yet
+		if (photoLoaderThread.getState() == Thread.State.NEW) {
+			photoLoaderThread.start();
+		}
 	}
-	///////////////////////
 
-	//download asynctask
-    public class BitmapDownloaderTask extends AsyncTask<String, Void, Bitmap> {
-    	private String url;
-        private final WeakReference<ImageView> imageViewReference;
+	private Bitmap getBitmap(String url)
+	{
+		// I identify images by hashcode. Not a perfect solution, good for the
+		// demo.
+		String filename = String.valueOf(url.hashCode());
+		File f = new File(cacheDir, filename);
 
-        public BitmapDownloaderTask(ImageView imageView) {
-            imageViewReference = new WeakReference<ImageView>(imageView);
-        }
+		// from SD cache
+		Bitmap b = decodeFile(f);
+		if (b != null)
+			return b;
 
-        @Override
-        // Actual download method, run in the task thread
-        protected Bitmap doInBackground(String... params) {
-             // params comes from the execute() call: params[0] is the url.
-        	 url = (String)params[0];
-             return downloadBitmap(params[0]);
-        }
+		// from web
+		try {
+			Bitmap bitmap = null;
+			InputStream is = new URL(url).openStream();
+			OutputStream os = new FileOutputStream(f);
+			CopyStream(is, os);
+			os.close();
+			bitmap = decodeFile(f);
+			return bitmap;
+		} catch (Exception ex) {
+			Log.w(LOG_TAG, "Exception while downloading " + url + ": " + ex.getMessage());
+			return null;
+		}
+	}
 
-        @Override
-        // Once the image is downloaded, associates it to the imageView
-        protected void onPostExecute(Bitmap bitmap) {
-            if (isCancelled()) {
-                bitmap = null;
-            }
+	// decodes image and scales it to reduce memory consumption
+	private Bitmap decodeFile(File f)
+	{
+		try
+		{
+			// decode image size
+			BitmapFactory.Options o = new BitmapFactory.Options();
+			o.inJustDecodeBounds = true;
+			BitmapFactory.decodeStream(new FileInputStream(f), null, o);
 
-            if (imageViewReference != null) {
-                ImageView imageView = imageViewReference.get();
-                BitmapDownloaderTask bitmapDownloaderTask = getBitmapDownloaderTask(imageView);
-                // Change bitmap only if this process is still associated with it
-                if (this == bitmapDownloaderTask) {
-                    imageView.setImageBitmap(bitmap);
-                    
-                    //cache the image
-                    
-                    
-                    String filename = String.valueOf(url.hashCode());
-       	    	 	File f = new File(getCacheDirectory(imageView.getContext()), filename);
-       	    	 	
-       	    	 	imageCache.put(f.getPath(), bitmap);
-       	    	 	
-                    writeFile(bitmap, f);
-                }
-            }
-        }
-        
-        
-    }
-    
-    static class DownloadedDrawable extends ColorDrawable {
-        private final WeakReference<BitmapDownloaderTask> bitmapDownloaderTaskReference;
+			// Find the correct scale value. It should be the power of 2.
+			final int REQUIRED_SIZE = 70;
+			int width_tmp = o.outWidth, height_tmp = o.outHeight;
+			int scale = 1;
+			while (true)
+			{
+				if (width_tmp / 2 < REQUIRED_SIZE || height_tmp / 2 < REQUIRED_SIZE)
+					break;
+				width_tmp /= 2;
+				height_tmp /= 2;
+				scale *= 2;
+			}
 
-        public DownloadedDrawable(BitmapDownloaderTask bitmapDownloaderTask) {
-            super(Color.BLACK);
-            bitmapDownloaderTaskReference =
-                new WeakReference<BitmapDownloaderTask>(bitmapDownloaderTask);
-        }
+			// decode with inSampleSize
+			BitmapFactory.Options o2 = new BitmapFactory.Options();
+			o2.inSampleSize = scale;
+			return BitmapFactory.decodeStream(new FileInputStream(f), null, o2);
+		} catch (FileNotFoundException e)
+		{
+			e.printStackTrace();
+		}
+		return null;
+	}
 
-        public BitmapDownloaderTask getBitmapDownloaderTask() {
-            return bitmapDownloaderTaskReference.get();
-        }
-    }
-    
-    //the actual download code
-    static Bitmap downloadBitmap(String url) {
-    	HttpParams params = new BasicHttpParams();
-    	params.setParameter(CoreProtocolPNames.PROTOCOL_VERSION, HttpVersion.HTTP_1_1);
-    	HttpClient client = new DefaultHttpClient(params);
-        final HttpGet getRequest = new HttpGet(url);
+	// Task for the queue
+	private class PhotoToLoad
+	{
+		public String url;
+		public ImageView imageView;
 
-        try {
-            HttpResponse response = client.execute(getRequest);
-            final int statusCode = response.getStatusLine().getStatusCode();
-            if (statusCode != HttpStatus.SC_OK) { 
-                Log.w("ImageDownloader", "Error " + statusCode + " while retrieving bitmap from " + url); 
-                return null;
-            }
-            
-            final HttpEntity entity = response.getEntity();
-            if (entity != null) {
-                InputStream inputStream = null;
-                try {
-                    inputStream = entity.getContent(); 
-                    final Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-                    return bitmap;
-                } finally {
-                    if (inputStream != null) {
-                        inputStream.close();  
-                    }
-                    entity.consumeContent();
-                }
-            }
-        } catch (Exception e) {
-            // Could provide a more explicit error message for IOException or IllegalStateException
-            getRequest.abort();
-            Log.w("ImageDownloader", "Error while retrieving bitmap from " + url + e.toString());
-        } finally {
-            if (client != null) {
-                //client.close();
-            }
-        }
-        return null;
-    }
+		public PhotoToLoad(String u, ImageView i)
+		{
+			url = u;
+			imageView = i;
+		}
+	}
+
+	PhotosQueue photosQueue = new PhotosQueue();
+
+	public void stopThread()
+	{
+		photoLoaderThread.interrupt();
+	}
+
+	// stores list of photos to download
+	class PhotosQueue
+	{
+		private Stack<PhotoToLoad> photosToLoad = new Stack<PhotoToLoad>();
+
+		// removes all instances of this ImageView
+		public void Clean(ImageView image)
+		{
+			for (int j = 0; j < photosToLoad.size();)
+			{
+				if (photosToLoad.get(j).imageView == image)
+					photosToLoad.remove(j);
+				else
+					++j;
+			}
+		};
+	}
+
+	class PhotosLoader extends Thread
+	{
+		public void run()
+		{
+			try
+			{
+				while (true)
+				{
+					// thread waits until there are any images to load in the
+					// queue
+					if (photosQueue.photosToLoad.size() == 0)
+						synchronized (photosQueue.photosToLoad)
+						{
+							photosQueue.photosToLoad.wait();
+						}
+					if (photosQueue.photosToLoad.size() != 0)
+					{
+						PhotoToLoad photoToLoad;
+						synchronized (photosQueue.photosToLoad)
+						{
+							photoToLoad = photosQueue.photosToLoad.pop();
+						}
+						Bitmap bmp = getBitmap(photoToLoad.url);
+						cache.put(photoToLoad.url, bmp);
+						Object tag = photoToLoad.imageView.getTag();
+						if (tag != null && ((String) tag).equals(photoToLoad.url))
+						{
+							BitmapDisplayer bd = new BitmapDisplayer(bmp, photoToLoad.imageView);
+							Activity a = (Activity) photoToLoad.imageView.getContext();
+							a.runOnUiThread(bd);
+						}
+					}
+					if (Thread.interrupted())
+						break;
+				}
+			} catch (InterruptedException e)
+			{
+				e.printStackTrace();
+			}
+		}
+	}
+
+	PhotosLoader photoLoaderThread = new PhotosLoader();
+
+	// Used to display bitmap in the UI thread
+	class BitmapDisplayer implements Runnable
+	{
+		Bitmap bitmap;
+		ImageView imageView;
+
+		public BitmapDisplayer(Bitmap b, ImageView i)
+		{
+			bitmap = b;
+			imageView = i;
+		}
+
+		public void run()
+		{
+			Log.i(LOG_TAG, "BitmapDisplayer run()");
+			if (bitmap != null)
+				imageView.setImageBitmap(bitmap);
+		}
+	}
+
+	public void clearCache()
+	{
+		// clear memory cache
+		cache.clear();
+
+		// clear SD cache
+		File[] files = cacheDir.listFiles();
+		for (File f : files)
+			f.delete();
+	}
+
+	public static void CopyStream(InputStream is, OutputStream os)
+	{
+		final int buffer_size = 1024;
+		try
+		{
+			byte[] bytes = new byte[buffer_size];
+			for (;;)
+			{
+				int count = is.read(bytes, 0, buffer_size);
+				if (count == -1)
+					break;
+				os.write(bytes, 0, count);
+			}
+		} catch (Exception ex)
+		{
+		}
+	}
 }
-

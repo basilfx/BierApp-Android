@@ -21,18 +21,12 @@ import com.warmwit.bierapp.database.DatabaseHelper;
 import com.warmwit.bierapp.database.TransactionQuery;
 
 public class TransactionActivity extends OrmLiteBaseActivity<DatabaseHelper> {
-	private RemoteClient remoteClient;
-	private ApiConnector apiConnector;
-	
 	private ListView transactionListView;
 	private TransactionListAdapter transactionListAdapter;
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        this.remoteClient = ((BierAppApplication) this.getApplication()).getRemoteClient();
-		this.apiConnector = new ApiConnector(remoteClient, this.getHelper());
         
         // Set content
         this.setContentView(R.layout.activity_transactions);

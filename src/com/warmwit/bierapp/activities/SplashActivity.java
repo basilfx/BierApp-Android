@@ -2,6 +2,7 @@ package com.warmwit.bierapp.activities;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 
@@ -10,6 +11,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.Window;
@@ -21,6 +23,8 @@ import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.data.ApiConnector;
 import com.warmwit.bierapp.data.RemoteClient;
 import com.warmwit.bierapp.database.DatabaseHelper;
+import com.warmwit.bierapp.utils.ImageDownloader;
+import com.warmwit.bierapp.utils.LogUtils;
 
 /**
  * Splash screen activity. Loads data from server, then advances to 
@@ -39,11 +43,6 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 	 * @const Timeout before advancing to next screen in ms
 	 */
 	public static final int SPLASH_TIMEOUT = 500;
-	
-	/**
-	 * @var Reference to data client
-	 */
-	private RemoteClient remoteClient;
 	
 	/**
 	 * @var Reference to API connector
@@ -66,14 +65,13 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
         this.setContentView(R.layout.activity_splash);
         
         // Create API instance
-        this.remoteClient = ((BierAppApplication) this.getApplication()).getRemoteClient();
-		this.apiConnector = new ApiConnector(remoteClient, this.getHelper());
-        
+        this.apiConnector = new ApiConnector(BierAppApplication.remoteClient, this.getHelper());
+		
         // Load data and advance to next screen
         new LoadDataTask().execute();
     }
-    
-    /**
+
+	/**
      * Sync data task.
      */
     private class LoadDataTask extends AsyncTask<Void, Void, Integer> {
@@ -96,9 +94,9 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 				Log.d(LOG_TAG, "Loading users info");
 				SplashActivity.this.apiConnector.loadUserInfo();
 			} catch (IOException e) {
-				return this.handleException(e, 1);
+				return LogUtils.logException(LOG_TAG, e, 1);
 			} catch (SQLException e) {
-				return this.handleException(e, 2);
+				return LogUtils.logException(LOG_TAG, e, 2);
 			}
 	        
 			// Done
@@ -139,18 +137,7 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 					throw new IllegalStateException();
 			}
 		}
-		
-		/**
-		 * Internal helper to log exception and return a return value.
-		 * 
-		 * @param exception Caught exception
-		 * @param returnValue Integer return value
-		 * @return given returnValue
-		 */
-		private int handleException(Exception exception, int returnValue) {
-			Log.e(LOG_TAG, "Caught exception: " + exception.getMessage());
-			return returnValue;
-		}
+
 		
 		/**
 		 * Internal helper to display a dialog with an OK button. After clicking,

@@ -21,8 +21,6 @@ import com.warmwit.bierapp.utils.ImageDownloader;
  * @author Bas Stottelaar
  */
 public class ProductView extends FrameLayout {
-	private static ImageDownloader downloader = new ImageDownloader();
-	
 	private static class ViewHolder {
 		private TextView change;
 		private TextView count;
@@ -30,17 +28,22 @@ public class ProductView extends FrameLayout {
 		private RelativeLayout bar;	
 	}
 	
+	private ImageDownloader downloader;
+	
 	public ProductView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
-		LayoutInflater.from(context).inflate(R.layout.view_product, this);
 		
+		// Inflate layout and create a holder
+		LayoutInflater.from(context).inflate(R.layout.view_product, this);
 		ViewHolder holder = new ViewHolder();
 		
+		// Bind controls
 		holder.change = (TextView) this.findViewById(R.id.product_change);
 		holder.count = (TextView) this.findViewById(R.id.product_count);
 		holder.logo = (ImageView) this.findViewById(R.id.product_logo);
 		holder.bar = (RelativeLayout) this.findViewById(R.id.product_bar);
 		
+		// Save holder internally
 		this.setTag(holder);
 	}
 	
@@ -65,7 +68,7 @@ public class ProductView extends FrameLayout {
 		
 		// Download ad second, if any
  		if (!Strings.isNullOrEmpty(logoUrl)) {
- 			ProductView.downloader.download(BierAppApplication.getHostUrl() + logoUrl, holder.logo);
+ 			BierAppApplication.imageDownloader.download(BierAppApplication.getHostUrl() + logoUrl, holder.logo);
  		}
 	}
 	

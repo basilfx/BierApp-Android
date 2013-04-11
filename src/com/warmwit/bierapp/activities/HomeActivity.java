@@ -9,12 +9,9 @@ import java.util.List;
 import java.util.Random;
 
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -53,6 +50,8 @@ import com.warmwit.bierapp.database.HostQuery;
 import com.warmwit.bierapp.database.ProductQuery;
 import com.warmwit.bierapp.database.TransactionQuery;
 import com.warmwit.bierapp.database.UserQuery;
+import com.warmwit.bierapp.utils.ImageDownloader;
+import com.warmwit.bierapp.utils.LogUtils;
 import com.warmwit.bierapp.utils.ProductInfo;
 import com.warmwit.bierapp.utils.ProgressAsyncTask;
 import com.warmwit.bierapp.views.ProductView;
@@ -64,7 +63,8 @@ import com.warmwit.bierapp.views.UserRowView;
  * @author Bas Stottelaar
  */
 public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements OnProductClickListener, OnMenuItemClickListener {
-	private RemoteClient remoteClient;
+	public static final String LOG_TAG = "HomeActivity";
+	
 	private ApiConnector apiConnector;
 	
 	private UserListAdapter userListAdapter; 
@@ -89,8 +89,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        this.remoteClient = ((BierAppApplication) this.getApplication()).getRemoteClient();
-		this.apiConnector = new ApiConnector(remoteClient, this.getHelper());
+		this.apiConnector = new ApiConnector(BierAppApplication.remoteClient, this.getHelper());
         
         // Set content
         this.setContentView(R.layout.activity_home);
@@ -575,11 +574,9 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				HomeActivity.this.apiConnector.loadTransactions();
 				HomeActivity.this.apiConnector.loadUserInfo();
 			} catch (IOException e) {
-				Log.e(this.getClass().getName(), e.getMessage());
-				return 1;
+				return LogUtils.logException(LOG_TAG, e, 1);
 			} catch (SQLException e) {
-				Log.e(this.getClass().getName(), e.getMessage());
-				return 2;
+				return LogUtils.logException(LOG_TAG, e, 2);
 			}
 			
 			// Done
@@ -666,11 +663,9 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			try {
 				return HomeActivity.this.apiConnector.saveTransaction(HomeActivity.this.transaction) ? 0 : 1;
 			} catch (IOException e) {
-				Log.e("HOME", e.getMessage());
-				return 2;
+				return LogUtils.logException(LOG_TAG, e, 1);
 			} catch (SQLException e) {
-				Log.e("HOME", e.getMessage());
-				return 2;
+				return LogUtils.logException(LOG_TAG, e, 2);
 			}
 		}
 		
