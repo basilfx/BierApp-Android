@@ -103,7 +103,7 @@ public class UserRowView extends LinearLayout {
 		
 		// Download at second, if any
  		if (!Strings.isNullOrEmpty(user.getAvatarUrl())) {
- 			BierAppApplication.imageDownloader.download(BierAppApplication.getHostUrl() + user.getAvatarUrl(), holder.avatar);
+ 			BierAppApplication.imageDownloader.download(user.getAvatarUrl(), holder.avatar);
  		} else {
  			holder.avatar.setImageResource(avatars[new Random().nextInt(avatars.length - 1)]);
  		}
@@ -125,14 +125,16 @@ public class UserRowView extends LinearLayout {
         final Map<Product, ProductInfo> productMap = user.getProducts();
         ProductInfo productInfoMore = new ProductInfo(0, 0); 
         
+        //for (i = 0; i < holder.products.length; i++) {
+        // 	holder.products[i].setVisibility(View.INVISIBLE);
+        //}
+        
         for (Entry<Product, ProductInfo> item : productMap.entrySet()) {
         	if (i >= holder.products.length) {
         		productInfoMore.setChange(productInfoMore.getChange() + item.getValue().getChange());
         		productInfoMore.setCount(productInfoMore.getCount() + item.getValue().getCount());
         	} else if (i < productMap.size()) {
         		UserRowView.this.refreshProduct(holder.products[i], item.getKey(), item.getValue(), false);
-        	} else {
-        		holder.products[i].setVisibility(View.GONE);
         	}
         	
         	// Increment current item

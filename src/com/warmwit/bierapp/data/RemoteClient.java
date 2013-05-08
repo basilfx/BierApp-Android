@@ -3,41 +3,55 @@ package com.warmwit.bierapp.data;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URL;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+
+import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 
 public class RemoteClient {
+	/**
+	 * @const Logging tag
+	 */
+	public static final String LOG_TAG = "RemoteClient";
+	
 	
 	private String baseUrl;
 	
-	public RemoteClient(String baseUrl) {
+	private String accessToken;
+	
+	private String refreshToken;
+	
+	public RemoteClient(String baseUrl, String accessToken) {
 		this.baseUrl = checkNotNull(baseUrl);
+		this.accessToken = checkNotNull(accessToken);
 	}
 	
 	public Object post(Object object, String url, String query) throws IOException {
 		checkNotNull(url);
 		
+		String completeUrl = url + (query != null ? "?" + query : "");
+		
 		if (url.equals("/transactions/")){
 			String data = new Gson().toJson(object);
-			HttpResponse response = this.postRequest(url, data);
+			HttpResponse response = this.postRequest(completeUrl, data);
 			
 			if (response.getStatusLine().getStatusCode() == 200) {
 				data = EntityUtils.toString(response.getEntity());
 				
-				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-				return gson.fromJson(data, ApiTransaction[].class)[0];
+				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss").create();
+				return gson.fromJson(data, ApiTransaction.class);
 			} else {
 				return null;
 			}
@@ -59,37 +73,34 @@ public class RemoteClient {
 		}
 		
 		// Request URL. Throws IOException on error
-		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-		InputStreamReader reader = getInputStream(completeUrl);
+		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss").create();
+		HttpResponse response = this.getRequest(completeUrl);
+		
+		String data = EntityUtils.toString(response.getEntity());
+		Log.d(LOG_TAG, "Data: " + data);
 		
 		// Parse result
 		if (url.equals("/")) {
-			return new Gson().fromJson(getInputStream(completeUrl), ApiRoot.class);
+			return new Gson().fromJson(data, ApiRoot.class);
 		} else if (url.startsWith("/users")) {
 			if (url.equals("/users")) { // All users
-				return gson.fromJson(reader, ApiUser[].class);
+				return gson.fromJson(data, ApiUserPage.class);
 			} else if (url.equals("/users/info")) {
-				return gson.fromJson(reader, ApiUser[].class);
+				return gson.fromJson(data, ApiUserPage.class);
 			} else { // Single user
-				return gson.fromJson(reader, ApiUser.class);
-			}
-		} else if (url.startsWith("/guests")) {
-			if (url.equals("/guests")) { // All guests
-				return gson.fromJson(reader, ApiUser[].class);
-			} else { // Single guest
-				return gson.fromJson(reader, ApiUser.class);
+				return gson.fromJson(data, ApiUser.class);
 			}
 		} else if (url.startsWith("/products")) {
 			if (url.equals("/products")) { // All products
-				return gson.fromJson(reader, ApiProduct[].class);
+				return gson.fromJson(data, ApiProductPage.class);
 			} else { // Single product
-				return gson.fromJson(reader, ApiProduct.class);
+				return gson.fromJson(data, ApiProduct.class);
 			}
 		} else if (url.startsWith("/transactions")) {
 			if (url.equals("/transactions")) { // All transactions
-				return gson.fromJson(reader, ApiTransaction[].class);
+				return gson.fromJson(data, ApiTransactionPage.class);
 			} else { // Single transaction
-				return gson.fromJson(reader, ApiTransaction.class);
+				return gson.fromJson(data, ApiTransaction.class);
 			}
 		}
 		
@@ -97,9 +108,15 @@ public class RemoteClient {
 		throw new UnsupportedOperationException(url);
 	}
 	
-	private InputStreamReader getInputStream(String relativeUrl) throws IOException {
+	private HttpResponse getRequest(String relativeUrl) throws IOException {
 		URL url = new URL(this.baseUrl + relativeUrl);
-		return new InputStreamReader(url.openStream());
+		
+		HttpClient client = new DefaultHttpClient();
+		HttpGet request = new HttpGet(this.baseUrl + relativeUrl);
+		
+		request.addHeader("Authorization", "Bearer " + this.accessToken);
+		
+		return client.execute(request);
 	}
 	
 	private HttpResponse postRequest(String relativeUrl, String data) throws ClientProtocolException, IOException {
@@ -108,6 +125,7 @@ public class RemoteClient {
 		
 		// Set header and data
 		request.addHeader("Content-type", "application/json");
+		request.addHeader("Authorization", "Bearer " + this.accessToken);
 		request.setEntity(new StringEntity(data));
 		
 		// Execute and return

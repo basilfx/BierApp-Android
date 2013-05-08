@@ -68,7 +68,7 @@ public class ProductView extends FrameLayout {
 		
 		// Download ad second, if any
  		if (!Strings.isNullOrEmpty(logoUrl)) {
- 			BierAppApplication.imageDownloader.download(BierAppApplication.getHostUrl() + logoUrl, holder.logo);
+ 			BierAppApplication.imageDownloader.download(logoUrl, holder.logo);
  		}
 	}
 	

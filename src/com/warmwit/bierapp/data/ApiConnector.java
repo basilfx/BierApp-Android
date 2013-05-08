@@ -32,9 +32,9 @@ public class ApiConnector {
 	//
 	
 	public void loadUsers() throws IOException, SQLException {
-		ApiUser[] apiUsers = (ApiUser[]) this.remoteClient.get("/users/", null);
+		ApiUserPage apiUserPage = (ApiUserPage) this.remoteClient.get("/users/", null);
 		
-		for (ApiUser apiUser : apiUsers) {
+		for (ApiUser apiUser : apiUserPage.results) {
 			if (!this.databaseHelper.getUserDao().idExists(apiUser.id)) {
 				User user = new User();
 				
@@ -57,9 +57,9 @@ public class ApiConnector {
 		UserQuery userQuery = new UserQuery(this.databaseHelper);
 		ProductQuery productQuery = new ProductQuery(this.databaseHelper);
 		
-		ApiUser[] apiUsers = (ApiUser[]) this.remoteClient.get("/users/info/", null);
+		ApiUserPage apiUserPage = (ApiUserPage) this.remoteClient.get("/users/info/", null);
 		
-		for (ApiUser apiUser : apiUsers) {
+		for (ApiUser apiUser : apiUserPage.results) {
 			User user = userQuery.byId(apiUser.id);
 			
 			for (ApiUserInfo apiUserInfo : apiUser.product_info) {
@@ -114,9 +114,9 @@ public class ApiConnector {
 	}
 	
 	public void loadTransactions() throws IOException, SQLException {
-		ApiTransaction[] apiTransactions = (ApiTransaction[]) this.remoteClient.get("/transactions/", null);
+		ApiTransactionPage apiTransactionPage = (ApiTransactionPage) this.remoteClient.get("/transactions/", null);
 		
-		for (ApiTransaction apiTransaction : apiTransactions) {
+		for (ApiTransaction apiTransaction : apiTransactionPage.results) {
 			if (!this.databaseHelper.getTransactionDao().idExists(apiTransaction.id)) {
 				this.convertToTransaction(apiTransaction);
 			}
@@ -172,9 +172,9 @@ public class ApiConnector {
 	//
 	
 	public void loadProducts() throws IOException, SQLException {
-		ApiProduct[] apiProducts = (ApiProduct[]) this.remoteClient.get("/products/", null);
+		ApiProductPage apiProductPage = (ApiProductPage) this.remoteClient.get("/products/", null);
 		
-		for (ApiProduct apiProduct : apiProducts) {
+		for (ApiProduct apiProduct : apiProductPage.results) {
 			if (!this.databaseHelper.getProductDao().idExists(apiProduct.id)) {
 				Product product = new Product();
 				

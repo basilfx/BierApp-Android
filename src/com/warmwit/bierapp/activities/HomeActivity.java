@@ -345,16 +345,18 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				
 				return true;
 			case R.id.menu_purchase_confirm:
-				if (this.transaction != null) {
-					new SaveTransactionTask().execute();
-				}
+				checkNotNull(this.transaction);
+				new SaveTransactionTask().execute();
 				
 				return true;
 			case R.id.menu_purchase_show:
 				checkNotNull(this.transaction);
+				
+				TransactionItemQuery transactionItemQuery = new TransactionItemQuery(this);
+				List<TransactionItem> transactionItems = transactionItemQuery.byTransaction(this.transaction);
 				List<String> message = Lists.newArrayList();
 				
-				for (TransactionItem transactionItem : new TransactionItemQuery(this).byTransaction(this.transaction)) {
+				for (TransactionItem transactionItem : transactionItems) {
 					message.add(transactionItem.getUser().getFullName() + "\t\t" + transactionItem.getCount() + "x " + transactionItem.getProduct());
 				}
 				

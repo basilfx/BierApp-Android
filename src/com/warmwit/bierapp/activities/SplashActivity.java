@@ -2,17 +2,17 @@ package com.warmwit.bierapp.activities;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager.LayoutParams;
@@ -21,9 +21,7 @@ import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.data.ApiConnector;
-import com.warmwit.bierapp.data.RemoteClient;
 import com.warmwit.bierapp.database.DatabaseHelper;
-import com.warmwit.bierapp.utils.ImageDownloader;
 import com.warmwit.bierapp.utils.LogUtils;
 
 /**
@@ -63,12 +61,33 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         this.getWindow().setFlags(LayoutParams.FLAG_FULLSCREEN, LayoutParams.FLAG_FULLSCREEN);
         this.setContentView(R.layout.activity_splash);
+         
+        // Decide to authorize or not
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         
-        // Create API instance
-        this.apiConnector = new ApiConnector(BierAppApplication.remoteClient, this.getHelper());
-		
-        // Load data and advance to next screen
-        new LoadDataTask().execute();
+        if (preferences.contains("access_token")) {
+        	String accessToken = preferences.getString("access_token", null);
+        	int expires = preferences.getInt("expires_in", -1);
+        	
+        	if (accessToken != null) {
+	        	// Setup remote client
+	        	Log.d(LOG_TAG, "Using access token: " + accessToken);
+	        	((BierAppApplication) this.getApplication()).initRemoteClient(accessToken);
+	        	
+	        	// Create API instance
+	        	this.apiConnector = new ApiConnector(BierAppApplication.remoteClient, this.getHelper());
+	        	
+	        	// Load data and advance to next screen
+	            new LoadDataTask().execute();
+	            
+	            // Done
+	            return;
+        	}
+        }
+        
+        // Catch for authorization
+    	Intent intent = new Intent(SplashActivity.this, AuthorizeActivity.class);
+		startActivity(intent);
     }
 
 	/**
@@ -120,7 +139,7 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 						public void run() {
 							Log.d(LOG_TAG, "Loading HomeActivity.");
 							
-							Intent intent = new Intent(SplashActivity.this, HomeActivity.class);
+							Intent intent = new Intent(SplashActivity.this, AuthorizeActivity.class);
 							startActivity(intent);             
 						}
 					}, SplashActivity.SPLASH_TIMEOUT);
@@ -137,7 +156,6 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 					throw new IllegalStateException();
 			}
 		}
-
 		
 		/**
 		 * Internal helper to display a dialog with an OK button. After clicking,
