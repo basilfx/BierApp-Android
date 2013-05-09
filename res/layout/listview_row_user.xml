@@ -59,19 +59,22 @@
             <com.warmwit.bierapp.views.ProductView
                 android:id="@+id/product_1"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" >
+                android:layout_height="wrap_content" 
+                android:layout_marginRight="5dp" >
             </com.warmwit.bierapp.views.ProductView>
             
             <com.warmwit.bierapp.views.ProductView
                 android:id="@+id/product_2"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" >
+                android:layout_height="wrap_content" 
+                android:layout_marginRight="5dp" >
             </com.warmwit.bierapp.views.ProductView>
             
             <com.warmwit.bierapp.views.ProductView
                 android:id="@+id/product_3"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" >
+                android:layout_height="wrap_content"
+                android:layout_marginRight="5dp" >
             </com.warmwit.bierapp.views.ProductView>
             
             <com.warmwit.bierapp.views.ProductView

@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.NumberPicker;
@@ -20,6 +21,7 @@ import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.callbacks.OnProductClickListener;
 import com.warmwit.bierapp.data.models.Product;
 import com.warmwit.bierapp.data.models.User;
+import com.warmwit.bierapp.utils.FlowLayout;
 import com.warmwit.bierapp.utils.ProductInfo;
 
 /**
@@ -153,10 +155,11 @@ public class UserRowView extends LinearLayout {
         	holder.more.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					LinearLayout view = new LinearLayout(UserRowView.this.getContext());
+					FlowLayout view = new FlowLayout(UserRowView.this.getContext());
 					
 					for (Entry<Product, ProductInfo> item : productMap.entrySet()) {
 						ProductView productView = new ProductView(UserRowView.this.getContext());
+						productView.setPadding(5, 5, 5, 5);
 						UserRowView.this.refreshProduct(productView, item.getKey(), item.getValue(), true);
 						view.addView(productView);
 					}
