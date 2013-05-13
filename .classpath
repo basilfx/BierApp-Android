@@ -8,5 +8,6 @@
 	<classpathentry kind="lib" path="libs/gson-2.2.2.jar"/>
 	<classpathentry kind="lib" path="libs/ormlite-android-4.45.jar"/>
 	<classpathentry kind="lib" path="libs/ormlite-core-4.45.jar"/>
+	<classpathentry kind="lib" path="libs/imageloader-core-1.5.8.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>
