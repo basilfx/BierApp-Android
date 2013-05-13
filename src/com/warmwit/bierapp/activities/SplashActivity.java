@@ -139,7 +139,7 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 						public void run() {
 							Log.d(LOG_TAG, "Loading HomeActivity.");
 							
-							Intent intent = new Intent(SplashActivity.this, AuthorizeActivity.class);
+							Intent intent = new Intent(SplashActivity.this, HomeActivity.class);
 							startActivity(intent);             
 						}
 					}, SplashActivity.SPLASH_TIMEOUT);

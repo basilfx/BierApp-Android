@@ -33,6 +33,8 @@ public class RemoteClient {
 	
 	private String refreshToken;
 	
+	private HttpClient client;
+	
 	public RemoteClient(String baseUrl, String accessToken) {
 		this.baseUrl = checkNotNull(baseUrl);
 		this.accessToken = checkNotNull(accessToken);
@@ -109,14 +111,23 @@ public class RemoteClient {
 	}
 	
 	private HttpResponse getRequest(String relativeUrl) throws IOException {
-		URL url = new URL(this.baseUrl + relativeUrl);
+		if (this.client == null) {
+			this.client = new DefaultHttpClient();
+		}
 		
-		HttpClient client = new DefaultHttpClient();
-		HttpGet request = new HttpGet(this.baseUrl + relativeUrl);
-		
-		request.addHeader("Authorization", "Bearer " + this.accessToken);
-		
-		return client.execute(request);
+		try {
+			URL url = new URL(this.baseUrl + relativeUrl);
+			HttpGet request = new HttpGet(this.baseUrl + relativeUrl);
+			
+			if (this.accessToken != null) {
+				request.addHeader("Authorization", "Bearer " + this.accessToken);
+			}
+			
+			return this.client.execute(request);
+		} catch (IOException e) {
+			this.client = null;
+			throw e;
+		}
 	}
 	
 	private HttpResponse postRequest(String relativeUrl, String data) throws ClientProtocolException, IOException {

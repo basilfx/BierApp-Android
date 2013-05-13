@@ -14,11 +14,12 @@ import java.util.Stack;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
 import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.widget.ImageView;
 
-public class ImageDownloader {
+public class ImageLoader {
 	private static String LOG_TAG = "ImageDownloader";
 	
 	private HashMap<String, Bitmap> cache = new HashMap<String, Bitmap>();
@@ -29,7 +30,7 @@ public class ImageDownloader {
 
 	private File cacheDir;
 
-	public ImageDownloader(File cacheDir) {
+	public ImageLoader(File cacheDir) {
 		this.photosQueue = new PhotosQueue();
 		this.photoLoaderThread = new PhotosLoader();
 		this.cacheDir = cacheDir;
@@ -37,21 +38,30 @@ public class ImageDownloader {
 		this.photoLoaderThread.setPriority(Thread.NORM_PRIORITY - 1);
 	}
 
-	public void download(String url, ImageView imageView) {
-		imageView.setTag(url);
+	public void download(String url, int width, int height, ImageView imageView) {
+		String key = url + "@" + width + "x" + height;
+		imageView.setTag(key);
 		
-		if (cache.containsKey(url)) {
-			imageView.setImageBitmap(cache.get(url));
+		if (cache.containsKey(key)) {
+			imageView.setImageBitmap(cache.get(key));
 		} else {
-			queuePhoto(url, imageView);
+			queuePhoto(url, width, height, imageView);
 		}
 	}
+	
+	public void putCache(String url, Bitmap b) {
+		cache.put(url + "@0x0", b);
+	}
+	
+	public boolean isCached(String url) {
+		return cache.containsKey(url);
+	}
 
-	private void queuePhoto(String url, ImageView imageView) {
+	private void queuePhoto(String url, int width, int height, ImageView imageView) {
 		// This ImageView may be used for other images before. So there may be
 		// some old tasks in the queue. We need to discard them.
 		photosQueue.clean(imageView);
-		PhotoToLoad p = new PhotoToLoad(url, new SoftReference<ImageView>(imageView));
+		PhotoToLoad p = new PhotoToLoad(url, width, height, new SoftReference<ImageView>(imageView));
 		
 		synchronized (photosQueue.photosToLoad)
 		{
@@ -65,18 +75,25 @@ public class ImageDownloader {
 		}
 	}
 
-	private Bitmap getBitmap(String url)
+	private Bitmap getBitmap(String url, int width, int height)
 	{
-		// I identify images by hashcode. Not a perfect solution, good for the
-		// demo.
-		String filename = String.valueOf(url.hashCode());
-		File f = new File(cacheDir, filename);
+		String filename = String.valueOf(url.hashCode()) + "@" + width + "x" + height;
+		File f = new File(cacheDir, filename).getAbsoluteFile();
 
-		// from SD cache
-		Bitmap b = decodeFile(f);
-		if (b != null) {
-			Log.d(LOG_TAG, "Image from storage");
-			return b;
+		// Check if file already exists on storage
+		Log.d(LOG_TAG, "Image from storage");
+		
+		BitmapFactory.Options o2 = new BitmapFactory.Options();
+		o2.inPurgeable = true;
+		o2.inSampleSize=1;
+		
+		if (f.exists()) {
+			try {
+				return BitmapFactory.decodeStream(new FileInputStream(f), null, o2);
+			} catch (IOException ex) {
+				Log.w(LOG_TAG, "Caught exception: " + ex.getMessage());
+				return null;
+			}
 		}
 
 		// from web
@@ -86,36 +103,45 @@ public class ImageDownloader {
 			// Download image
 			InputStream is = new URL(url).openStream();
 			OutputStream os = new FileOutputStream(f);
+			
 			CopyStream(is, os);
+			
+			is.close();
+			os.close();
+			
+			// Decode it and resize
+			Bitmap bitmap = decodeFile(f, Math.max(width, height));//), width, height, true);
+			bitmap.compress(CompressFormat.JPEG, 90, os);
 			os.close();
 			
 			// Done
-			return decodeFile(f);
+			return bitmap;
 		} catch (IOException ex) {
+			// Make sure intermediate result doesn't exist anymore
+			f.delete();
+			
 			Log.w(LOG_TAG, "Caught exception: " + ex.getMessage());
 			return null;
 		}
 	}
 
 	// decodes image and scales it to reduce memory consumption
-	private Bitmap decodeFile(File f)
+	private Bitmap decodeFile(File f, int size)
 	{
 		try
 		{
 			// decode image size
 			BitmapFactory.Options o = new BitmapFactory.Options();
 			o.inJustDecodeBounds = true;
-			//o.inPurgeable = true;
 			
 			BitmapFactory.decodeStream(new FileInputStream(f), null, o);
 
 			// Find the correct scale value. It should be the power of 2.
-			final int REQUIRED_SIZE = 70;
 			int width_tmp = o.outWidth, height_tmp = o.outHeight;
 			int scale = 1;
 			while (true)
 			{
-				if (width_tmp / 2 < REQUIRED_SIZE || height_tmp / 2 < REQUIRED_SIZE)
+				if (width_tmp / 2 < size || height_tmp / 2 < size)
 					break;
 				width_tmp /= 2;
 				height_tmp /= 2;
@@ -125,7 +151,7 @@ public class ImageDownloader {
 			// decode with inSampleSize
 			BitmapFactory.Options o2 = new BitmapFactory.Options();
 			o2.inSampleSize = scale;
-			//o2.inPurgeable = true;
+			o2.inPurgeable = true;
 			
 			return BitmapFactory.decodeStream(new FileInputStream(f), null, o2);
 		} catch (FileNotFoundException e) {
@@ -139,10 +165,14 @@ public class ImageDownloader {
 	private class PhotoToLoad
 	{
 		public String url;
+		public int width;
+		public int height;
 		public SoftReference<ImageView> imageView;
 
-		public PhotoToLoad(String u, SoftReference<ImageView> i)
+		public PhotoToLoad(String u, int w, int h, SoftReference<ImageView> i)
 		{
+			this.width = w;
+			this.height = h;
 			this.url = u;
 			this.imageView = i;
 		}
@@ -198,8 +228,8 @@ public class ImageDownloader {
 						if (photoToLoad.imageView.get() != null) {
 							ImageView imageView = photoToLoad.imageView.get();
 							
-							Bitmap bmp = getBitmap(photoToLoad.url);
-							cache.put(photoToLoad.url, bmp);
+							Bitmap bmp = getBitmap(photoToLoad.url, photoToLoad.width, photoToLoad.height);
+							cache.put(photoToLoad.url + "@" + photoToLoad.width + "x" + photoToLoad.height, bmp);
 							Object tag = imageView.getTag();
 							
 							if (tag != null && ((String) tag).equals(photoToLoad.url)) {

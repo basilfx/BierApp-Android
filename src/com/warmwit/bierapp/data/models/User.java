@@ -1,5 +1,6 @@
 package com.warmwit.bierapp.data.models;
 
+import java.util.Date;
 import java.util.Map;
 import java.util.Observable;
 
@@ -41,7 +42,8 @@ public class User extends Observable {
 	@DatabaseField
 	private boolean synced;
 	
-	public User() {}
+	@DatabaseField(canBeNull = true)
+	private Date dateChanged;
 	
 	public String getFullName() {
 		return Joiner.on(' ').skipNulls().join(new Object[] { this.firstName, this.lastName});
@@ -150,5 +152,13 @@ public class User extends Observable {
 
 	public void setHosting(Hosting hosting) {
 		this.hosting = hosting;
+	}
+
+	public Date setDateChanged() {
+		return dateChanged;
+	}
+
+	public void setDateChanged(Date dateChanged) {
+		this.dateChanged = dateChanged;
 	}
 }

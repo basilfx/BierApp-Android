@@ -1,12 +1,16 @@
 package com.warmwit.bierapp.database;
 
 import java.sql.SQLException;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.warmwit.bierapp.data.models.Product;
+import com.warmwit.bierapp.data.models.TransactionItem;
 import com.warmwit.bierapp.data.models.User;
 import com.warmwit.bierapp.data.models.UserInfo;
 
@@ -50,6 +54,23 @@ public class UserQuery extends QueryHelper {
 		} catch (SQLException e) {
 			this.handleException(e);
 			return null;
+		}
+	}
+	
+	public boolean shouldSync(int id, Date dateChanged) {
+		try {
+			QueryBuilder<User, Integer> queryBuilder = this.userDao.queryBuilder();
+			
+			queryBuilder.selectRaw("COUNT(*)")
+						.where()
+						.eq("id", id)
+						.and()
+						.eq("dateChanged", dateChanged);
+						
+			return (int) this.userDao.queryRawValue(queryBuilder.prepareStatementString()) == 0;
+		} catch (SQLException e) {
+			this.handleException(e);
+			return true;
 		}
 	}
 	

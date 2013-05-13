@@ -25,6 +25,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -54,7 +55,13 @@ public class AuthorizeActivity extends Activity {
         this.webView = (WebView) this.findViewById(R.id.webview);
         
         // Configure it
-        this.webView.getSettings().setJavaScriptEnabled(true);
+        WebSettings settings = this.webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setSavePassword(false);
+        settings.setAppCacheEnabled(true);
+        settings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);
+        
+        // Start webpage
         this.webView.loadUrl(BierAppApplication.getAuthorizeUrl());
         this.webView.setWebViewClient(new WebViewClient() {
         	@Override
@@ -195,5 +202,17 @@ public class AuthorizeActivity extends Activity {
 			// Show dialog
 			builder.show();
 		}
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		this.webView.onPause();
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		this.webView.onResume();
 	}
 }

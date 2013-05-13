@@ -1,6 +1,10 @@
 package com.warmwit.bierapp.views;
 
+import java.util.Random;
+
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -13,7 +17,7 @@ import android.widget.TextView;
 import com.google.common.base.Strings;
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
-import com.warmwit.bierapp.utils.ImageDownloader;
+import com.warmwit.bierapp.utils.ImageLoader;
 
 /**
  *
@@ -60,16 +64,20 @@ public class ProductView extends FrameLayout {
 		holder.count.setVisibility(View.INVISIBLE);
 	}
 	
-	public void setProductLogo(String logoUrl) {
+	public void setProductLogo(String url) {
 		ViewHolder holder = (ViewHolder) this.getTag();
-
-		// Set at first
-		holder.logo.setImageResource(R.drawable.product_beer_none);
 		
-		// Download ad second, if any
- 		if (!Strings.isNullOrEmpty(logoUrl)) {
- 			BierAppApplication.imageDownloader.download(logoUrl, holder.logo);
+ 		if (Strings.isNullOrEmpty(url)) {
+ 			url = "res://" + R.drawable.product_beer_none;
+ 			
+ 			// Resources are decoded each time
+ 			if (!BierAppApplication.imageDownloader.isCached(url)) {
+ 				Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.product_beer_none);
+ 				BierAppApplication.imageDownloader.putCache(url, bitmap);
+ 			}
  		}
+ 		
+ 		BierAppApplication.imageDownloader.download(url, 65, 65, holder.logo);
 	}
 	
 	public void setGuestProduct(boolean guestProduct) {

@@ -7,9 +7,10 @@ import java.util.Random;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.NumberPicker;
@@ -88,6 +89,7 @@ public class UserRowView extends LinearLayout {
 	
 	public void refreshAvatar() {
 		ViewHolder holder = (ViewHolder) this.getTag();
+		String url;
 		
 		// Set at first
 		int[] avatars = new int[] {
@@ -105,10 +107,19 @@ public class UserRowView extends LinearLayout {
 		
 		// Download at second, if any
  		if (!Strings.isNullOrEmpty(user.getAvatarUrl())) {
- 			BierAppApplication.imageDownloader.download(user.getAvatarUrl(), holder.avatar);
+ 			url = user.getAvatarUrl();
  		} else {
- 			holder.avatar.setImageResource(avatars[new Random().nextInt(avatars.length - 1)]);
+ 			int avatar = avatars[new Random().nextInt(avatars.length - 1)];
+ 			url = "res://" + avatar;
+ 			
+ 			// Resources are decoded each time
+ 			if (!BierAppApplication.imageDownloader.isCached(url)) {
+ 				Bitmap bitmap = BitmapFactory.decodeResource(getResources(), avatar);
+ 				BierAppApplication.imageDownloader.putCache(url, bitmap);
+ 			}
  		}
+ 		
+ 		BierAppApplication.imageDownloader.download(url, 65, 65, holder.avatar);
 	}
 	
 	public void refreshUser() {

@@ -33,22 +33,24 @@ public class ApiConnector {
 	
 	public void loadUsers() throws IOException, SQLException {
 		ApiUserPage apiUserPage = (ApiUserPage) this.remoteClient.get("/users/", null);
+		UserQuery userQuery = new UserQuery(this.databaseHelper);
 		
 		for (ApiUser apiUser : apiUserPage.results) {
-			if (!this.databaseHelper.getUserDao().idExists(apiUser.id)) {
+			if (userQuery.shouldSync(apiUser.id, apiUser.date_changed)) {
 				User user = new User();
 				
 				user.setId(apiUser.id);
 				user.setFirstName(apiUser.first_name);
 				user.setLastName(apiUser.last_name);
 				user.setAvatarUrl(apiUser.avatar);
-				user.setType(apiUser.type);
+				user.setType(apiUser.user_type);
+				user.setDateChanged(apiUser.date_changed);
 				
 				user.setDirty(false);
 				user.setSynced(true);
 				
 				// Save changes to database
-				this.databaseHelper.getUserDao().create(user);
+				this.databaseHelper.getUserDao().createOrUpdate(user);
 			}
 		}
 	}
@@ -63,7 +65,7 @@ public class ApiConnector {
 			User user = userQuery.byId(apiUser.id);
 			
 			for (ApiUserInfo apiUserInfo : apiUser.product_info) {
-				Product product = productQuery.byId(apiUserInfo.product_id);
+				Product product = productQuery.byId(apiUserInfo.product);
 				UserInfo userInfo = userQuery.userProductInfo(user, product);
 				boolean exists = true;
 
@@ -173,18 +175,20 @@ public class ApiConnector {
 	
 	public void loadProducts() throws IOException, SQLException {
 		ApiProductPage apiProductPage = (ApiProductPage) this.remoteClient.get("/products/", null);
+		ProductQuery productQuery = new ProductQuery(this.databaseHelper);
 		
 		for (ApiProduct apiProduct : apiProductPage.results) {
-			if (!this.databaseHelper.getProductDao().idExists(apiProduct.id)) {
+			if (productQuery.shouldSync(apiProduct.id, apiProduct.date_changed)) {
 				Product product = new Product();
 				
 				product.setId(apiProduct.id);
 				product.setTitle(apiProduct.title);
 				product.setCost(apiProduct.cost);
 				product.setLogo(apiProduct.logo);
+				product.setDateChanged(apiProduct.date_changed);
 				
 				// Save changes to database
-				this.databaseHelper.getProductDao().create(product);
+				this.databaseHelper.getProductDao().createOrUpdate(product);
 			}
 		}
 	}

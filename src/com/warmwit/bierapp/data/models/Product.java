@@ -1,6 +1,6 @@
 package com.warmwit.bierapp.data.models;
 
-import java.util.Observable;
+import java.util.Date;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
@@ -20,7 +20,8 @@ public class Product {
 	@DatabaseField
 	private String logo;
 	
-	public Product() {}
+	@DatabaseField(canBeNull = true)
+	private Date dateChanged;
 	
 	public int getId() {
 		return id;
@@ -56,5 +57,13 @@ public class Product {
 
 	public String toString() {
 		return this.title;
+	}
+
+	public Date getDateChanged() {
+		return this.dateChanged;
+	}
+
+	public void setDateChanged(Date dateChanged) {
+		this.dateChanged = dateChanged;
 	}	
 }

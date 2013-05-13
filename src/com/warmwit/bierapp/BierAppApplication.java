@@ -8,7 +8,7 @@ import android.app.Application;
 import android.os.Environment;
 
 import com.warmwit.bierapp.data.RemoteClient;
-import com.warmwit.bierapp.utils.ImageDownloader;
+import com.warmwit.bierapp.utils.ImageLoader;
 
 /**
  *
@@ -21,7 +21,7 @@ public class BierAppApplication extends Application {
 	public static final String BASE_URL = "http://10.0.0.30:8000/apps/bierapp/api2";
 	public static final String REDIRECT_URL = "http://www.beterlijst.nl/oauth/catch_me";
 	
-	public static ImageDownloader imageDownloader;
+	public static ImageLoader imageDownloader;
 	public static RemoteClient remoteClient;
 	
 	public static File generalCache;
@@ -30,7 +30,7 @@ public class BierAppApplication extends Application {
 	public BierAppApplication() {
 		this.initCaches();
 		
-		BierAppApplication.imageDownloader = new ImageDownloader(imageCache);
+		BierAppApplication.imageDownloader = new ImageLoader(imageCache);
 	}
 	
 	/**

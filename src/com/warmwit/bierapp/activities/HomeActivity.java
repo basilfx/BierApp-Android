@@ -490,6 +490,11 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     		for (Product product : products) {
     			UserInfo userInfo = userQuery.userProductInfo(user, product); 
     			
+    			// If userInfo is null, no information was found (e.g. no transactions)
+    			if (userInfo == null) {
+    				userInfo = new UserInfo();
+    			}
+    			
     			if (this.transaction != null) {
     				int change = transactionQuery.costByUserAndProduct(
 						this.transaction,
