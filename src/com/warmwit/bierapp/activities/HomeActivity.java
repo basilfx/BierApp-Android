@@ -254,12 +254,15 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     		    	.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
-							// Cancel transactions for this user
-							HomeActivity.this.cancelTransaction(user);
+							if (HomeActivity.this.transaction != null) {
+								// Cancel transactions for this user
+								HomeActivity.this.cancelTransaction(user);
+								new TransactionItemQuery(HomeActivity.this).deleteByTransactionAndUser(HomeActivity.this.transaction, user);
+							}
 							
-							new TransactionItemQuery(HomeActivity.this).deleteByTransactionAndUser(HomeActivity.this.transaction, user);
+							// Delete hosting
 							new HostQuery(HomeActivity.this).delete(user);
-							
+								
 							// Reload data
 							HomeActivity.this.refreshList();
 							HomeActivity.this.refreshMenu();
