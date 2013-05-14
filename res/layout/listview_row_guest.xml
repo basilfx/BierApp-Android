@@ -4,7 +4,7 @@
     android:layout_height="wrap_content"
     android:descendantFocusability="blocksDescendants"
     android:orientation="horizontal"
-    android:padding="3dip" >
+    android:padding="5dp" >
 
     <ImageView
         android:id="@+id/avatar"

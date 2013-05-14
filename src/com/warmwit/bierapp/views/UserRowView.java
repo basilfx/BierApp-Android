@@ -1,5 +1,6 @@
 package com.warmwit.bierapp.views;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
@@ -7,8 +8,7 @@ import java.util.Random;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -17,6 +17,8 @@ import android.widget.NumberPicker;
 import android.widget.TextView;
 
 import com.google.common.base.Strings;
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.callbacks.OnProductClickListener;
@@ -89,7 +91,6 @@ public class UserRowView extends LinearLayout {
 	
 	public void refreshAvatar() {
 		ViewHolder holder = (ViewHolder) this.getTag();
-		String url;
 		
 		// Set at first
 		int[] avatars = new int[] {
@@ -104,22 +105,15 @@ public class UserRowView extends LinearLayout {
 			R.drawable.avatar_9,
 			R.drawable.avatar_10
 		};
+		int avatar = avatars[new Random().nextInt(avatars.length - 1)];
 		
-		// Download at second, if any
- 		if (!Strings.isNullOrEmpty(user.getAvatarUrl())) {
- 			url = user.getAvatarUrl();
- 		} else {
- 			int avatar = avatars[new Random().nextInt(avatars.length - 1)];
- 			url = "res://" + avatar;
- 			
- 			// Resources are decoded each time
- 			if (!BierAppApplication.imageDownloader.isCached(url)) {
- 				Bitmap bitmap = BitmapFactory.decodeResource(getResources(), avatar);
- 				BierAppApplication.imageDownloader.putCache(url, bitmap);
- 			}
- 		}
- 		
- 		BierAppApplication.imageDownloader.download(url, 65, 65, holder.avatar);
+		DisplayImageOptions displayOptions = new DisplayImageOptions.Builder()
+			.cacheOnDisc()	
+			.cacheInMemory()
+			.build();
+		
+		String url = Strings.isNullOrEmpty(user.getAvatarUrl()) ? "drawable://" + avatar : user.getAvatarUrl();
+ 		ImageLoader.getInstance().displayImage(url, holder.avatar);
 	}
 	
 	public void refreshUser() {

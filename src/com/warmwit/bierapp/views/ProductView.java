@@ -1,23 +1,22 @@
 package com.warmwit.bierapp.views;
 
-import java.util.Random;
-
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.PorterDuff.Mode;
+import android.graphics.PorterDuffColorFilter;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnTouchListener;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.google.common.base.Strings;
-import com.warmwit.bierapp.BierAppApplication;
+import com.nostra13.universalimageloader.core.ImageLoader;
 import com.warmwit.bierapp.R;
-import com.warmwit.bierapp.utils.ImageLoader;
 
 /**
  *
@@ -25,6 +24,7 @@ import com.warmwit.bierapp.utils.ImageLoader;
  * @author Bas Stottelaar
  */
 public class ProductView extends FrameLayout {
+	
 	private static class ViewHolder {
 		private TextView change;
 		private TextView count;
@@ -60,24 +60,15 @@ public class ProductView extends FrameLayout {
 	public void setProductMore() {
 		ViewHolder holder = (ViewHolder) this.getTag();
 		
-		holder.logo.setImageResource(android.R.drawable.ic_search_category_default);
+		ImageLoader.getInstance().displayImage("drawable://" + android.R.drawable.ic_search_category_default, holder.logo);
 		holder.count.setVisibility(View.INVISIBLE);
 	}
 	
 	public void setProductLogo(String url) {
 		ViewHolder holder = (ViewHolder) this.getTag();
-		
- 		if (Strings.isNullOrEmpty(url)) {
- 			url = "res://" + R.drawable.product_beer_none;
- 			
- 			// Resources are decoded each time
- 			if (!BierAppApplication.imageDownloader.isCached(url)) {
- 				Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.product_beer_none);
- 				BierAppApplication.imageDownloader.putCache(url, bitmap);
- 			}
- 		}
- 		
- 		BierAppApplication.imageDownloader.download(url, 65, 65, holder.logo);
+	
+		url = Strings.isNullOrEmpty(url) ? "drawable://" + R.drawable.product_beer_none : url;
+		ImageLoader.getInstance().displayImage(url, holder.logo);
 	}
 	
 	public void setGuestProduct(boolean guestProduct) {

@@ -49,9 +49,9 @@ public class RemoteClient {
 			String data = new Gson().toJson(object);
 			HttpResponse response = this.postRequest(completeUrl, data);
 			
-			if (response.getStatusLine().getStatusCode() == 200) {
-				data = EntityUtils.toString(response.getEntity());
-				
+			data = EntityUtils.toString(response.getEntity());
+			
+			if (response.getStatusLine().getStatusCode() == 201) {
 				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss").create();
 				return gson.fromJson(data, ApiTransaction.class);
 			} else {
@@ -79,7 +79,6 @@ public class RemoteClient {
 		HttpResponse response = this.getRequest(completeUrl);
 		
 		String data = EntityUtils.toString(response.getEntity());
-		Log.d(LOG_TAG, "Data: " + data);
 		
 		// Parse result
 		if (url.equals("/")) {

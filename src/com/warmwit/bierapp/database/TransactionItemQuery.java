@@ -1,5 +1,7 @@
 package com.warmwit.bierapp.database;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.sql.SQLException;
 import java.util.List;
 
@@ -33,6 +35,9 @@ public class TransactionItemQuery extends QueryHelper {
 	}
 	
 	public int deleteByTransactionAndUser(Transaction transaction, User user) {
+		checkNotNull(transaction);
+		checkNotNull(user);
+		
 		try {
 			DeleteBuilder<TransactionItem, Integer> deleteBuilder = this.transactionItemDao.deleteBuilder();
 			deleteBuilder.where()

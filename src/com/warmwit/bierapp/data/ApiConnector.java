@@ -107,9 +107,9 @@ public class ApiConnector {
 			TransactionItem transactionItem = new TransactionItem();
 			
 			transactionItem.setId(apiTransactionItem.id);
-			transactionItem.setUser(this.databaseHelper.getUserDao().queryForId(apiTransactionItem.executing_user_id));
-			transactionItem.setPayer(this.databaseHelper.getUserDao().queryForId(apiTransactionItem.accounted_user_id));
-			transactionItem.setProduct(this.databaseHelper.getProductDao().queryForId(apiTransactionItem.product_id));
+			transactionItem.setUser(this.databaseHelper.getUserDao().queryForId(apiTransactionItem.executing_user));
+			transactionItem.setPayer(this.databaseHelper.getUserDao().queryForId(apiTransactionItem.accounted_user));
+			transactionItem.setProduct(this.databaseHelper.getProductDao().queryForId(apiTransactionItem.product));
 			transactionItem.setCount(apiTransactionItem.count);
 			transactionItem.setTransaction(transaction);
 		}
@@ -137,10 +137,10 @@ public class ApiConnector {
 		for (TransactionItem transactionItem : transactionItems) {
 			ApiTransactionItem apiTransactionItem = new ApiTransactionItem();
 			
-			apiTransactionItem.accounted_user_id = transactionItem.getPayer().getId();
-			apiTransactionItem.executing_user_id = transactionItem.getUser().getId();
+			apiTransactionItem.accounted_user = transactionItem.getPayer().getId();
+			apiTransactionItem.executing_user = transactionItem.getUser().getId();
 			apiTransactionItem.count = transactionItem.getCount();
-			apiTransactionItem.product_id = transactionItem.getProduct().getId();
+			apiTransactionItem.product = transactionItem.getProduct().getId();
 			
 			apiTransaction.transaction_items[i] = apiTransactionItem;
 			i++;
