@@ -1,10 +1,6 @@
 package com.warmwit.bierapp.activities;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.io.IOException;
-import java.sql.SQLException;
-
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -20,9 +16,12 @@ import android.view.WindowManager.LayoutParams;
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
+import com.warmwit.bierapp.actions.Action;
+import com.warmwit.bierapp.actions.SyncAction;
 import com.warmwit.bierapp.data.ApiConnector;
+import com.warmwit.bierapp.data.RemoteClient;
 import com.warmwit.bierapp.database.DatabaseHelper;
-import com.warmwit.bierapp.utils.LogUtils;
+import com.warmwit.bierapp.utils.TokenInfo;
 
 /**
  * Splash screen activity. Loads data from server, then advances to 
@@ -48,6 +47,11 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 	private ApiConnector apiConnector;
 	
 	/**
+	 * 
+	 */
+	private TokenInfo tokenInfo;
+	
+	/**
 	 * {@inheritDoc}
 	 */
     @Override
@@ -62,64 +66,41 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
         this.getWindow().setFlags(LayoutParams.FLAG_FULLSCREEN, LayoutParams.FLAG_FULLSCREEN);
         this.setContentView(R.layout.activity_splash);
          
-        // Decide to authorize or not
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        
-        if (preferences.contains("access_token")) {
-        	String accessToken = preferences.getString("access_token", null);
-        	int expires = preferences.getInt("expires_in", -1);
+        // Continue main logic
+        this.start();
+    }
+    
+    private void start() {
+    	RemoteClient remoteClient = BierAppApplication.getRemoteClient();
+    	
+    	// Decide to authorize or not
+        if (remoteClient.getTokenInfo().isValid()) {
+        	// Create API instance
+        	Log.d(LOG_TAG, "Using token info: " + remoteClient.getTokenInfo());
+        	this.apiConnector = new ApiConnector(remoteClient, this.getHelper());
         	
-        	if (accessToken != null) {
-	        	// Setup remote client
-	        	Log.d(LOG_TAG, "Using access token: " + accessToken);
-	        	((BierAppApplication) this.getApplication()).initRemoteClient(accessToken);
-	        	
-	        	// Create API instance
-	        	this.apiConnector = new ApiConnector(BierAppApplication.remoteClient, this.getHelper());
-	        	
-	        	// Load data and advance to next screen
-	            new LoadDataTask().execute();
-	            
-	            // Done
-	            return;
-        	}
+        	// Load data and advance to next screen
+            new LoadDataTask().execute();
+            
+            // Done
+            return;
         }
         
         // Catch for authorization
     	Intent intent = new Intent(SplashActivity.this, AuthorizeActivity.class);
 		startActivity(intent);
     }
-
+    
 	/**
      * Sync data task.
      */
     private class LoadDataTask extends AsyncTask<Void, Void, Integer> {
+    	/**
+    	 * Execute the sync action.
+    	 */
 		@Override
 		protected Integer doInBackground(Void... params) {
-			try {
-				// Products
-				Log.d(LOG_TAG, "Loading products");
-				SplashActivity.this.apiConnector.loadProducts();
-				
-				// Users
-				Log.d(LOG_TAG, "Loading users");
-				SplashActivity.this.apiConnector.loadUsers();
-				
-				// Transactions
-				Log.d(LOG_TAG, "Loading transactions");
-				SplashActivity.this.apiConnector.loadTransactions();
-				
-				// Users info
-				Log.d(LOG_TAG, "Loading users info");
-				SplashActivity.this.apiConnector.loadUserInfo();
-			} catch (IOException e) {
-				return LogUtils.logException(LOG_TAG, e, 1);
-			} catch (SQLException e) {
-				return LogUtils.logException(LOG_TAG, e, 2);
-			}
-	        
-			// Done
-	        return 0;
+			return new SyncAction(SplashActivity.this.apiConnector).basicSync();
 		}
 
 		/**
@@ -133,7 +114,7 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 			checkNotNull(result);
 			
 			switch (result) {
-				case 0:
+				case Action.RESULT_OK:
 					// Advance to next screen, with little delay
 					new Handler().postDelayed(new Runnable(){
 						public void run() {
@@ -145,42 +126,47 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 					}, SplashActivity.SPLASH_TIMEOUT);
 					
 					break;
-				case 1:
-					this.showDialog("Internetverbinding", "Kan de server niet benaderen. Controleer of er een actieve internetverbinding is.");
+				case Action.RESULT_ERROR_CONNECTION:
+					SplashActivity.this.showMessage("Internetverbinding", "Kan de server niet benaderen. Controleer of er een actieve internetverbinding is.");
 					break;
-				case 2:
-					this.showDialog("Applicatiefout", "Interne cache is corrupt. Probeer de applicatiegegevens te wissen en probeer het opnieuw.");
+				case Action.RESULT_ERROR_SQL:
+					SplashActivity.this.showMessage("Applicatiefout", "Interne cache is corrupt. Probeer de applicatiegegevens te wissen en probeer het opnieuw.");
+					break;
+				case Action.RESULT_ERROR_SERVER:
+					SplashActivity.this.showMessage("Serverfout", "De server gaf een onverwacht resultaat terug. Probeer het nogmaals.");
+					break;
+				case Action.RESULT_ERROR_AUTHENTICATION:
+					SplashActivity.this.start();
 					break;
 				default:
-					// Should not land here
-					throw new IllegalStateException();
+					throw new IllegalStateException("Code: " + result);
 			}
 		}
-		
-		/**
-		 * Internal helper to display a dialog with an OK button. After clicking,
-		 * the activity will finish, thus quit.
-		 * 
-		 * @param title Dialog title
-		 * @param message Dialog message
-		 */
-		private void showDialog(String title, String message) {
-			AlertDialog.Builder builder = new AlertDialog.Builder(SplashActivity.this);
-			
-			// Configure alert dialog
-			builder.setTitle(title);
-			builder.setMessage(message);
-			builder.setCancelable(false);
-			builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					// Closes application
-					SplashActivity.this.finish();
-				}
-			});
-			
-			// Show dialog
-			builder.show();
-		}
     }
+    
+    /**
+	 * Helper to display a dialog with an OK button. After clicking, the 
+	 * activity will finish, thus quit.
+	 * 
+	 * @param title Dialog title
+	 * @param message Dialog message
+	 */
+	private void showMessage(String title, String message) {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		
+		// Configure alert dialog
+		builder.setTitle(title);
+		builder.setMessage(message);
+		builder.setCancelable(false);
+		builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				// Closes application
+				SplashActivity.this.finish();
+			}
+		});
+		
+		// Show dialog
+		builder.show();
+	}
 }

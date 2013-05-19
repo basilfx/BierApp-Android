@@ -2,18 +2,21 @@
     android:versionCode="1"
     android:versionName="1.0" android:installLocation="auto" xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <uses-sdk
-        android:minSdkVersion="15"
-        android:targetSdkVersion="15" />
+    <uses-sdk android:minSdkVersion="15" android:targetSdkVersion="15" />
+    
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:name=".BierAppApplication"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme"
-        android:hardwareAccelerated="true" >
+        android:hardwareAccelerated="true" 
+        android:allowBackup="false">
         
         <activity
             android:name=".activities.SplashActivity"
@@ -31,6 +34,8 @@
         <activity android:name=".activities.GuestsActivity"></activity>
         <activity android:name=".activities.TransactionActivity"></activity>
         <activity android:name=".activities.StatsActivity"></activity>
+        
+     	<service android:name=".service.SyncService"></service>
     </application>
 
 </manifest>

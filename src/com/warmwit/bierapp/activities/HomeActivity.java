@@ -8,6 +8,8 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Random;
 
+import org.apache.http.auth.AuthenticationException;
+
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -36,6 +38,8 @@ import com.mobsandgeeks.adapters.Sectionizer;
 import com.mobsandgeeks.adapters.SimpleSectionAdapter;
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
+import com.warmwit.bierapp.actions.Action;
+import com.warmwit.bierapp.actions.SyncAction;
 import com.warmwit.bierapp.callbacks.OnProductClickListener;
 import com.warmwit.bierapp.data.ApiConnector;
 import com.warmwit.bierapp.data.adapters.UserListAdapter;
@@ -52,6 +56,7 @@ import com.warmwit.bierapp.database.ProductQuery;
 import com.warmwit.bierapp.database.TransactionItemQuery;
 import com.warmwit.bierapp.database.TransactionQuery;
 import com.warmwit.bierapp.database.UserQuery;
+import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;
 import com.warmwit.bierapp.utils.LogUtils;
 import com.warmwit.bierapp.utils.ProductInfo;
 import com.warmwit.bierapp.utils.ProgressAsyncTask;
@@ -91,7 +96,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
         super.onCreate(savedInstanceState);
         
         // Connect to API
-		this.apiConnector = new ApiConnector(BierAppApplication.remoteClient, this.getHelper());
+		this.apiConnector = new ApiConnector(BierAppApplication.getRemoteClient(), this.getHelper());
         
         // Set content
         this.setContentView(R.layout.activity_home);
@@ -572,20 +577,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		
 		@Override
 		protected Integer doInBackground(Void... params) {
-			// Refresh the data
-			try {
-				HomeActivity.this.apiConnector.loadProducts();
-				HomeActivity.this.apiConnector.loadUsers();
-				HomeActivity.this.apiConnector.loadTransactions();
-				HomeActivity.this.apiConnector.loadUserInfo();
-			} catch (IOException e) {
-				return LogUtils.logException(LOG_TAG, e, 1);
-			} catch (SQLException e) {
-				return LogUtils.logException(LOG_TAG, e, 2);
-			}
-			
-			// Done
-	        return 0;
+			return new SyncAction(HomeActivity.this.apiConnector).basicSync();
 		}
 		
 		@Override
@@ -672,11 +664,15 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			
 			// Send transaction to the server
 			try {
-				return HomeActivity.this.apiConnector.saveTransaction(HomeActivity.this.transaction) ? 0 : 1;
+				return HomeActivity.this.apiConnector.saveTransaction(HomeActivity.this.transaction) ? Action.RESULT_OK : Action.RESULT_ERROR_INTERNAL;
 			} catch (IOException e) {
-				return LogUtils.logException(LOG_TAG, e, 1);
+				return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_CONNECTION);
 			} catch (SQLException e) {
-				return LogUtils.logException(LOG_TAG, e, 2);
+				return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_SQL);
+			} catch (AuthenticationException e) {
+				return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_AUTHENTICATION);
+			} catch (UnexpectedStatusCode e) {
+				return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_SERVER);
 			}
 		}
 		
@@ -685,7 +681,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			checkNotNull(result);
 			
 			switch (result) {
-				case 0: // OK
+				case Action.RESULT_OK: // OK
 					HomeActivity.this.transaction = null;
 					HomeActivity.this.amount = 0;
 					HomeActivity.this.refreshMenu();
@@ -695,7 +691,8 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 					Toast.makeText(HomeActivity.this, "Transactie succesvol verzonden!", Toast.LENGTH_LONG).show();
 					
 					break;
-				case 1: // POST error
+				case Action.RESULT_ERROR_INTERNAL:
+				case Action.RESULT_ERROR_SERVER:
 					new AlertDialog.Builder(HomeActivity.this)
 						.setMessage("Opslaan van transactie is mislukt. Probeer het nogmaals.")
 						.setTitle("Transactiefout")
@@ -703,7 +700,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 						.show();
 					
 					break;
-				case 2: // Exception
+				case Action.RESULT_ERROR_CONNECTION: // Exception
 					new AlertDialog.Builder(HomeActivity.this)
 						.setMessage("Geen internetverbinding. Probeer het nogmaals.")
 						.setTitle("Connectiefout")
@@ -711,8 +708,16 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 						.show();
 					
 					break;
+				case Action.RESULT_ERROR_AUTHENTICATION:
+					new AlertDialog.Builder(HomeActivity.this)
+						.setMessage("Authenticatie met de server is mislukt. De applicatie moet opnieuw gekoppeld worden.")
+						.setTitle("Authenticatiefout")
+						.create()
+						.show();
+					
+					break;
 				default:
-					throw new IllegalStateException();
+					throw new IllegalStateException("Code: " + result);
 			}
 			
 			super.onPostExecute(result);
