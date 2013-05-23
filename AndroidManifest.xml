@@ -36,6 +36,12 @@
         <activity android:name=".activities.StatsActivity"></activity>
         
      	<service android:name=".service.SyncService"></service>
+     	
+     	<receiver android:name=".service.BatchIntentReceiver">
+        	<intent-filter>
+            	<action android:name="android.intent.action.BOOT_COMPLETED"></action>
+        	</intent-filter>
+    	</receiver>
     </application>
 
 </manifest>

@@ -11,8 +11,11 @@ import java.util.Random;
 import org.apache.http.auth.AuthenticationException;
 
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -29,6 +32,7 @@ import android.widget.Toast;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Iterables;
@@ -57,6 +61,7 @@ import com.warmwit.bierapp.database.TransactionItemQuery;
 import com.warmwit.bierapp.database.TransactionQuery;
 import com.warmwit.bierapp.database.UserQuery;
 import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;
+import com.warmwit.bierapp.service.SyncService;
 import com.warmwit.bierapp.utils.LogUtils;
 import com.warmwit.bierapp.utils.ProductInfo;
 import com.warmwit.bierapp.utils.ProgressAsyncTask;
@@ -80,6 +85,8 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	private List<User> inhabitants;
 	private List<User> guests;
 	private List<Product> products;
+	
+	private BroadcastReceiver broadcastReceiver;
 	
 	/**
 	 * @var Reference to an on-going transaction.
@@ -121,6 +128,42 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
  		this.initList();
     	this.refreshList();
     }
+    
+	@Override
+	protected void onResume() {
+		super.onResume();
+		
+		// Create broadcast receiver
+		this.broadcastReceiver = new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				HomeActivity.this.onHandleIntent(intent);
+			}
+		};
+		
+		// Register for messages
+		this.registerReceiver(this.broadcastReceiver, new IntentFilter(SyncService.SYNC_COMPLETE));
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		
+		// Unregister
+		this.unregisterReceiver(this.broadcastReceiver);
+	}
+	
+	protected void onHandleIntent(Intent intent) {
+		String action = Strings.nullToEmpty(intent.getAction());
+		Log.d(LOG_TAG, "Received intent: " + action);
+		
+		if (action.equals(SyncService.SYNC_COMPLETE)) {
+			if (intent.getLongExtra("result", Action.RESULT_ERROR_UNKNOWN) == Action.RESULT_OK) {
+				HomeActivity.this.refreshMenu();
+				HomeActivity.this.refreshList();
+			}
+		}
+	}
     
     private void initList() {
     	this.userListAdapter = new UserListAdapter(this, this);
