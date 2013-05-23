@@ -7,6 +7,7 @@ import org.apache.http.auth.AuthenticationException;
 
 import android.util.Log;
 
+import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.data.ApiConnector;
 import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;
 import com.warmwit.bierapp.utils.LogUtils;

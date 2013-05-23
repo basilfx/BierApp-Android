@@ -3,6 +3,7 @@ package com.warmwit.bierapp.utils;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.AsyncTask;
+import com.warmwit.bierapp.R;
 
 public abstract class ProgressAsyncTask<X, Y, T> extends AsyncTask<X, Y, T> {
 	private ProgressDialog dialog;

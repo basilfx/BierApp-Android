@@ -1,5 +1,6 @@
 package com.warmwit.bierapp.data;
 
+import com.warmwit.bierapp.R;
 import java.util.Date;
 
 public class ApiProduct {

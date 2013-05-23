@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
+import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.data.models.Product;
 import com.warmwit.bierapp.data.models.TransactionItem;
 import com.warmwit.bierapp.data.models.User;

@@ -172,7 +172,7 @@ public class UserRowView extends LinearLayout {
 	        		new AlertDialog.Builder(UserRowView.this.getContext())
 	    		    	.setView(view)
 	    		    	.setTitle("Alle producten")
-	    		    	.setPositiveButton("Sluiten", null)
+	    		    	.setPositiveButton(R.string.sluiten, null)
 	    		    	.show();
 				}
 			});

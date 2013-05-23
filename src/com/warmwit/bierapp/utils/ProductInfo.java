@@ -1,5 +1,6 @@
 package com.warmwit.bierapp.utils;
 
+import com.warmwit.bierapp.R;
 import java.util.Observable;
 
 public class ProductInfo extends Observable {

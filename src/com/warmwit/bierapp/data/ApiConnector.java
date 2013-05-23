@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.apache.http.auth.AuthenticationException;
 
+import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.data.models.Product;
 import com.warmwit.bierapp.data.models.Transaction;
 import com.warmwit.bierapp.data.models.TransactionItem;
@@ -95,7 +96,7 @@ public class ApiConnector {
 	//
 	
 	// http://stackoverflow.com/questions/12885499/problems-saving-collection-using-ormlite-on-android
-	private void convertToTransaction(ApiTransaction apiTransaction) throws IOException, SQLException {
+	private Transaction convertToTransaction(ApiTransaction apiTransaction) throws IOException, SQLException {
 		Transaction transaction = new Transaction();
 		
 		transaction.setId(apiTransaction.id);
@@ -115,7 +116,12 @@ public class ApiConnector {
 			transactionItem.setProduct(this.databaseHelper.getProductDao().queryForId(apiTransactionItem.product));
 			transactionItem.setCount(apiTransactionItem.count);
 			transactionItem.setTransaction(transaction);
+			
+			this.databaseHelper.getTransactionItemDao().create(transactionItem);
 		}
+		
+		// Done
+		return transaction;
 	}
 	
 	public void loadTransactions() throws IOException, SQLException, UnexpectedStatusCode, AuthenticationException {
@@ -128,7 +134,7 @@ public class ApiConnector {
 		}
 	}
 	
-	public boolean saveTransaction(Transaction transaction) throws IOException, SQLException, UnexpectedStatusCode, AuthenticationException {
+	public Transaction saveTransaction(Transaction transaction) throws IOException, SQLException, UnexpectedStatusCode, AuthenticationException {
 		ApiTransaction apiTransaction = new ApiTransaction();
 		int i = 0;
 		
@@ -153,23 +159,18 @@ public class ApiConnector {
 		Object result = this.remoteClient.post(apiTransaction, "/transactions/", null);
 		
 		// Parse result
-		if (result != null) {
-			apiTransaction = (ApiTransaction) result;
-			
-			// Remove the old transaction
-			new TransactionQuery(this.databaseHelper).delete(transaction);
-			
-			// Save a new one
-			this.convertToTransaction(apiTransaction);
-			
-			// Reload new user data
-			this.loadUserInfo();
-			
-			// Done
-			return true;
-		} else {
-			return false;
+		if (result == null) {
+			return null;
 		}
+		
+		// Convert to ApiTransaction
+		apiTransaction = (ApiTransaction) result;
+		
+		// Remove the old transaction
+		new TransactionQuery(this.databaseHelper).delete(transaction);
+		
+		// Save a new one
+		return this.convertToTransaction(apiTransaction);
 	}
 	
 	//

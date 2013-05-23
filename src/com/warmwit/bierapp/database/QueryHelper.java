@@ -1,6 +1,7 @@
 package com.warmwit.bierapp.database;
 
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
+import com.warmwit.bierapp.R;
 
 public class QueryHelper {
 

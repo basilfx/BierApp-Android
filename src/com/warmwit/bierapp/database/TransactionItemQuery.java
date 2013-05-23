@@ -8,6 +8,8 @@ import java.util.List;
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.DeleteBuilder;
+import com.j256.ormlite.stmt.QueryBuilder;
+import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.data.models.Transaction;
 import com.warmwit.bierapp.data.models.TransactionItem;
 import com.warmwit.bierapp.data.models.User;
@@ -25,13 +27,25 @@ public class TransactionItemQuery extends QueryHelper {
 		this.transactionItemDao = databaseHelper.getTransactionItemDao();
 	}
 	
-	public List<TransactionItem> byTransaction(Transaction transaction) {
+	public List<TransactionItem> byTransaction(Transaction transaction, String order) {
 		try {
-			return this.transactionItemDao.queryForEq("transaction_id", transaction.getId());
+			QueryBuilder<TransactionItem, Integer> queryBuilder = this.transactionItemDao.queryBuilder();
+			
+			queryBuilder.where().eq("transaction_id", transaction.getId());
+			
+			if (order != null) {
+				queryBuilder.orderBy(order, true);
+			}
+			
+			return queryBuilder.query();
 		} catch (SQLException e) {
 			this.handleException(e);
 			return null;
 		}
+	}
+	
+	public List<TransactionItem> byTransaction(Transaction transaction) {
+		return this.byTransaction(transaction, null);
 	}
 	
 	public int deleteByTransactionAndUser(Transaction transaction, User user) {

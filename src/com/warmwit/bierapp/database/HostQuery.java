@@ -8,6 +8,7 @@ import java.util.List;
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.ForeignCollection;
+import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.data.models.HostMapping;
 import com.warmwit.bierapp.data.models.Hosting;
 import com.warmwit.bierapp.data.models.User;

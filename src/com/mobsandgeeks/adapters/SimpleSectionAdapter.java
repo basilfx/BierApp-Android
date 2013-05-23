@@ -28,6 +28,7 @@ import android.widget.BaseAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import com.warmwit.bierapp.R;
 
 /**
  * A very simple adapter that adds sections to adapters written for {@link ListView}s.

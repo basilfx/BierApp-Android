@@ -46,6 +46,7 @@ import com.warmwit.bierapp.actions.Action;
 import com.warmwit.bierapp.actions.SyncAction;
 import com.warmwit.bierapp.callbacks.OnProductClickListener;
 import com.warmwit.bierapp.data.ApiConnector;
+import com.warmwit.bierapp.data.adapters.TransactionItemListAdapter;
 import com.warmwit.bierapp.data.adapters.UserListAdapter;
 import com.warmwit.bierapp.data.models.HostMapping;
 import com.warmwit.bierapp.data.models.Hosting;
@@ -169,7 +170,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     	this.userListAdapter = new UserListAdapter(this, this);
     	
     	// Create sectionizer to separate guests from inhabitants
-    	SimpleSectionAdapter<User> sectionAdapter = new SimpleSectionAdapter<User>(
+    	this.userListView.setAdapter(new SimpleSectionAdapter<User>(
 			this, this.userListAdapter, R.layout.listview_row_header, R.id.header, new Sectionizer<User>() {
 			@Override
 			public String getSectionTitleForItem(User instance) {
@@ -179,14 +180,12 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 					case User.GUEST:
 						return "Gasten";
 					default:
-						Log.e(LOG_TAG, "Requested user type " + instance.getType());
-						throw new IllegalStateException();
+						throw new IllegalStateException("type " + instance.getType());
 				}
 			}		
-		});
+		}));
     	
-	    // Display data and register context menu
-    	this.userListView.setAdapter(sectionAdapter);
+	    // Register context menu
     	this.registerForContextMenu(this.userListView);
     }
 
@@ -241,7 +240,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     			
 				// Create the first dialog
     			new AlertDialog.Builder(this)
-    		    	.setTitle("Kies een gast")
+    		    	.setTitle(R.string.kies_een_gast)
     		    	.setAdapter(adapter, new DialogInterface.OnClickListener() {
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
@@ -249,7 +248,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 							
 							// Create the second dialog
 							new AlertDialog.Builder(HomeActivity.this)
-								.setTitle("Kies de host(s)")
+								.setTitle(R.string.kies_de_host_s_)
 								.setMultiChoiceItems(
 									names, 
 									states,
@@ -260,7 +259,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 										}
 									}
 								)
-								.setPositiveButton("Toevoegen", new DialogInterface.OnClickListener() {
+								.setPositiveButton(R.string.toevoegen, new DialogInterface.OnClickListener() {
 									@Override
 									public void onClick(DialogInterface dialog, int which) {
 										List<User> hosts = Lists.newArrayList();
@@ -278,14 +277,14 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 											HomeActivity.this.refreshList();
 											
 											// Done
-											Toast.makeText(HomeActivity.this, guest.getName() + " als gast toegevoegd.", Toast.LENGTH_LONG).show();
+											Toast.makeText(HomeActivity.this, HomeActivity.this.getResources().getString(R.string.s_als_gast_toegevoegd, guest.getName()), Toast.LENGTH_LONG).show();
 										} else {
 											// Done
-											Toast.makeText(HomeActivity.this, "Gast niet toegevoegd omdat er geen hosts geselecteerd zijn.", Toast.LENGTH_LONG).show();
+											Toast.makeText(HomeActivity.this, R.string.gast_niet_toegevoegd_omdat_er_geen_hosts_geselecteerd_zijn, Toast.LENGTH_LONG).show();
 										}
 									}
 								})
-								.setNegativeButton("Annuleren", null)
+								.setNegativeButton(R.string.annuleren, null)
 								.show();
 						}
 	    		    })
@@ -297,7 +296,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				
 				// Create a dialog
     			new AlertDialog.Builder(this)
-    		    	.setMessage("Weet je zeker dat je " + user.getName() + " wilt verwijderen?")
+    		    	.setMessage(HomeActivity.this.getResources().getString(R.string.weet_je_zeker_dat_je_s_wilt_verwijderen, user.getName()))
     		    	.setNegativeButton(android.R.string.no, null)
     		    	.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 						@Override
@@ -316,7 +315,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 							HomeActivity.this.refreshMenu();
 							
 							// Done
-							Toast.makeText(HomeActivity.this, user.getName() + " is verwijderd.", Toast.LENGTH_LONG).show();
+							Toast.makeText(HomeActivity.this, HomeActivity.this.getResources().getString(R.string.s_is_verwijderd, user.getName()), Toast.LENGTH_LONG).show();
 						}
 					})
 	    			.show();
@@ -353,7 +352,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				this.refreshMenu();
 				
 				// Done
-				Toast.makeText(HomeActivity.this, "Transactie-items voor " + user.getName() + " gewist.", Toast.LENGTH_LONG).show();
+				Toast.makeText(HomeActivity.this, this.getResources().getString(R.string.transactie_items_voor_s_gewist, user.getName()), Toast.LENGTH_LONG).show();
     		    
     			return true;
     		default:
@@ -380,8 +379,8 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				// Refresh data
 				if (this.transaction != null) {
 					new AlertDialog.Builder(this)
-						.setTitle("Vernieuwen")
-						.setMessage("Er is een huidige transactie gaande die gewist zal worden. Wil je doorgaan?")
+						.setTitle(R.string.vernieuwen)
+						.setMessage(R.string.er_is_een_huidige_transactie_gaande_die_gewist_zal_worden_wil_je_doorgaan)
 						.setNegativeButton(android.R.string.no, null)
 						.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 							@Override
@@ -401,22 +400,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				
 				return true;
 			case R.id.menu_purchase_show:
-				checkNotNull(this.transaction);
-				
-				TransactionItemQuery transactionItemQuery = new TransactionItemQuery(this);
-				List<TransactionItem> transactionItems = transactionItemQuery.byTransaction(this.transaction);
-				List<String> message = Lists.newArrayList();
-				
-				for (TransactionItem transactionItem : transactionItems) {
-					message.add(transactionItem.getUser().getFullName() + "\t\t" + transactionItem.getCount() + "x " + transactionItem.getProduct());
-				}
-				
-				// Set the message
-				new AlertDialog.Builder(this)
-					.setTitle("Huidige transactie")
-					.setPositiveButton("Sluiten", null)
-					.setMessage(Joiner.on("\n").join(message))
-					.show();
+				this.showTransactionSummary(checkNotNull(this.transaction), false);
 				
 				return true;
 			case R.id.menu_purchase_cancel:
@@ -445,7 +429,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				this.refreshMenu();
 				
 				// Display toast message
-				Toast.makeText(HomeActivity.this, "Transactie gewist", Toast.LENGTH_LONG).show();
+				Toast.makeText(HomeActivity.this, R.string.transactie_gewist, Toast.LENGTH_LONG).show();
 				
 				return true;
 			default:
@@ -517,7 +501,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		if (this.amount == 0) {
 			this.purchaseMenu.setVisible(false);
 		} else {
-			this.purchaseMenu.setTitle((this.amount * -1) + " consumpties");
+			this.purchaseMenu.setTitle(this.getResources().getString(R.string.d_consumpties, -1 * this.amount));
 			this.purchaseMenu.setVisible(true);
 		}
 	}
@@ -578,7 +562,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		
 		// Start a new transaction if needed
 		if (this.transaction == null) {
-			this.transaction = transactionQuery.create("Verkoop vanaf Tablet");
+			this.transaction = transactionQuery.create(getString(R.string.verkoop_vanaf_tablet));
 		}
 		
 		// Create (or update an existing) transaction item
@@ -598,12 +582,36 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		userView.refreshProducts();
 		this.refreshMenu();
 	}
-
+	
+	private void showTransactionSummary(Transaction transaction, final boolean byPayer) {
+		TransactionItemQuery transactionItemQuery = new TransactionItemQuery(this);
+		ListView listView = new ListView(this);
+		
+		// Create inner adapter
+		TransactionItemListAdapter adapter = new TransactionItemListAdapter(this);
+		adapter.addAll(transactionItemQuery.byTransaction(transaction, byPayer ? "payer_id" : "user_id"));
+		
+		// Create outer adapter
+		listView.setAdapter(new SimpleSectionAdapter<TransactionItem>(
+			this, adapter, R.layout.listview_row_header, R.id.header, new Sectionizer<TransactionItem>() {
+				@Override
+				public String getSectionTitleForItem(TransactionItem instance) {
+					return byPayer ? instance.getPayer().getName() : instance.getUser().getName();
+				}		
+		}));
+		
+		// Display dialog
+		new AlertDialog.Builder(this)
+			.setTitle(R.string.transactiesamenvatting)
+			.setPositiveButton(R.string.sluiten, null)
+			.setView(listView)
+			.show();
+	}
 	
 	private class LoadDataTask extends ProgressAsyncTask<Void, Void, Integer> {
 		public LoadDataTask() {
 	        super(HomeActivity.this);
-	        this.setMessage("Gegevens herladen");
+	        this.setMessage(HomeActivity.this.getResources().getString(R.string.gegevens_herladen));
 	    }
 		
 		@Override
@@ -634,7 +642,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 					HomeActivity.this.refreshMenu();
 					
 					// Inform user
-					Toast.makeText(HomeActivity.this, "Data vernieuwd", Toast.LENGTH_LONG).show();
+					Toast.makeText(HomeActivity.this, R.string.data_vernieuwd, Toast.LENGTH_LONG).show();
 					
 					break;
 				case 1:
@@ -650,9 +658,11 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	}
 	
 	private class SaveTransactionTask extends ProgressAsyncTask<Void, Void, Integer> {
+		private Transaction result;
+		
 		public SaveTransactionTask() {
 			super(HomeActivity.this);
-			this.setMessage("Transactie versturen");
+			this.setMessage(HomeActivity.this.getResources().getString(R.string.transactie_versturen));
 	    }
 
 		@Override
@@ -700,14 +710,23 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 						HomeActivity.this.getHelper().getTransactionItemDao().update(transactionItem);
 						HomeActivity.this.getHelper().getHostMappingDao().update(payer);
 					} catch (SQLException e) {
-						
+						LogUtils.logException(LOG_TAG, e, 0);
 					}
 				}
 			}
 			
 			// Send transaction to the server
 			try {
-				return HomeActivity.this.apiConnector.saveTransaction(HomeActivity.this.transaction) ? Action.RESULT_OK : Action.RESULT_ERROR_INTERNAL;
+				this.result = HomeActivity.this.apiConnector.saveTransaction(HomeActivity.this.transaction);
+				
+				if (this.result != null) {
+					// Reload new user data
+					HomeActivity.this.apiConnector.loadUserInfo();
+					
+					return Action.RESULT_OK;
+				} else {
+					return Action.RESULT_ERROR_INTERNAL;
+				}
 			} catch (IOException e) {
 				return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_CONNECTION);
 			} catch (SQLException e) {
@@ -730,31 +749,34 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 					HomeActivity.this.refreshMenu();
 					HomeActivity.this.refreshList();
 					
+					// Display summary
+					HomeActivity.this.showTransactionSummary(this.result, true);
+					
 					// Done
-					Toast.makeText(HomeActivity.this, "Transactie succesvol verzonden!", Toast.LENGTH_LONG).show();
+					Toast.makeText(HomeActivity.this, R.string.transactie_succesvol_verzonden, Toast.LENGTH_LONG).show();
 					
 					break;
 				case Action.RESULT_ERROR_INTERNAL:
 				case Action.RESULT_ERROR_SERVER:
 					new AlertDialog.Builder(HomeActivity.this)
-						.setMessage("Opslaan van transactie is mislukt. Probeer het nogmaals.")
-						.setTitle("Transactiefout")
+						.setMessage(R.string.opslaan_van_transactie_is_mislukt_probeer_het_nogmaals)
+						.setTitle(R.string.transactiefout)
 						.create()
 						.show();
 					
 					break;
 				case Action.RESULT_ERROR_CONNECTION: // Exception
 					new AlertDialog.Builder(HomeActivity.this)
-						.setMessage("Geen internetverbinding. Probeer het nogmaals.")
-						.setTitle("Connectiefout")
+						.setMessage(R.string.geen_internetverbinding_probeer_het_nogmaals)
+						.setTitle(R.string.connectiefout)
 						.create()
 						.show();
 					
 					break;
 				case Action.RESULT_ERROR_AUTHENTICATION:
 					new AlertDialog.Builder(HomeActivity.this)
-						.setMessage("Authenticatie met de server is mislukt. De applicatie moet opnieuw gekoppeld worden.")
-						.setTitle("Authenticatiefout")
+						.setMessage(R.string.authenticatie_met_de_server_is_mislukt_de_applicatie_moet_opnieuw_gekoppeld_worden)
+						.setTitle(R.string.authenticatiefout)
 						.create()
 						.show();
 					

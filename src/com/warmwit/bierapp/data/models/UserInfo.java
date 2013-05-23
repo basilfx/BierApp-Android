@@ -2,6 +2,7 @@ package com.warmwit.bierapp.data.models;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+import com.warmwit.bierapp.R;
 
 @DatabaseTable
 public class UserInfo {

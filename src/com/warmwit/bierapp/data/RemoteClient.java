@@ -19,6 +19,7 @@ import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.actions.RefreshTokenAction;
 import com.warmwit.bierapp.exceptions.RetryException;
 import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;

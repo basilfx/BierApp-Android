@@ -1,6 +1,7 @@
 package com.warmwit.bierapp.service;
 
 import com.google.common.base.Strings;
+import com.warmwit.bierapp.R;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;

@@ -16,6 +16,8 @@
 
 package com.mobsandgeeks.adapters;
 
+import com.warmwit.bierapp.R;
+
 /**
  * Interface provides mechanism for supplying titles for instances based on the property they are 
  * compared against. The parameterized type of the <b>Sectionizer</b> should be same as that of the 

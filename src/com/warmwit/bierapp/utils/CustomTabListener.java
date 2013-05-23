@@ -7,6 +7,7 @@ import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.os.Bundle;
 import android.util.Log;
+import com.warmwit.bierapp.R;
 
 public class CustomTabListener<T extends Fragment> implements TabListener {
     private Fragment mFragment;

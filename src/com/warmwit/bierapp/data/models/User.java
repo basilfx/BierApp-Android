@@ -8,6 +8,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.utils.ProductInfo;
 
 @DatabaseTable
