@@ -18,5 +18,31 @@
     <string name="menu_purchase_confirm">Consumeren</string>
     <string name="menu_purchase_show">Weergeven</string>
     <string name="menu_purchase_cancel">Wissen</string>
+    <string name="kies_een_gast">Kies een gast</string>
+    <string name="kies_de_host_s_">Kies de host(s)</string>
+    <string name="toevoegen">Toevoegen</string>
+    <string name="gast_niet_toegevoegd_omdat_er_geen_hosts_geselecteerd_zijn">Gast niet toegevoegd omdat er geen hosts geselecteerd zijn.</string>
+    <string name="annuleren">Annuleren</string>
+    <string name="s_als_gast_toegevoegd">%s als gast toegevoegd.</string>
+    <string name="weet_je_zeker_dat_je_s_wilt_verwijderen">Weet je zeker dat je %s wilt verwijderen?</string>
+    <string name="s_is_verwijderd">" is verwijderd."</string>
+    <string name="transactie_items_voor_s_gewist">Transactie-items voor %s gewist.</string>
+    <string name="er_is_een_huidige_transactie_gaande_die_gewist_zal_worden_wil_je_doorgaan">Er is een huidige transactie gaande die gewist zal worden. Wil je doorgaan?</string>
+    <string name="vernieuwen">Vernieuwen</string>
+    <string name="transactie_gewist">Transactie gewist</string>
+    <string name="d_consumpties">%d consumpties</string>
+    <string name="verkoop_vanaf_tablet">Verkoop vanaf Tablet</string>
+    <string name="transactiesamenvatting">Transactiesamenvatting</string>
+    <string name="gegevens_herladen">Gegevens herladen</string>
+    <string name="sluiten">Sluiten</string>
+    <string name="data_vernieuwd">Data vernieuwd</string>
+    <string name="transactie_versturen">Transactie versturen</string>
+    <string name="transactie_succesvol_verzonden">Transactie succesvol verzonden!</string>
+    <string name="opslaan_van_transactie_is_mislukt_probeer_het_nogmaals">Opslaan van transactie is mislukt. Probeer het nogmaals.</string>
+    <string name="geen_internetverbinding_probeer_het_nogmaals">Geen internetverbinding. Probeer het nogmaals.</string>
+    <string name="connectiefout">Connectiefout</string>
+    <string name="transactiefout">Transactiefout</string>
+    <string name="authenticatie_met_de_server_is_mislukt_de_applicatie_moet_opnieuw_gekoppeld_worden">Authenticatie met de server is mislukt. De applicatie moet opnieuw gekoppeld worden.</string>
+    <string name="authenticatiefout">Authenticatiefout</string>
 
 </resources>
