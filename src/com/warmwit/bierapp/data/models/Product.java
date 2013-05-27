@@ -4,24 +4,23 @@ import java.util.Date;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import com.warmwit.bierapp.R;
 
-@DatabaseTable
+@DatabaseTable(tableName = "product")
 public class Product {
 	
-	@DatabaseField(index = true, id = true)
+	@DatabaseField(columnName = "id", index = true, id = true)
 	private int id;
 	
-	@DatabaseField
+	@DatabaseField(columnName = "title")
 	private String title;
 	
-	@DatabaseField
+	@DatabaseField(columnName = "cost")
 	private int cost;
 	
-	@DatabaseField
+	@DatabaseField(columnName = "logo")
 	private String logo;
 	
-	@DatabaseField(canBeNull = true)
+	@DatabaseField(columnName = "dateChanged", canBeNull = true)
 	private Date dateChanged;
 	
 	public int getId() {

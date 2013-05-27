@@ -1,14 +1,13 @@
 package com.warmwit.bierapp.service;
 
-import com.google.common.base.Strings;
-import com.warmwit.bierapp.R;
-
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
+
+import com.google.common.base.Strings;
 
 public class BatchIntentReceiver extends BroadcastReceiver {
 	public static final String LOG_TAG = "BatchIntentReceiver";

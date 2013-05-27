@@ -1,8 +1,9 @@
 package com.warmwit.bierapp.data;
 
-import com.warmwit.bierapp.R;
-import java.util.Date;
+import com.google.gson.annotations.SerializedName;
+
 
 public class ApiTransactionPage extends ApiPage {
+	@SerializedName("results")
 	public ApiTransaction[] results;
 }

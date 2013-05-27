@@ -44,5 +44,19 @@
     <string name="transactiefout">Transactiefout</string>
     <string name="authenticatie_met_de_server_is_mislukt_de_applicatie_moet_opnieuw_gekoppeld_worden">Authenticatie met de server is mislukt. De applicatie moet opnieuw gekoppeld worden.</string>
     <string name="authenticatiefout">Authenticatiefout</string>
-
+    <string name="toon_transactiesamenvatting_na_opslaan">Toon transactiesamenvatting na opslaan.</string>
+    <string name="transacties">Transacties</string>
+    <string name="resumeerwaarschuwing">Resumeerwaarschuwing</string>
+    <string name="toon_waarschuwing_by_het_resumeren_van_een_oude_transactie">Toon waarschuwing by het resumeren van een oude transactie</string>
+    <string name="overig">Overig</string>
+    <string name="website">Website</string>
+    <string name="bezoek_website_van_beterlijst">Bezoek website van Beterlijst</string>
+    <string name="gasten_automatisch_verwijderen">Gasten automatisch verwijderen</string>
+    <string name="automatisch_gasten_verwijderen_uit_overzicht_na_een_bepaalde_tijd">Automatisch gasten verwijderen uit overzicht na een bepaalde tijd.</string>
+    <string name="gasten">Gasten</string>
+    <string name="resumeertimeout">Resumeertimeout</string>
+    <string name="selecteer_timeout">Selecteer timeout</string>
+    <string name="verwijdertimeout">Verwijdertimeout</string>
+    <string name="transactie_resumeren">Transactie resumeren</string>
+    <string formatted="false" name="let_op_er_is_op_dit_moment_een_transactie_gestart_die_aangemaakt_is_op_s_om_s_uur">Let op: er wordt een transactie geresumeerd die is aangemaakt op %s om %s uur!</string>
 </resources>

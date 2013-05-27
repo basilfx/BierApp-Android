@@ -16,7 +16,6 @@
 
 package com.mobsandgeeks.adapters;
 
-import com.warmwit.bierapp.R;
 
 /**
  * Interface provides mechanism for supplying titles for instances based on the property they are 

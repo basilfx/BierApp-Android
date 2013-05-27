@@ -2,21 +2,20 @@ package com.warmwit.bierapp.data.models;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import com.warmwit.bierapp.R;
 
-@DatabaseTable
+@DatabaseTable(tableName = "userinfo")
 public class UserInfo {
 	
-	@DatabaseField(index = true, generatedId = true)
+	@DatabaseField(columnName = "id", index = true, generatedId = true)
 	private int id;
 	
-	@DatabaseField(foreign = true)
+	@DatabaseField(columnName = "user_id", foreign = true)
 	private User user;
 	
-	@DatabaseField(foreign = true)
+	@DatabaseField(columnName = "product_id", foreign = true)
 	private Product product;
 	
-	@DatabaseField
+	@DatabaseField(columnName = "count")
 	private int count;
 
 	public int getId() {

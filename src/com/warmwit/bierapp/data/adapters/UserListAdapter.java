@@ -1,7 +1,6 @@
 package com.warmwit.bierapp.data.adapters;
 
 import android.app.Activity;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;

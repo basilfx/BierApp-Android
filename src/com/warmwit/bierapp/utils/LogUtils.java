@@ -1,7 +1,6 @@
 package com.warmwit.bierapp.utils;
 
 import android.util.Log;
-import com.warmwit.bierapp.R;
 
 public class LogUtils {
 	/**

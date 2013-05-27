@@ -1,6 +1,5 @@
 package com.warmwit.bierapp.actions;
 
-import com.warmwit.bierapp.R;
 
 public class Action {
 	public static final int RESULT_OK = 0;

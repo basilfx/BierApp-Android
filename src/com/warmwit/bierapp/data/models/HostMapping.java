@@ -2,21 +2,20 @@ package com.warmwit.bierapp.data.models;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import com.warmwit.bierapp.R;
 
-@DatabaseTable
+@DatabaseTable(tableName = "hostmapping")
 public class HostMapping {
 
-	@DatabaseField(index = true, generatedId = true)
+	@DatabaseField(columnName = "id", index = true, generatedId = true)
 	private int id;
 	
-	@DatabaseField(foreign = true)
+	@DatabaseField(columnName = "hosting_id", foreign = true)
 	private Hosting hosting;
 	
-	@DatabaseField(foreign = true)
+	@DatabaseField(columnName = "host_id", foreign = true)
 	private User host;
 
-	@DatabaseField
+	@DatabaseField(columnName = "timesPaid")
 	private int timesPaid;
 	
 	public int getId() {

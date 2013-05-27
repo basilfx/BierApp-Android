@@ -6,11 +6,8 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -150,12 +147,20 @@ public class AuthorizeActivity extends Activity {
 		// Show spinner while loading
 		AuthorizeActivity.this.dialog.show();
 		
+		// Build request URL
+		String url = Uri.parse(BierAppApplication.OAUTH2_AUTHORIZE_URL)
+			.buildUpon()
+			.appendQueryParameter("client_id", BierAppApplication.OAUTH2_CLIENT_ID)
+			.appendQueryParameter("redirect_uri", BierAppApplication.OAUTH2_REDIRECT_URL)
+			.appendQueryParameter("response_type","code")
+			.toString();
+		
 		// Load webpage
-        this.webView.loadUrl(BierAppApplication.getAuthorizeUrl());
+        this.webView.loadUrl(url);
         this.webView.setWebViewClient(new WebViewClient() {
         	@Override
         	public boolean shouldOverrideUrlLoading(WebView view, String url) {
-        		if (url.startsWith(BierAppApplication.REDIRECT_URL)) {
+        		if (url.startsWith(BierAppApplication.OAUTH2_REDIRECT_URL)) {
         			Log.d(LOG_TAG, "Caught redirect URL: " + url);
         			
         			// Strip code

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="preference_transaction_timeouts">
+        <item>10 minuten</item>
+        <item>30 minuten</item>
+        <item>1 uur</item>
+        <item>2 uur</item>
+        <item>12 uur</item>
+        <item>1 dag</item>
+    </string-array>
+    
+    <string-array name="preference_transaction_timeouts_values">
+        <item>600</item>
+        <item>1800</item>
+        <item>3600</item>
+        <item>7200</item>
+        <item>43200</item>
+        <item>86400</item>
+    </string-array>
+    
+    <string-array name="preference_guest_timeouts">
+        <item>1 uur</item>
+        <item>2 uur</item>
+        <item>12 uur</item>
+        <item>1 dag</item>
+        <item>1 week</item>
+    </string-array>
+    
+    <string-array name="preference_guest_timeouts_values">
+        <item>3600</item>
+        <item>7200</item>
+        <item>43200</item>
+        <item>86400</item>
+        <item>604800</item>
+    </string-array>
+</resources>

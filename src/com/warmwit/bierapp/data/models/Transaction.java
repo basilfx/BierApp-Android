@@ -2,29 +2,25 @@ package com.warmwit.bierapp.data.models;
 
 import java.util.Date;
 
-import com.google.common.collect.Multimap;
-import com.j256.ormlite.dao.ForeignCollection;
 import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
-import com.warmwit.bierapp.R;
 
-@DatabaseTable
+@DatabaseTable(tableName = "transaction")
 public class Transaction {
 
-	@DatabaseField(index = true, generatedId = true)
+	@DatabaseField(columnName = "id", index = true, generatedId = true)
 	private int id;
 	
-	@DatabaseField
+	@DatabaseField(columnName = "description")
 	private String description;
 	
-	@DatabaseField(canBeNull = true)
+	@DatabaseField(columnName = "dateCreated", canBeNull = true)
 	private Date dateCreated;
 
-	@DatabaseField
+	@DatabaseField(columnName = "dirty")
 	private boolean dirty;
 	
-	@DatabaseField
+	@DatabaseField(columnName = "synced")
 	private boolean synced;
 
 	public Date getDateCreated() {

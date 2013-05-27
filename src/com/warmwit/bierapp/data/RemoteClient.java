@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
 
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthenticationException;
 import org.apache.http.client.HttpClient;
@@ -15,13 +14,13 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.warmwit.bierapp.R;
+import com.google.gson.JsonSyntaxException;
 import com.warmwit.bierapp.actions.RefreshTokenAction;
 import com.warmwit.bierapp.exceptions.RetryException;
+import com.warmwit.bierapp.exceptions.UnexpectedData;
 import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;
 import com.warmwit.bierapp.utils.TokenInfo;
 
@@ -60,7 +59,7 @@ public class RemoteClient {
 		this.tokenInfo = tokenInfo;
 	}
 	
-	public Object post(Object object, String url, String query) throws IOException, AuthenticationException, UnexpectedStatusCode {
+	public Object post(Object object, String url, String query) throws IOException, AuthenticationException, UnexpectedStatusCode, UnexpectedData {
 		checkNotNull(url);
 		
 		String completeUrl = url + (query != null ? "?" + query : "");
@@ -73,7 +72,12 @@ public class RemoteClient {
 			
 			if (response.getStatusLine().getStatusCode() == 201) {
 				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss").create();
-				return gson.fromJson(data, ApiTransaction.class);
+				
+				try {
+					return gson.fromJson(data, ApiTransaction.class);
+				} catch (JsonSyntaxException e) {
+					throw new UnexpectedData("JSON parse error");
+				}	
 			} else {
 				return null;
 			}
@@ -83,7 +87,7 @@ public class RemoteClient {
 		throw new UnsupportedOperationException(url);
 	}
 	
-	public Object get(String url, String query) throws IOException, AuthenticationException, UnexpectedStatusCode {
+	public Object get(String url, String query) throws IOException, AuthenticationException, UnexpectedStatusCode, UnexpectedData {
 		checkNotNull(url);
 		
 		// Build complete URL
@@ -99,31 +103,35 @@ public class RemoteClient {
 		HttpResponse response = this.getRequest(completeUrl);
 		
 		String data = EntityUtils.toString(response.getEntity());
-		Log.d(LOG_TAG, data);
+		//Log.d(LOG_TAG, data);
 		
 		// Parse result
-		if (url.equals("/")) {
-			return new Gson().fromJson(data, ApiRoot.class);
-		} else if (url.startsWith("/users")) {
-			if (url.equals("/users")) { // All users
-				return gson.fromJson(data, ApiUserPage.class);
-			} else if (url.equals("/users/info")) {
-				return gson.fromJson(data, ApiUserPage.class);
-			} else { // Single user
-				return gson.fromJson(data, ApiUser.class);
+		try {
+			if (url.equals("/")) {
+				return new Gson().fromJson(data, ApiRoot.class);
+			} else if (url.startsWith("/users")) {
+				if (url.equals("/users")) { // All users
+					return gson.fromJson(data, ApiUserPage.class);
+				} else if (url.equals("/users/info")) {
+					return gson.fromJson(data, ApiUserPage.class);
+				} else { // Single user
+					return gson.fromJson(data, ApiUser.class);
+				}
+			} else if (url.startsWith("/products")) {
+				if (url.equals("/products")) { // All products
+					return gson.fromJson(data, ApiProductPage.class);
+				} else { // Single product
+					return gson.fromJson(data, ApiProduct.class);
+				}
+			} else if (url.startsWith("/transactions")) {
+				if (url.equals("/transactions")) { // All transactions
+					return gson.fromJson(data, ApiTransactionPage.class);
+				} else { // Single transaction
+					return gson.fromJson(data, ApiTransaction.class);
+				}
 			}
-		} else if (url.startsWith("/products")) {
-			if (url.equals("/products")) { // All products
-				return gson.fromJson(data, ApiProductPage.class);
-			} else { // Single product
-				return gson.fromJson(data, ApiProduct.class);
-			}
-		} else if (url.startsWith("/transactions")) {
-			if (url.equals("/transactions")) { // All transactions
-				return gson.fromJson(data, ApiTransactionPage.class);
-			} else { // Single transaction
-				return gson.fromJson(data, ApiTransaction.class);
-			}
+		} catch (JsonSyntaxException e) {
+			throw new UnexpectedData("JSON parse error");
 		}
 		
 		// If we arrive here, the URL is not caught.

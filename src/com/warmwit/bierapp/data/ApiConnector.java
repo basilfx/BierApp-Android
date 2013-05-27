@@ -8,7 +8,6 @@ import java.util.List;
 
 import org.apache.http.auth.AuthenticationException;
 
-import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.data.models.Product;
 import com.warmwit.bierapp.data.models.Transaction;
 import com.warmwit.bierapp.data.models.TransactionItem;
@@ -19,6 +18,7 @@ import com.warmwit.bierapp.database.ProductQuery;
 import com.warmwit.bierapp.database.TransactionItemQuery;
 import com.warmwit.bierapp.database.TransactionQuery;
 import com.warmwit.bierapp.database.UserQuery;
+import com.warmwit.bierapp.exceptions.UnexpectedData;
 import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;
 
 public class ApiConnector {
@@ -35,7 +35,7 @@ public class ApiConnector {
 	// Users
 	//
 	
-	public void loadUsers() throws IOException, SQLException, UnexpectedStatusCode, AuthenticationException {
+	public void loadUsers() throws IOException, SQLException, UnexpectedStatusCode, UnexpectedData, AuthenticationException {
 		ApiUserPage apiUserPage = (ApiUserPage) this.remoteClient.get("/users/", null);
 		UserQuery userQuery = new UserQuery(this.databaseHelper);
 		
@@ -59,7 +59,7 @@ public class ApiConnector {
 		}
 	}
 	
-	public void loadUserInfo() throws IOException, SQLException, UnexpectedStatusCode, AuthenticationException {
+	public void loadUserInfo() throws IOException, SQLException, UnexpectedStatusCode, UnexpectedData, AuthenticationException {
 		UserQuery userQuery = new UserQuery(this.databaseHelper);
 		ProductQuery productQuery = new ProductQuery(this.databaseHelper);
 		
@@ -124,7 +124,7 @@ public class ApiConnector {
 		return transaction;
 	}
 	
-	public void loadTransactions() throws IOException, SQLException, UnexpectedStatusCode, AuthenticationException {
+	public void loadTransactions() throws IOException, SQLException, UnexpectedStatusCode, UnexpectedData, AuthenticationException {
 		ApiTransactionPage apiTransactionPage = (ApiTransactionPage) this.remoteClient.get("/transactions/", null);
 		
 		for (ApiTransaction apiTransaction : apiTransactionPage.results) {
@@ -134,7 +134,7 @@ public class ApiConnector {
 		}
 	}
 	
-	public Transaction saveTransaction(Transaction transaction) throws IOException, SQLException, UnexpectedStatusCode, AuthenticationException {
+	public Transaction saveTransaction(Transaction transaction) throws IOException, SQLException, UnexpectedStatusCode, UnexpectedData, AuthenticationException {
 		ApiTransaction apiTransaction = new ApiTransaction();
 		int i = 0;
 		
@@ -177,7 +177,7 @@ public class ApiConnector {
 	// Products
 	//
 	
-	public void loadProducts() throws IOException, SQLException, UnexpectedStatusCode, AuthenticationException {
+	public void loadProducts() throws IOException, SQLException, UnexpectedStatusCode, UnexpectedData, AuthenticationException {
 		ApiProductPage apiProductPage = (ApiProductPage) this.remoteClient.get("/products/", null);
 		ProductQuery productQuery = new ProductQuery(this.databaseHelper);
 		

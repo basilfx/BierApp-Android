@@ -5,6 +5,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
 
@@ -16,7 +18,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -61,6 +65,7 @@ import com.warmwit.bierapp.database.ProductQuery;
 import com.warmwit.bierapp.database.TransactionItemQuery;
 import com.warmwit.bierapp.database.TransactionQuery;
 import com.warmwit.bierapp.database.UserQuery;
+import com.warmwit.bierapp.exceptions.UnexpectedData;
 import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;
 import com.warmwit.bierapp.service.SyncService;
 import com.warmwit.bierapp.utils.LogUtils;
@@ -116,7 +121,6 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
  		if (savedInstanceState != null) {
  			this.transaction = new TransactionQuery(this).resumeById(savedInstanceState.getInt("transactionId"));
  		} else {
- 			// TODO: Ask user if it wants to continue a old transaction
  			this.transaction = new TransactionQuery(this).resumeLatest();
  		}
  		
@@ -144,6 +148,35 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		
 		// Register for messages
 		this.registerReceiver(this.broadcastReceiver, new IntentFilter(SyncService.SYNC_COMPLETE));
+		
+		// Warn user if he is resuming an existing transaction
+ 		if (this.transaction != null && this.transaction.getDateCreated() != null) {
+ 			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+ 			
+ 			if (preferences.getBoolean("transaction_warn_resume", false)) {
+ 				int seconds = Integer.parseInt(preferences.getString("transaction_warn_resume_timeout", "3600"));
+ 				
+ 				Calendar timeout = Calendar.getInstance();
+ 				timeout.setTime(this.transaction.getDateCreated());
+ 				timeout.add(Calendar.SECOND, seconds);
+ 				
+ 				if (Calendar.getInstance().after(timeout)) {
+	 				String startDate = DateFormat
+	 					.getDateInstance(DateFormat.LONG)
+	 					.format(this.transaction.getDateCreated());
+	 				
+	 				String startTime = DateFormat
+	 					.getTimeInstance(DateFormat.SHORT)
+	 					.format(this.transaction.getDateCreated());
+	 				
+	 				new AlertDialog.Builder(this)
+	 					.setTitle(R.string.transactie_resumeren)
+	 					.setMessage(this.getResources().getString(R.string.let_op_er_is_op_dit_moment_een_transactie_gestart_die_aangemaakt_is_op_s_om_s_uur, startDate, startTime))
+	 					.setPositiveButton(R.string.sluiten, null)
+	 					.show();
+ 				}
+ 			}
+ 		}
 	}
 
 	@Override
@@ -371,10 +404,6 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				// Switch to guests activity
 				startActivity(new Intent(this, TransactionActivity.class)); 
 				return true;
-			case R.id.menu_show_stats:
-				// Switch to guests activity
-				startActivity(new Intent(this, StatsActivity.class)); 
-				return true;
 			case R.id.menu_refresh:
 				// Refresh data
 				if (this.transaction != null) {
@@ -393,6 +422,10 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 					new LoadDataTask().execute();
 				}
 				
+				return true;
+			case R.id.menu_settings:
+				// Switch to guests activity
+				startActivity(new Intent(this, SettingsActivity.class)); 
 				return true;
 			case R.id.menu_purchase_confirm:
 				checkNotNull(this.transaction);
@@ -448,9 +481,9 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		
 		// Add handler to general menu
 		menu.findItem(R.id.menu_show_guests).setOnMenuItemClickListener(this);
-		menu.findItem(R.id.menu_show_stats).setOnMenuItemClickListener(this);
 		menu.findItem(R.id.menu_show_transactions).setOnMenuItemClickListener(this);
 		menu.findItem(R.id.menu_refresh).setOnMenuItemClickListener(this);
+		menu.findItem(R.id.menu_settings).setOnMenuItemClickListener(this);
 		
 		// Add handler to purchase menu
 		menu.findItem(R.id.menu_purchase_confirm).setOnMenuItemClickListener(this);
@@ -735,6 +768,8 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_AUTHENTICATION);
 			} catch (UnexpectedStatusCode e) {
 				return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_SERVER);
+			} catch (UnexpectedData e) {
+				return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_SERVER);
 			}
 		}
 		
@@ -750,7 +785,11 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 					HomeActivity.this.refreshList();
 					
 					// Display summary
-					HomeActivity.this.showTransactionSummary(this.result, true);
+					SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(HomeActivity.this);
+					
+					if (preferences.getBoolean("transaction_post_save_summary", true)) {
+						HomeActivity.this.showTransactionSummary(this.result, true);
+					}
 					
 					// Done
 					Toast.makeText(HomeActivity.this, R.string.transactie_succesvol_verzonden, Toast.LENGTH_LONG).show();

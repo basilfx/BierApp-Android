@@ -2,24 +2,23 @@ package com.warmwit.bierapp.data.models;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import com.warmwit.bierapp.R;
 
-@DatabaseTable
+@DatabaseTable(tableName = "transactionitem")
 public class TransactionItem {
 	
-	@DatabaseField(index = true, generatedId = true)
+	@DatabaseField(columnName = "id", index = true, generatedId = true)
 	private int id;
 	
-	@DatabaseField(foreign = true, foreignAutoRefresh = true)
+	@DatabaseField(columnName = "user_id", foreign = true, foreignAutoRefresh = true)
 	private User user;
 	
-	@DatabaseField(foreign = true, foreignAutoRefresh = true)
+	@DatabaseField(columnName = "payer_id", foreign = true, foreignAutoRefresh = true)
 	private User payer;
 	
-	@DatabaseField(foreign = true, foreignAutoRefresh = true)
+	@DatabaseField(columnName = "product_id", foreign = true, foreignAutoRefresh = true)
 	private Product product;
 	
-	@DatabaseField
+	@DatabaseField(columnName = "count")
 	private int count;
 	
 	@DatabaseField(foreign = true)

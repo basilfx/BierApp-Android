@@ -1,6 +1,5 @@
 package com.warmwit.bierapp.callbacks;
 
-import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.data.models.Product;
 import com.warmwit.bierapp.data.models.User;
 import com.warmwit.bierapp.views.ProductView;

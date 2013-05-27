@@ -1,6 +1,5 @@
 package com.warmwit.bierapp.exceptions;
 
-import com.warmwit.bierapp.R;
 import org.apache.http.HttpException;
 
 public class UnexpectedStatusCode extends HttpException{

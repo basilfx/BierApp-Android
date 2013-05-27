@@ -33,7 +33,7 @@
         <activity android:name=".activities.AuthorizeActivity"></activity>
         <activity android:name=".activities.GuestsActivity"></activity>
         <activity android:name=".activities.TransactionActivity"></activity>
-        <activity android:name=".activities.StatsActivity"></activity>
+        <activity android:name=".activities.SettingsActivity"></activity>
         
      	<service android:name=".service.SyncService"></service>
      	

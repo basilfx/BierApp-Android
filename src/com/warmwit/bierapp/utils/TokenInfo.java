@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
-import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.data.ApiAccessToken;
 
 public class TokenInfo {

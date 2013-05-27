@@ -8,42 +8,41 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.utils.ProductInfo;
 
-@DatabaseTable
+@DatabaseTable(tableName = "user")
 public class User extends Observable {
 	public static final int INHABITANT = 0;
 	public static final int GUEST = 1;
 	
-	@DatabaseField(index = true, id = true)
+	@DatabaseField(columnName = "id", index = true, id = true)
 	private int id;
 
-	@DatabaseField
+	@DatabaseField(columnName = "firstName")
 	private String firstName;
 	
-	@DatabaseField
+	@DatabaseField(columnName = "lastName")
 	private String lastName;
 	
-	@DatabaseField
+	@DatabaseField(columnName = "avatarUrl")
 	private String avatarUrl;
 	
-	@DatabaseField(index = true)
+	@DatabaseField(columnName = "type", index = true)
 	private int type;
 	
-	@DatabaseField
+	@DatabaseField(columnName = "score")
 	private int score;
 	
-	@DatabaseField(foreign = true, canBeNull = true, foreignAutoRefresh = true, maxForeignAutoRefreshLevel = 3)
+	@DatabaseField(columnName = "hosting_id", foreign = true, canBeNull = true, foreignAutoRefresh = true, maxForeignAutoRefreshLevel = 3)
 	private Hosting hosting;
 	
-	@DatabaseField
+	@DatabaseField(columnName = "dirty")
 	private boolean dirty;
 	
-	@DatabaseField
+	@DatabaseField(columnName = "synced")
 	private boolean synced;
 	
-	@DatabaseField(canBeNull = true)
+	@DatabaseField(columnName = "dateChanged", canBeNull = true)
 	private Date dateChanged;
 	
 	public String getFullName() {

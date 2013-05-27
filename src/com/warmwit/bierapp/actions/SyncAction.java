@@ -7,8 +7,8 @@ import org.apache.http.auth.AuthenticationException;
 
 import android.util.Log;
 
-import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.data.ApiConnector;
+import com.warmwit.bierapp.exceptions.UnexpectedData;
 import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;
 import com.warmwit.bierapp.utils.LogUtils;
 
@@ -43,6 +43,8 @@ public class SyncAction extends Action {
 		} catch (SQLException e) {
 			return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_SQL);
 		} catch (UnexpectedStatusCode e) {
+			return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_SERVER);
+		} catch (UnexpectedData e) {
 			return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_SERVER);
 		} catch (AuthenticationException e) {
 			return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_AUTHENTICATION);

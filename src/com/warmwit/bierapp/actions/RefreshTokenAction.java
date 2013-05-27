@@ -16,7 +16,6 @@ import org.apache.http.util.EntityUtils;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.warmwit.bierapp.BierAppApplication;
-import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.data.ApiAccessToken;
 import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;
 import com.warmwit.bierapp.utils.LogUtils;
@@ -42,14 +41,14 @@ public class RefreshTokenAction extends Action {
 	}
 	
 	public int refresh() {
-		HttpPost request = new HttpPost(BierAppApplication.getAccessTokenFromCode());
+		HttpPost request = new HttpPost(BierAppApplication.OAUTH2_TOKEN_URL);
 		
 		// Build request body
 		try {
 			List<NameValuePair> form = Lists.newArrayList();
 			
-			form.add(new BasicNameValuePair("client_id", BierAppApplication.CLIENT_ID));
-			form.add(new BasicNameValuePair("client_secret", BierAppApplication.CLIENT_SECRET));
+			form.add(new BasicNameValuePair("client_id", BierAppApplication.OAUTH2_CLIENT_ID));
+			form.add(new BasicNameValuePair("client_secret", BierAppApplication.OAUTH2_CLIENT_SECRET));
 			form.add(new BasicNameValuePair("refresh_token", this.oldTokenInfo.getRefreshToken()));
 			form.add(new BasicNameValuePair("grant_type", "refresh_token"));
 			

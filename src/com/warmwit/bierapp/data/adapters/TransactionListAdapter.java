@@ -36,7 +36,7 @@ public class TransactionListAdapter extends ArrayAdapter<Transaction> {
         products.setText(transaction.getDescription());
         
         time.setText(DateFormat.getTimeInstance(DateFormat.SHORT)
-        					   .format(transaction.getDateCreated()));
+        					   .format(transaction.getDateCreated()) + " uur");
         
         // Done
         return view;

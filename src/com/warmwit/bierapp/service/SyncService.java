@@ -8,7 +8,6 @@ import android.util.Log;
 
 import com.google.common.base.Strings;
 import com.warmwit.bierapp.BierAppApplication;
-import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.data.RemoteClient;
 
 public class SyncService extends IntentService {

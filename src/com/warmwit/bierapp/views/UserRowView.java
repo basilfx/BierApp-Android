@@ -1,6 +1,5 @@
 package com.warmwit.bierapp.views;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
@@ -8,7 +7,6 @@ import java.util.Random;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
@@ -19,7 +17,6 @@ import android.widget.TextView;
 import com.google.common.base.Strings;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
-import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.callbacks.OnProductClickListener;
 import com.warmwit.bierapp.data.models.Product;

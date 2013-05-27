@@ -1,6 +1,9 @@
 package com.warmwit.bierapp;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLEncoder;
 
 import android.app.Application;
 import android.content.Intent;
@@ -20,10 +23,18 @@ import com.warmwit.bierapp.service.BatchIntentReceiver;
  * @author Bas Stottelaar
  */
 public class BierAppApplication extends Application {
-	public static final String CLIENT_ID = "8df8f62b96ba40d11cd1";
-	public static final String CLIENT_SECRET = "eee752653d2a1afc5cdff451ebc5d17ec9b9bc9c";
-	public static final String BASE_URL = "http://10.0.0.13:8000/apps/bierapp/api2";
-	public static final String REDIRECT_URL = "http://www.beterlijst.nl/oauth/catch_me";
+	//public static final String API_URL = "http://api.beterlijst.nl/apps/bierapp";
+	//public static final String WEBSITE_URL = "http://www.beterlijst.nl";
+	
+	public static final String API_URL = "http://10.0.0.15:8000/api/apps/bierapp";
+	public static final String WEBSITE_URL = "http://10.0.0.15:8000";
+	
+	public static final String OAUTH2_CLIENT_ID = "8df8f62b96ba40d11cd1";
+	public static final String OAUTH2_CLIENT_SECRET = "eee752653d2a1afc5cdff451ebc5d17ec9b9bc9c";
+	
+	public static final String OAUTH2_REDIRECT_URL = "http://www.beterlijst.nl/oauth/catch_me";
+	public static final String OAUTH2_AUTHORIZE_URL = WEBSITE_URL + "/oauth2/authorize";
+	public static final String OAUTH2_TOKEN_URL = WEBSITE_URL + "/oauth2/access_token";
 	
 	private static RemoteClient remoteClient;
 	
@@ -54,14 +65,6 @@ public class BierAppApplication extends Application {
 	public static RemoteClient getRemoteClient() {
 		return BierAppApplication.remoteClient;
 	}
-	
-	public static String getAuthorizeUrl() {
-		return "http://10.0.0.13:8000/oauth2/authorize/?client_id=" + BierAppApplication.CLIENT_ID + "&redirect_uri=" + BierAppApplication.REDIRECT_URL + "&response_type=code";
-	}
-	
-	public static String getAccessTokenFromCode() {
-		return "http://10.0.0.13:8000/oauth2/access_token/";
-	}
 
 	@Override
 	public void onCreate() {
@@ -85,7 +88,7 @@ public class BierAppApplication extends Application {
         );
 		
 		// Setup remote client
-		BierAppApplication.remoteClient = new RemoteClient(this, BierAppApplication.BASE_URL);
+		BierAppApplication.remoteClient = new RemoteClient(this, BierAppApplication.API_URL);
 		
 		// Send initial intent to setup alarm
 		Intent intent = new Intent(this, BatchIntentReceiver.class);
