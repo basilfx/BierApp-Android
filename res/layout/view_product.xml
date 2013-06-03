@@ -11,54 +11,53 @@
         android:layout_height="fill_parent"
         android:src="@drawable/product_beer_none" />
 
+    <RelativeLayout
+        android:id="@+id/product_bar"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" >
 
-        <RelativeLayout
-            android:id="@+id/product_bar"
-	        android:layout_width="fill_parent"
-	        android:layout_height="fill_parent" >
-	        
-	        <TextView
-	            android:id="@+id/product_title"
-	            android:layout_width="wrap_content"
-	            android:layout_height="wrap_content"
-	            android:background="#AA000000"
-	            android:gravity="top|left"
-	            android:maxLines="2"
-	            android:text="Grolsch 33cl"
-	            android:textAppearance="?android:attr/textAppearanceSmall"
-	            android:visibility="visible" />
-       	</RelativeLayout>
+        <TextView
+            android:id="@+id/product_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#AA000000"
+            android:gravity="top|left"
+            android:maxLines="2"
+            android:text="Grolsch 33cl"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:visibility="visible" />
+    </RelativeLayout>
 
-        <RelativeLayout
-	        android:layout_width="fill_parent"
-	        android:layout_height="fill_parent" >
-        
-	        <TextView
-	            android:id="@+id/product_change"
-	            android:layout_width="fill_parent"
-	            android:layout_height="fill_parent"
-	            android:background="#AA000000"
-	            android:gravity="center"
-	            android:maxLines="1"
-	            android:text="-10"
-	            android:textAppearance="?android:attr/textAppearanceLarge" />
-		</RelativeLayout>
-	        
-        <RelativeLayout
-	        android:layout_width="fill_parent"
-	        android:layout_height="fill_parent" >
-	        
-	        <TextView
-	            android:id="@+id/product_count"
-	            android:layout_width="wrap_content"
-	            android:layout_height="wrap_content"
-	            android:layout_alignParentBottom="true"
-	            android:layout_alignParentRight="true"
-	            android:background="#AA000000"
-	            android:gravity="bottom|left"
-	            android:maxLines="1"
-	            android:text="10"
-	            android:textAppearance="?android:attr/textAppearanceSmall" />
-        </RelativeLayout>
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" >
+
+        <TextView
+            android:id="@+id/product_change"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:background="#AA000000"
+            android:gravity="center"
+            android:maxLines="1"
+            android:text="-10"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" >
+
+        <TextView
+            android:id="@+id/product_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:background="#AA000000"
+            android:gravity="bottom|left"
+            android:maxLines="1"
+            android:text="10"
+            android:textAppearance="?android:attr/textAppearanceSmall" />
+    </RelativeLayout>
 
 </FrameLayout>
