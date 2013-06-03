@@ -90,26 +90,7 @@ public class UserRowView extends LinearLayout {
 		ViewHolder holder = (ViewHolder) this.getTag();
 		
 		// Set at first
-		int[] avatars = new int[] {
-			R.drawable.avatar_1,
-			R.drawable.avatar_2,
-			R.drawable.avatar_3,
-			R.drawable.avatar_4,
-			R.drawable.avatar_5,
-			R.drawable.avatar_6,
-			R.drawable.avatar_7,
-			R.drawable.avatar_8,
-			R.drawable.avatar_9,
-			R.drawable.avatar_10
-		};
-		int avatar = avatars[new Random().nextInt(avatars.length - 1)];
-		
-		DisplayImageOptions displayOptions = new DisplayImageOptions.Builder()
-			.cacheOnDisc()	
-			.cacheInMemory()
-			.build();
-		
-		String url = Strings.isNullOrEmpty(user.getAvatarUrl()) ? "drawable://" + avatar : user.getAvatarUrl();
+		String url = Strings.isNullOrEmpty(user.getAvatarUrl()) ? "drawable://" + R.drawable.avatar_none : user.getAvatarUrl();
  		ImageLoader.getInstance().displayImage(url, holder.avatar);
 	}
 	
