@@ -830,4 +830,9 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			super.onPostExecute(result);
 		}
 	}
+
+	@Override
+	public void onBackPressed() {
+		moveTaskToBack(true);
+	}
 }
