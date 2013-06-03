@@ -5,6 +5,7 @@ import java.io.File;
 import android.app.Application;
 import android.content.Intent;
 import android.os.Environment;
+import android.util.Log;
 
 import com.nostra13.universalimageloader.cache.disc.impl.UnlimitedDiscCache;
 import com.nostra13.universalimageloader.cache.memory.impl.LruMemoryCache;
@@ -20,6 +21,8 @@ import com.warmwit.bierapp.service.BatchIntentReceiver;
  * @author Bas Stottelaar
  */
 public class BierAppApplication extends Application {
+	public static final String LOG_TAG = "BierAppApplication";
+	
 	//public static final String API_URL = "http://api.beterlijst.nl/apps/bierapp";
 	//public static final String WEBSITE_URL = "http://www.beterlijst.nl";
 	
@@ -51,11 +54,15 @@ public class BierAppApplication extends Application {
         
         // Make sure directories exist
         if (!BierAppApplication.generalCache.exists()) { 
-        	BierAppApplication.generalCache.mkdirs();
+        	if (!BierAppApplication.generalCache.mkdirs()) {
+        		Log.e(LOG_TAG, "Unable to create directory for general cache: " + BierAppApplication.imageCache);
+        	}
         }
         
         if (!BierAppApplication.imageCache.exists()) {
-        	BierAppApplication.imageCache.mkdirs();
+        	if (!BierAppApplication.imageCache.mkdirs()) {
+        		Log.e(LOG_TAG, "Unable to create directory for image cache: " + BierAppApplication.imageCache);
+        	}
         }
 	}
 	

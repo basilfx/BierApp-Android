@@ -107,10 +107,19 @@ public class User extends Observable {
 			
         final User other = (User) o;
         
-        return Objects.equal(this.firstName, other.firstName) &&
-    		Objects.equal(this.lastName, other.lastName) &&
-    		Objects.equal(this.avatarUrl, other.avatarUrl) &&
-    		Objects.equal(this.type, other.type);
+        return 	Objects.equal(this.id, other.id) &&
+        		Objects.equal(this.firstName, other.firstName) &&
+        		Objects.equal(this.lastName, other.lastName) &&
+        		Objects.equal(this.avatarUrl, other.avatarUrl) &&
+        		Objects.equal(this.type, other.type) &&
+        		Objects.equal(this.score, other.score) &&
+        		Objects.equal(this.dateChanged, other.dateChanged);
+	}
+	
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(this.id, this.firstName, this.lastName, 
+				this.avatarUrl, this.type, this.score, this.dateChanged);
 	}
 
 	public boolean isDirty() {

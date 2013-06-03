@@ -8,14 +8,14 @@
 
     <TextView
         android:id="@+id/product"
-        android:text="Product"
+        android:text="@string/product"
         android:layout_height="wrap_content"
         android:layout_width="0dp" 
         android:layout_weight="15" />
 
     <TextView
         android:id="@+id/count"
-        android:text="-1"
+        android:text="@string/number_10"
         android:gravity="right"
         android:layout_height="wrap_content"
         android:layout_width="0dp" 

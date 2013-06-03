@@ -15,4 +15,14 @@ public class LogUtils {
 		Log.e(tag, "Caught " + exception.getClass().getName() + ": " + exception.getMessage());
 		return returnValue;
 	}
+	
+	/**
+	 * Helper to log exception. Useful for oneliners.
+	 * 
+	 * @param tag Log tag
+	 * @param exception Caught exception
+	 */
+	public static void logException(String tag, Exception exception) {
+		LogUtils.logException(tag, exception, 0);
+	}
 }

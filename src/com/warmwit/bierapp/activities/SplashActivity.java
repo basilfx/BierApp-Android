@@ -87,6 +87,9 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
         // Catch for authorization
     	Intent intent = new Intent(SplashActivity.this, AuthorizeActivity.class);
 		startActivity(intent);
+
+		// Finish this activity so it is cleared from the stack
+		this.finish();
     }
     
 	/**
@@ -118,8 +121,12 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 						public void run() {
 							Log.d(LOG_TAG, "Loading HomeActivity.");
 							
+							// Advance to next activity
 							Intent intent = new Intent(SplashActivity.this, HomeActivity.class);
-							startActivity(intent);             
+							startActivity(intent);
+							
+							// Finish this activity so it is cleared from the stack
+							SplashActivity.this.finish();
 						}
 					}, SplashActivity.SPLASH_TIMEOUT);
 					

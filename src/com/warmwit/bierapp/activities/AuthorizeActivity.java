@@ -1,6 +1,7 @@
 package com.warmwit.bierapp.activities;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -19,6 +20,7 @@ import com.warmwit.bierapp.actions.Action;
 import com.warmwit.bierapp.actions.ExchangeTokenAction;
 import com.warmwit.bierapp.utils.ProgressAsyncTask;
 
+@SuppressLint("SetJavaScriptEnabled")
 public class AuthorizeActivity extends Activity {
 	/**
 	 * @const Logging tag
@@ -210,6 +212,8 @@ public class AuthorizeActivity extends Activity {
 					case ERROR_CONNECT:
 						// Display warning
 						AuthorizeActivity.this.showMessage("Internetverbinding", "Kan de server niet benaderen. Controleer of er een actieve internetverbinding is.");
+						break;
+					default:
 						break;
 				}
 			}

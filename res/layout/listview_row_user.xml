@@ -12,14 +12,16 @@
         android:layout_height="65dp"
         android:layout_centerVertical="true"
         android:layout_marginRight="5dp"
-        android:background="@drawable/image_border" />
+        android:background="@drawable/image_border" 
+        android:contentDescription="@string/avatar"/>
 
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_toRightOf="@+id/avatar"
-        android:weightSum="20" >
+        android:weightSum="20" 
+        android:baselineAligned="false">
 
         <LinearLayout
             android:layout_width="0dp"
@@ -34,7 +36,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="top|right"
                 android:maxLines="1"
-                android:text="Username"
+                android:text="@string/username"
                 android:textAppearance="?android:attr/textAppearanceLarge" />
 
             <TextView

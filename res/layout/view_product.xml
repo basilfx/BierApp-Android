@@ -9,7 +9,8 @@
         android:id="@+id/product_logo"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:src="@drawable/product_beer_none" />
+        android:src="@drawable/product_beer_none" 
+        android:contentDescription="@string/product_logo"/>
 
     <RelativeLayout
         android:id="@+id/product_bar"
@@ -23,7 +24,7 @@
             android:background="#AA000000"
             android:gravity="top|left"
             android:maxLines="2"
-            android:text="Grolsch 33cl"
+            android:text="@string/product"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:visibility="visible" />
     </RelativeLayout>
@@ -39,7 +40,7 @@
             android:background="#AA000000"
             android:gravity="center"
             android:maxLines="1"
-            android:text="-10"
+            android:text="@string/number_10"
             android:textAppearance="?android:attr/textAppearanceLarge" />
     </RelativeLayout>
 
@@ -56,7 +57,7 @@
             android:background="#AA000000"
             android:gravity="bottom|left"
             android:maxLines="1"
-            android:text="10"
+            android:text="@string/number_10"
             android:textAppearance="?android:attr/textAppearanceSmall" />
     </RelativeLayout>
 

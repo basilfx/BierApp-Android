@@ -10,7 +10,6 @@
     
     <string name="menu_show_guests">Gasten</string>
     <string name="menu_show_transactions">Transacties</string>
-    <string name="menu_show_stats">Statistieken</string>
     <string name="menu_refresh">Vernieuwen</string>
     
     <string name="menu_clear_transaction_items">Transactie-items wissen</string>
@@ -59,4 +58,10 @@
     <string name="verwijdertimeout">Verwijdertimeout</string>
     <string name="transactie_resumeren">Transactie resumeren</string>
     <string formatted="false" name="let_op_er_is_op_dit_moment_een_transactie_gestart_die_aangemaakt_is_op_s_om_s_uur">Let op: er wordt een transactie geresumeerd die is aangemaakt op %s om %s uur!</string>
+    <string name="avatar">Avatar</string>
+    <string name="username">Username</string>
+    <string name="product">Product</string>
+    <string name="product_logo">Product logo</string>
+    <string name="number_10">10</string>
+    <string name="application_logo">Application logo</string>
 </resources>
