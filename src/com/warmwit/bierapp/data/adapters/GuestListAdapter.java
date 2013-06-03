@@ -46,9 +46,10 @@ public class GuestListAdapter extends ArrayAdapter<User> {
         	holder = (ViewHolder) view.getTag();
         }
         
-        // Bind data
+        // Retrieve the user corresponding to this row
         User user = this.getItem(pos);
         
+        // Bind data 
         holder.username.setText(user.getName());
         
         String url = Strings.isNullOrEmpty(user.getAvatarUrl()) ? "drawable://" + R.drawable.avatar_none : user.getAvatarUrl();

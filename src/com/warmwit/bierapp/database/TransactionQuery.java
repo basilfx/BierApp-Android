@@ -46,7 +46,12 @@ public class TransactionQuery extends QueryHelper {
 	
 	public List<Transaction> bySynced(boolean synced) {
 		try {
-			return transactionDao.queryForEq("synced", synced);
+			QueryBuilder<Transaction, Integer> queryBuilder = this.transactionDao.queryBuilder();
+			queryBuilder.where()
+						.eq("synced", synced);
+			queryBuilder.orderBy("dateCreated", false);
+			
+			return this.transactionDao.query(queryBuilder.prepare());
 		} catch (SQLException e) {
 			this.handleException(e);
 			return null;

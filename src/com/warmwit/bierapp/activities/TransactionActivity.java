@@ -63,7 +63,6 @@ public class TransactionActivity extends OrmLiteBaseActivity<DatabaseHelper> {
     	
     	// Add click handler
     	this.transactionListView.setOnItemClickListener(new OnItemClickListener() {
-
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 				Transaction transaction = (Transaction) parent.getItemAtPosition(position);
