@@ -1,9 +1,6 @@
 package com.warmwit.bierapp;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.net.URL;
-import java.net.URLEncoder;
 
 import android.app.Application;
 import android.content.Intent;

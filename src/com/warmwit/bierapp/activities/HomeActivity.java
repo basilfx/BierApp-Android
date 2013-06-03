@@ -298,8 +298,9 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 										List<User> hosts = Lists.newArrayList();
 										
 										for (int i = 0; i < states.length; i++) {
-											if (states[i])
+											if (states[i]) {
 												hosts.add(users.get(i));
+											}
 										}
 		
 										if (hosts.size() > 0) {
@@ -341,7 +342,8 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 							}
 							
 							// Delete hosting
-							new HostQuery(HomeActivity.this).delete(user);
+							HostQuery hostQuery = new HostQuery(HomeActivity.this);
+							hostQuery.delete(hostQuery.byUser(user));
 								
 							// Reload data
 							HomeActivity.this.refreshList();
@@ -356,12 +358,12 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     			return true;
     		case R.id.menu_context_show_hosts:
 				checkArgument(user.getType() == User.GUEST);
-				checkNotNull(user.getHosting());
 				
-				// Build a list of hosts
+				// Initialize data
 				List<String> message = Lists.newArrayList();
+				HostQuery hostQuery = new HostQuery(this);
 				
-				for (HostMapping host : user.getHosting().getHosts()) {
+				for (HostMapping host : hostQuery.byUser(user).getHosts()) {
 					message.add(host.getHost().getFullName());
 				}
 				
@@ -704,11 +706,12 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			
 			// For each guest transaction, set a payer
 			TransactionItemQuery transactionItemQuery = new TransactionItemQuery(HomeActivity.this);
+			HostQuery hostQuery = new HostQuery(HomeActivity.this);
 			List<TransactionItem> transactionItems = transactionItemQuery.byTransaction(HomeActivity.this.transaction);
 			
 			for (TransactionItem transactionItem : transactionItems) {
 				if (transactionItem.getPayer().getType() == User.GUEST) {
-					Hosting hosting = transactionItem.getPayer().getHosting();
+					Hosting hosting = hostQuery.byUser(transactionItem.getPayer());
 					
 					// Determine the least times paid
 					int min = Integer.MAX_VALUE;

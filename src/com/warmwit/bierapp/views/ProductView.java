@@ -24,6 +24,7 @@ public class ProductView extends FrameLayout {
 	private static class ViewHolder {
 		private TextView change;
 		private TextView count;
+		private TextView title;
 		private ImageView logo;
 		private RelativeLayout bar;	
 	}
@@ -38,6 +39,7 @@ public class ProductView extends FrameLayout {
 		// Bind controls
 		holder.change = (TextView) this.findViewById(R.id.product_change);
 		holder.count = (TextView) this.findViewById(R.id.product_count);
+		holder.title = (TextView) this.findViewById(R.id.product_title);
 		holder.logo = (ImageView) this.findViewById(R.id.product_logo);
 		holder.bar = (RelativeLayout) this.findViewById(R.id.product_bar);
 		
@@ -58,12 +60,19 @@ public class ProductView extends FrameLayout {
 		
 		ImageLoader.getInstance().displayImage("drawable://" + android.R.drawable.ic_search_category_default, holder.logo);
 		holder.count.setVisibility(View.INVISIBLE);
+		holder.title.setVisibility(View.INVISIBLE);
 	}
 	
 	public void setProductLogo(String url) {
 		ViewHolder holder = (ViewHolder) this.getTag();
 	
-		url = Strings.isNullOrEmpty(url) ? "drawable://" + R.drawable.product_beer_none : url;
+		if (Strings.isNullOrEmpty(url)) {
+			url = "drawable://" + R.drawable.product_beer_none;
+			holder.title.setVisibility(View.VISIBLE);
+		} else {
+			holder.title.setVisibility(View.INVISIBLE);
+		}
+		
 		ImageLoader.getInstance().displayImage(url, holder.logo);
 	}
 	
@@ -79,6 +88,10 @@ public class ProductView extends FrameLayout {
 		holder.bar.setVisibility(holder.count.getVisibility() == View.INVISIBLE && change == 0 ? View.INVISIBLE : View.VISIBLE);
 		holder.change.setVisibility(change == 0 ? View.INVISIBLE : View.VISIBLE);
 		
+		// Hide background of change and title
+		holder.count.setBackgroundColor(change == 0 ? Color.argb(0xAA, 0, 0, 0) : Color.argb(0, 0, 0, 0));
+		holder.title.setBackgroundColor(change == 0 ? Color.argb(0xAA, 0, 0, 0) : Color.argb(0, 0, 0, 0));
+		
 		// Update content
 		holder.change.setTextColor(change < 0 ? Color.RED : Color.GREEN);
 		holder.change.setText(change + "");
@@ -89,5 +102,12 @@ public class ProductView extends FrameLayout {
 		
 		// Update content
 		holder.count.setText(count + "");
+	}
+	
+	public void setTitle(String title) {
+		ViewHolder holder = (ViewHolder) this.getTag();
+		
+		// Update content
+		holder.title.setText(title);
 	}
 }

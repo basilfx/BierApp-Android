@@ -2,5 +2,4 @@
 
     <style name="AppTheme" parent="android:Theme.Light" />
     <color name="splash_background">#000000</color>
-
 </resources>

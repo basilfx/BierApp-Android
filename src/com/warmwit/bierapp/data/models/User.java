@@ -33,9 +33,6 @@ public class User extends Observable {
 	@DatabaseField(columnName = "score")
 	private int score;
 	
-	@DatabaseField(columnName = "hosting_id", foreign = true, canBeNull = true, foreignAutoRefresh = true, maxForeignAutoRefreshLevel = 3)
-	private Hosting hosting;
-	
 	@DatabaseField(columnName = "dirty")
 	private boolean dirty;
 	
@@ -144,14 +141,6 @@ public class User extends Observable {
 
 	public Map<Product, ProductInfo> getProducts() {
 		return this.productMap;
-	}
-
-	public Hosting getHosting() {
-		return hosting;
-	}
-
-	public void setHosting(Hosting hosting) {
-		this.hosting = hosting;
 	}
 
 	public Date setDateChanged() {

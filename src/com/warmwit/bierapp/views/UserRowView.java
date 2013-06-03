@@ -188,6 +188,7 @@ public class UserRowView extends LinearLayout {
 		productView.setGuestProduct(this.user.getType() == User.GUEST);
 		productView.setChange(productInfo.getChange());
 		productView.setCount(productInfo.getCount());
+		productView.setTitle(product.getTitle());
 		productView.setProductLogo(product.getLogo());
 		
 		// Set on click handler

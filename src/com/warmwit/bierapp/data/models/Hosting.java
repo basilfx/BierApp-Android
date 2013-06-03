@@ -17,6 +17,9 @@ public class Hosting {
 	@ForeignCollectionField(eager = true)
 	private ForeignCollection<HostMapping> hosts;
 	
+	@DatabaseField(columnName = "user_id", foreign = true)
+	private User user;
+	
 	public int getId() {
 		return id;
 	}
@@ -39,5 +42,13 @@ public class Hosting {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public User getUser() {
+		return user;
+	}
+
+	public void setUser(User user) {
+		this.user = user;
 	}
 }

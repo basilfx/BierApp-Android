@@ -40,11 +40,11 @@ public class GuestsActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 			this, this.guestListAdapter, R.layout.listview_row_header, R.id.header, new Sectionizer<User>() {
 			@Override
 			public String getSectionTitleForItem(User instance) {
-				if (instance.getHosting() != null) {
+				//if (instance.getHosting() != null) {
 					return "Actief";
-				} else {
-					return "Inactief";
-				}
+				//} else {
+				//	return "Inactief";
+				//}
 			}		
 		});
     	

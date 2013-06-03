@@ -1,13 +1,12 @@
 package com.warmwit.bierapp.database;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.sql.SQLException;
 import java.util.List;
 
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.ForeignCollection;
+import com.j256.ormlite.stmt.QueryBuilder;
 import com.warmwit.bierapp.data.models.HostMapping;
 import com.warmwit.bierapp.data.models.Hosting;
 import com.warmwit.bierapp.data.models.User;
@@ -16,7 +15,6 @@ public class HostQuery extends QueryHelper {
 
 	private Dao<Hosting, Integer> hostDao;
 	private Dao<HostMapping, Integer> hostMappingDao;
-	private Dao<User, Integer> userDao;
 	
 	public HostQuery(OrmLiteBaseActivity<DatabaseHelper> activity) {
 		this(activity.getHelper());
@@ -27,16 +25,24 @@ public class HostQuery extends QueryHelper {
 		
 		this.hostDao = databaseHelper.getHostingDao();
 		this.hostMappingDao = databaseHelper.getHostMappingDao();
-		this.userDao = databaseHelper.getUserDao();
 	}
 	
-	public void delete(User guest) {
-		Hosting hosting = checkNotNull(guest.getHosting());
-		
+	public Hosting byUser(User user) {
 		try {
-			guest.setHosting(null);
-			this.userDao.update(guest);
+			QueryBuilder<Hosting, Integer> queryBuilder = this.hostDao.queryBuilder();
 			
+			queryBuilder.where()
+						.eq("user_id", user.getId());
+						
+			return this.hostDao.queryForFirst(queryBuilder.prepare());
+		} catch (SQLException e) {
+			this.handleException(e);
+			return null;
+		}
+	}
+	
+	public void delete(Hosting hosting) {
+		try {
 			this.hostMappingDao.delete(hosting.getHosts());
 			this.hostDao.delete(hosting);
 		} catch (SQLException e) {
@@ -44,26 +50,24 @@ public class HostQuery extends QueryHelper {
 		}
 	}
 	
-	public void create(User guest, List<User> users) {
+	public void create(User user, List<User> hosts) {
 		try {
-			ForeignCollection<HostMapping> hosts = this.hostDao.getEmptyForeignCollection("hosts");
+			ForeignCollection<HostMapping> hostCollection = this.hostDao.getEmptyForeignCollection("hosts");
 			
 			Hosting hosting = new Hosting();
 			hosting.setDescription("Meh");
-			hosting.setHosts(hosts);
+			hosting.setHosts(hostCollection);
+			hosting.setUser(user);
 			
 			this.hostDao.create(hosting);
 			
-			guest.setHosting(hosting);
-			this.userDao.update(guest);
-			
-			for (User user : users) {
+			for (User host : hosts) {
 				HostMapping hostMapping = new HostMapping();
 				
-				hostMapping.setHost(user);
+				hostMapping.setHost(host);
 				hostMapping.setHosting(hosting);
 				
-				hosts.add(hostMapping);
+				hostCollection.add(hostMapping);
 			}
 		} catch (SQLException e) {
 			this.handleException(e);

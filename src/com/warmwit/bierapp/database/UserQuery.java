@@ -7,6 +7,7 @@ import java.util.List;
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
+import com.warmwit.bierapp.data.models.Hosting;
 import com.warmwit.bierapp.data.models.Product;
 import com.warmwit.bierapp.data.models.User;
 import com.warmwit.bierapp.data.models.UserInfo;
@@ -15,6 +16,7 @@ public class UserQuery extends QueryHelper {
 
 	private Dao<User, Integer> userDao;
 	private Dao<UserInfo, Integer> userInfoDao;
+	private Dao<Hosting, Integer> hostingDao;
 	
 	public UserQuery(OrmLiteBaseActivity<DatabaseHelper> activity) {
 		this(activity.getHelper());
@@ -25,6 +27,7 @@ public class UserQuery extends QueryHelper {
 		
 		this.userDao = databaseHelper.getUserDao();
 		this.userInfoDao = databaseHelper.getUserInfoDao();
+		this.hostingDao = databaseHelper.getHostingDao();
 	}
 	
 	public List<User> all() {
@@ -82,11 +85,13 @@ public class UserQuery extends QueryHelper {
 	public List<User> activeGuests() {
 		try {
 			QueryBuilder<User, Integer> queryBuilder = this.userDao.queryBuilder();
+			QueryBuilder<Hosting, Integer> subQueryBuilder = this.hostingDao.queryBuilder();
 			
+			subQueryBuilder.selectColumns("user_id");
 			queryBuilder.where()
 						.eq("type", User.GUEST)
 						.and()
-						.isNotNull("hosting_id");
+						.in("id", subQueryBuilder);
 			
 			return userDao.query(queryBuilder.prepare());
 		} catch (SQLException e) {
@@ -98,11 +103,13 @@ public class UserQuery extends QueryHelper {
 	public List<User> inactiveGuests() {
 		try {
 			QueryBuilder<User, Integer> queryBuilder = this.userDao.queryBuilder();
+			QueryBuilder<Hosting, Integer> subQueryBuilder = this.hostingDao.queryBuilder();
 			
+			subQueryBuilder.selectColumns("user_id");
 			queryBuilder.where()
 						.eq("type", User.GUEST)
 						.and()
-						.isNull("hosting_id");
+						.notIn("id", subQueryBuilder);
 			
 			return userDao.query(queryBuilder.prepare());
 		} catch (SQLException e) {
