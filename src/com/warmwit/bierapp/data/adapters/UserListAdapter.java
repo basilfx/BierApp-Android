@@ -1,21 +1,22 @@
 package com.warmwit.bierapp.data.adapters;
 
-import android.app.Activity;
+import java.util.List;
+
+import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 
-import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.callbacks.OnProductClickListener;
 import com.warmwit.bierapp.data.models.User;
 import com.warmwit.bierapp.views.UserRowView;
 
-public class UserListAdapter extends ArrayAdapter<User> {
-	private OnProductClickListener callback;
+public abstract class UserListAdapter extends BaseAdapter {
 	
-    public UserListAdapter(Activity context, OnProductClickListener callback){  
-        super(context, R.layout.listview_row_user);
-        this.callback = callback;
+	private Context context;
+	
+    public UserListAdapter(Context context) {
+    	this.context = context;
     }
     
     @Override
@@ -24,14 +25,14 @@ public class UserListAdapter extends ArrayAdapter<User> {
     	
     	// Inflate or reuse view
         if (convertView == null) {
-        	view = new UserRowView(this.getContext());
+        	view = new UserRowView(this.context);
         } else {
         	view = (UserRowView) convertView;
         }
         
         // Bind data
-    	view.setUser(this.getItem(pos));
-    	view.setCallback(this.callback);
+    	view.setUser((User) this.getItem(pos));
+    	view.setCallback(this.getOnProductClickListener());
         
     	// Display data
     	view.refreshAll();
@@ -39,4 +40,6 @@ public class UserListAdapter extends ArrayAdapter<User> {
         // Done
         return view;
     }
+
+	public abstract OnProductClickListener getOnProductClickListener();
 }

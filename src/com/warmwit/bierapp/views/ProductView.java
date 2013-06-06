@@ -2,17 +2,18 @@ package com.warmwit.bierapp.views;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.google.common.base.Strings;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.warmwit.bierapp.R;
+import com.warmwit.bierapp.utils.Convert;
 
 /**
  *
@@ -29,14 +30,23 @@ public class ProductView extends FrameLayout {
 		private RelativeLayout bar;	
 	}
 	
-	public ProductView(Context context, AttributeSet attrs, int defStyle) {
-		super(context, attrs, defStyle);
+	public ProductView(Context context) {
+		super(context);
 		
 		// Inflate layout and create a holder
 		LayoutInflater.from(context).inflate(R.layout.view_product, this);
+		Convert convert = new Convert(context);
+		
+		// Configure layout parameters
+		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(convert.toPx(65), convert.toPx(65));
+		
+		this.setLayoutParams(params);
+		this.setBackgroundDrawable(this.getResources().getDrawable(R.drawable.image_border));
+		this.setForeground(this.getResources().getDrawable(convert.toResource(android.R.attr.selectableItemBackground)));
+
+		// Bind controls
 		ViewHolder holder = new ViewHolder();
 		
-		// Bind controls
 		holder.change = (TextView) this.findViewById(R.id.product_change);
 		holder.count = (TextView) this.findViewById(R.id.product_count);
 		holder.title = (TextView) this.findViewById(R.id.product_title);
@@ -45,14 +55,6 @@ public class ProductView extends FrameLayout {
 		
 		// Save holder internally
 		this.setTag(holder);
-	}
-	
-	public ProductView(Context context, AttributeSet attrs) {
-		this(context, attrs, 0);
-	}
-	
-	public ProductView(Context context) {
-		this(context, null, 0);
 	}
 	
 	public void setProductMore() {

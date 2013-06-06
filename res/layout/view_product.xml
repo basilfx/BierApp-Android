@@ -1,16 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="65dp"
-    android:layout_height="65dp"
-    android:background="@drawable/image_border"
-    android:foreground="?android:attr/selectableItemBackground" >
-
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+    
     <ImageView
         android:id="@+id/product_logo"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:src="@drawable/product_beer_none" 
-        android:contentDescription="@string/product_logo"/>
+        android:contentDescription="@string/product_logo" />
 
     <RelativeLayout
         android:id="@+id/product_bar"
@@ -25,8 +21,7 @@
             android:gravity="top|left"
             android:maxLines="2"
             android:text="@string/product"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:visibility="visible" />
+            android:textAppearance="?android:attr/textAppearanceSmall"  />
     </RelativeLayout>
 
     <RelativeLayout
@@ -60,5 +55,4 @@
             android:text="@string/number_10"
             android:textAppearance="?android:attr/textAppearanceSmall" />
     </RelativeLayout>
-
-</FrameLayout>
+</merge>

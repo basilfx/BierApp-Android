@@ -60,7 +60,7 @@ public class FlowLayout extends ViewGroup {
 
 			LayoutParams lp = (LayoutParams) child.getLayoutParams();
 		    spacing = mHorizontalSpacing;
-			if (lp.horizontalSpacing >= 0) {
+			if (lp.horizontalSpacing > 0) {
 				spacing = lp.horizontalSpacing;
 			}
 

@@ -131,7 +131,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
  		
  		// Bind data
  		this.initList();
-    	this.refreshList();
+ 		this.refreshList();
     }
     
 	@Override
@@ -200,7 +200,39 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	}
     
     private void initList() {
-    	this.userListAdapter = new UserListAdapter(this, this);
+    	this.userListAdapter = new UserListAdapter(this) {
+			@Override
+			public long getItemId(int position) {
+				return position;
+			}
+			
+			@Override
+			public Object getItem(int position) {
+				int inhabitantsCount = HomeActivity.this.inhabitants.size();
+				
+				if (position >= inhabitantsCount) {
+					position = position - inhabitantsCount;
+					return HomeActivity.this.guests.get(position);
+				} else {
+					return HomeActivity.this.inhabitants.get(position);
+				}
+			}
+			
+			@Override
+			public int getCount() {
+				if (HomeActivity.this.inhabitants == null || HomeActivity.this.guests == null) {
+					return 0;
+				}
+				
+				return HomeActivity.this.inhabitants.size() + HomeActivity.this.guests.size();
+			}
+			
+			@Override
+			public OnProductClickListener getOnProductClickListener() {
+				return HomeActivity.this;
+			}
+		};
+    	
     	
     	// Create sectionizer to separate guests from inhabitants
     	this.userListView.setAdapter(new SimpleSectionAdapter<User>(
@@ -550,9 +582,6 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		this.guests = userQuery.activeGuests();
 		this.products = productQuery.all();
 		
-		// Remove all current items
-		this.userListAdapter.clear();
-		
 		// For each user, set the product info
 		for (User user : Iterables.concat(this.inhabitants, this.guests)) {
     		Builder<Product, ProductInfo> builder = ImmutableMap.<Product, ProductInfo>builder();
@@ -579,7 +608,6 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     		}
     		
     		user.setProducts(builder.build());
-    		this.userListAdapter.add(user);
     	}
 		
 		// Notify change

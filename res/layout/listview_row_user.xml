@@ -1,11 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:descendantFocusability="blocksDescendants"
-    android:orientation="horizontal"
-    android:padding="5dp" >
-
+<merge xmlns:android="http://schemas.android.com/apk/res/android" xmlns:f="http://schemas.android.com/apk/res/com.warmwit.bierapp">
     <ImageView
         android:id="@+id/avatar"
         android:layout_width="65dp"
@@ -48,43 +42,15 @@
                 android:textAppearance="?android:attr/textAppearanceSmall" />
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/products"
+        <com.warmwit.bierapp.utils.FlowLayout
+			f:horizontalSpacing="5dp"
+            android:id="@+id/container" 
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="right|center"
             android:layout_weight="14"
             android:orientation="horizontal" 
-            android:baselineAligned="false">
-
-            <com.warmwit.bierapp.views.ProductView
-                android:id="@+id/product_1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" 
-                android:layout_marginRight="5dp" >
-            </com.warmwit.bierapp.views.ProductView>
-            
-            <com.warmwit.bierapp.views.ProductView
-                android:id="@+id/product_2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" 
-                android:layout_marginRight="5dp" >
-            </com.warmwit.bierapp.views.ProductView>
-            
-            <com.warmwit.bierapp.views.ProductView
-                android:id="@+id/product_3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="5dp" >
-            </com.warmwit.bierapp.views.ProductView>
-            
-            <com.warmwit.bierapp.views.ProductView
-                android:id="@+id/product_more"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" >
-            </com.warmwit.bierapp.views.ProductView>
-
-        </LinearLayout>
+            android:baselineAligned="false" >
+        </com.warmwit.bierapp.utils.FlowLayout>
     </LinearLayout>
-
-</RelativeLayout>
+</merge>
