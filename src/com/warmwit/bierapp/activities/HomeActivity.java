@@ -273,6 +273,9 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				throw new IllegalStateException();
         }
         
+        // Hide clear button if applicable
+        menu.findItem(R.id.menu_context_clear_transaction_items).setVisible(this.transaction != null);
+        
         super.onCreateContextMenu(menu, v, menuInfo);
     }
 

@@ -167,4 +167,12 @@ public class FlowLayout extends ViewGroup {
 			super(w, h);
 		}
 	}
+
+	public void setHorizontalSpacing(int spacing) {
+		this.mHorizontalSpacing = spacing;
+	}
+
+	public void setVerticalSpacing(int spacing) {
+		this.mVerticalSpacing = spacing;
+	}
 }

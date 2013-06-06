@@ -7,6 +7,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
@@ -15,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.NumberPicker;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.LinearLayout.LayoutParams;
 
 import com.google.common.base.Strings;
 import com.nostra13.universalimageloader.core.ImageLoader;
@@ -183,16 +185,28 @@ public class UserRowView extends RelativeLayout implements OnGlobalLayoutListene
         	more.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					FlowLayout view = new FlowLayout(UserRowView.this.getContext());
+					RelativeLayout outerView = new RelativeLayout(UserRowView.this.getContext());
+					FlowLayout innerView = new FlowLayout(UserRowView.this.getContext());
 					
+					// Add some spacing
+					Convert convert = new Convert(UserRowView.this.getContext());
+					innerView.setHorizontalSpacing(convert.toPx(5));
+					innerView.setVerticalSpacing(convert.toPx(5));
+					
+					// Add each product to the view
 					for (Entry<Product, ProductInfo> item : productMap.entrySet()) {
 						ProductView productView = new ProductView(UserRowView.this.getContext());
 						UserRowView.this.refreshProduct(productView, item.getKey(), item.getValue(), true);
-						view.addView(productView);
+						innerView.addView(productView);
 					}
 					
+					// Configure the outer view
+					outerView.setGravity(Gravity.CENTER);
+					outerView.addView(innerView);
+					
+					// Finnaly, show the dialog
 	        		new AlertDialog.Builder(UserRowView.this.getContext())
-	    		    	.setView(view)
+	    		    	.setView(outerView)
 	    		    	.setTitle("Alle producten")
 	    		    	.setPositiveButton(R.string.sluiten, null)
 	    		    	.show();

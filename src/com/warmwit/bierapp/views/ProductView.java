@@ -38,9 +38,14 @@ public class ProductView extends FrameLayout {
 		Convert convert = new Convert(context);
 		
 		// Configure layout parameters
-		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(convert.toPx(65), convert.toPx(65));
+		if (this.getLayoutParams() == null) {
+			this.setLayoutParams(new LinearLayout.LayoutParams(convert.toPx(65), convert.toPx(65)));
+		} else {
+			LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) this.getLayoutParams();
+			params.width = convert.toPx(65);
+			params.height = convert.toPx(65);
+		}
 		
-		this.setLayoutParams(params);
 		this.setBackgroundDrawable(this.getResources().getDrawable(R.drawable.image_border));
 		this.setForeground(this.getResources().getDrawable(convert.toResource(android.R.attr.selectableItemBackground)));
 
