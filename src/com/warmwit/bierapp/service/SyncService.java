@@ -1,6 +1,5 @@
 package com.warmwit.bierapp.service;
 
-import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.os.PowerManager;
@@ -9,8 +8,10 @@ import android.util.Log;
 import com.google.common.base.Strings;
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.data.RemoteClient;
+import com.warmwit.bierapp.database.DatabaseHelper;
+import com.warmwit.bierapp.utils.OrmLiteBaseIntentService;
 
-public class SyncService extends IntentService {
+public class SyncService extends OrmLiteBaseIntentService<DatabaseHelper> {
 	public static final String LOG_TAG = "SyncService";
 	
 	public static final String LOCK_NAME = "com.warmwit.bierapp.service.SyncServiceWakeLock";

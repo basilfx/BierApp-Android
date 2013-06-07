@@ -81,6 +81,8 @@ public class ApiConnector {
 				userInfo.setUser(user);
 				userInfo.setProduct(product);
 				userInfo.setCount(apiUserInfo.count);
+				userInfo.setValue(apiUserInfo.value);
+				userInfo.setEstimatedCount(apiUserInfo.estimated_count);
 				
 				if (exists) {
 					this.databaseHelper.getUserInfoDao().update(userInfo);

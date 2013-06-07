@@ -24,6 +24,10 @@ public class ProductQuery extends QueryHelper {
 	}
 	
 	public boolean shouldSync(int id, Date dateChanged) {
+		if (dateChanged == null) {
+			return true;
+		}
+		
 		try {
 			QueryBuilder<Product, Integer> queryBuilder = this.productDao.queryBuilder();
 			

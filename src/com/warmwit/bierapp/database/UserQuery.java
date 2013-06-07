@@ -58,6 +58,10 @@ public class UserQuery extends QueryHelper {
 	}
 	
 	public boolean shouldSync(int id, Date dateChanged) {
+		if (dateChanged == null) {
+			return true;
+		}
+		
 		try {
 			QueryBuilder<User, Integer> queryBuilder = this.userDao.queryBuilder();
 			
