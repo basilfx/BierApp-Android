@@ -1,7 +1,5 @@
 package com.warmwit.bierapp.data.adapters;
 
-import java.util.List;
-
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;

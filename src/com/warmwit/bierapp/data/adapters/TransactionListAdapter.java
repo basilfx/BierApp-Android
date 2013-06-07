@@ -2,41 +2,56 @@ package com.warmwit.bierapp.data.adapters;
 
 import java.text.DateFormat;
 
-import android.app.Activity;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.data.models.Transaction;
 
-public class TransactionListAdapter extends ArrayAdapter<Transaction> {
+public abstract class TransactionListAdapter extends BaseAdapter {
 	
-	public TransactionListAdapter(Activity context) {  
-        super(context, R.layout.listview_row_user);
+	private static class ViewHolder {
+		private TextView products;
+		private TextView time;
 	}
 	
-	 @Override
+	private Context context;
+	
+    public TransactionListAdapter(Context context) {
+    	this.context = context;
+    }
+	
+	@Override
     public View getView(int pos, View view, ViewGroup parent) {
-    	// Inflate or reuse view
+		ViewHolder holder;
+		
+    	// Inflate or recycle view
         if (view == null) {
-        	LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            view = inflater.inflate(R.layout.listview_row_transaction, parent, false);
+        	LayoutInflater inflater = (LayoutInflater) this.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            
+        	view = inflater.inflate(R.layout.listview_row_transaction, parent, false);
+        	holder = new ViewHolder();
+            
+            holder.products = (TextView) view.findViewById(R.id.textView1);
+            holder.time = (TextView) view.findViewById(R.id.textView2);
+            
+            view.setTag(holder);
+        } else {
+        	holder = (ViewHolder) view.getTag();
         }
         
-        // Bind views
-        TextView products = (TextView) view.findViewById(R.id.textView1);
-        TextView time = (TextView) view.findViewById(R.id.textView2);
-        
         // Bind data
-        Transaction transaction = this.getItem(pos);
-        products.setText(transaction.getDescription());
+        Transaction transaction = (Transaction) this.getItem(pos);
+        holder.products.setText(transaction.getDescription());
         
-        time.setText(DateFormat.getTimeInstance(DateFormat.SHORT)
-        					   .format(transaction.getDateCreated()) + " uur");
+        holder.time.setText(DateFormat
+	    		.getTimeInstance(DateFormat.SHORT)
+	    		.format(transaction.getDateCreated()) + " uur"
+        );
         
         // Done
         return view;

@@ -18,6 +18,12 @@ public class UserInfo {
 	@DatabaseField(columnName = "count")
 	private int count;
 
+	@DatabaseField(columnName = "value")
+	private Double value;
+	
+	@DatabaseField(columnName = "estimated_count")
+	private int estimatedCount;
+	
 	public int getId() {
 		return id;
 	}
@@ -48,5 +54,21 @@ public class UserInfo {
 
 	public void setCount(int count) {
 		this.count = count;
+	}
+
+	public double getValue() {
+		return value;
+	}
+
+	public void setValue(double value) {
+		this.value = value;
+	}
+
+	public int getEstimatedCount() {
+		return estimatedCount;
+	}
+
+	public void setEstimatedCount(int estimatedCount) {
+		this.estimatedCount = estimatedCount;
 	}
 }

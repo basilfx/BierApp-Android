@@ -35,7 +35,7 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 	public static final String LOG_TAG = "SplashActivity";
 	
 	/**
-	 * @const Timeout before advancing to next screen in ms
+	 * @const Timeout before advancing to next screen in milliseconds
 	 */
 	public static final int SPLASH_TIMEOUT = 250;
 	

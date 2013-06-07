@@ -32,7 +32,8 @@
         <activity android:name=".activities.HomeActivity" android:alwaysRetainTaskState="true"></activity>
         <activity android:name=".activities.AuthorizeActivity"></activity>
         <activity android:name=".activities.GuestsActivity"></activity>
-        <activity android:name=".activities.TransactionActivity"></activity>
+        <activity android:name=".activities.TransactionEditorActivity" android:alwaysRetainTaskState="true"></activity>
+        <activity android:name=".activities.TransactionsActivity"></activity>
         <activity android:name=".activities.SettingsActivity"></activity>
         
      	<service android:name=".service.SyncService"></service>

@@ -437,9 +437,9 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				// Switch to guests activity
 				startActivity(new Intent(this, GuestsActivity.class)); 
 				return true;
-			case R.id.menu_show_transactions:
+			case R.id.menu_transactions:
 				// Switch to guests activity
-				startActivity(new Intent(this, TransactionActivity.class)); 
+				startActivity(new Intent(this, TransactionsActivity.class)); 
 				return true;
 			case R.id.menu_refresh:
 				// Refresh data
@@ -518,7 +518,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		
 		// Add handler to general menu
 		menu.findItem(R.id.menu_show_guests).setOnMenuItemClickListener(this);
-		menu.findItem(R.id.menu_show_transactions).setOnMenuItemClickListener(this);
+		menu.findItem(R.id.menu_transactions).setOnMenuItemClickListener(this);
 		menu.findItem(R.id.menu_refresh).setOnMenuItemClickListener(this);
 		menu.findItem(R.id.menu_settings).setOnMenuItemClickListener(this);
 		
@@ -604,9 +604,9 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 						product
     				);
     				
-    				builder.put(product, new ProductInfo(userInfo.getCount(), change));
+    				builder.put(product, new ProductInfo(userInfo.getEstimatedCount(), change));
     			} else {
-    				builder.put(product, new ProductInfo(userInfo.getCount(), 0));
+    				builder.put(product, new ProductInfo(userInfo.getEstimatedCount(), 0));
     			}
     		}
     		

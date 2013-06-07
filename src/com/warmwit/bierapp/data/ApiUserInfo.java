@@ -9,4 +9,10 @@ public class ApiUserInfo {
 	
 	@SerializedName("count")
 	public int count;
+	
+	@SerializedName("value")
+	public double value;
+	
+	@SerializedName("estimated_count")
+	public int estimated_count;
 }

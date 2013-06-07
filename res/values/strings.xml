@@ -9,10 +9,13 @@
     <string name="menu_show_hosts">Host(s) weergeven</string>
     
     <string name="menu_show_guests">Gasten</string>
-    <string name="menu_show_transactions">Transacties</string>
+    <string name="menu_transactions">Transacties</string>
     <string name="menu_refresh">Vernieuwen</string>
     
     <string name="menu_clear_transaction_items">Transactie-items wissen</string>
+    <string name="menu_undo_transaction">Transactie ongedaan maken</string>
+    
+    <string name="menu_add_transaction">Transactie toevoegen</string>
     
     <string name="menu_purchase_confirm">Consumeren</string>
     <string name="menu_purchase_show">Weergeven</string>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
     <item android:id="@+id/menu_show_guests" android:title="@string/menu_show_guests"></item>
-    <item android:id="@+id/menu_show_transactions" android:title="@string/menu_show_transactions"></item>
+    <item android:id="@+id/menu_transactions" android:title="@string/menu_transactions"></item>
     <item android:id="@+id/menu_refresh" android:title="@string/menu_refresh"></item>
     <item android:id="@+id/menu_settings" android:title="@string/menu_settings"></item>
     

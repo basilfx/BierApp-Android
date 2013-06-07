@@ -136,7 +136,7 @@ public class UserRowView extends RelativeLayout implements OnGlobalLayoutListene
         ProductInfo productInfoMore = new ProductInfo(0, 0);
         
         // Determine the number of products to show
-        int maxProducts = (int) Math.floor(this.lastWidth / 130);
+        int maxProducts = (int) Math.floor(this.lastWidth / 130); // TODO: fix hardcoded value
         int productCount = productMap.size();
         int childCount = holder.container.getChildCount();
         int index = 0;
