@@ -44,6 +44,8 @@ public class UserRowView extends RelativeLayout implements OnGlobalLayoutListene
 		private FlowLayout container;
 	}
 	
+	private int productWidth;
+	
 	private int lastWidth;
 	
 	private User user;
@@ -60,6 +62,8 @@ public class UserRowView extends RelativeLayout implements OnGlobalLayoutListene
 		this.setLayoutParams(new AbsListView.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
 		this.setDescendantFocusability(FOCUS_BLOCK_DESCENDANTS);
 		this.setPadding(convert.toPx(5), convert.toPx(5), convert.toPx(5), convert.toPx(5));
+		
+		this.productWidth = convert.toPx(65);
 		
 		// Build a ViewHolder
 		final ViewHolder holder = new ViewHolder();
@@ -136,7 +140,7 @@ public class UserRowView extends RelativeLayout implements OnGlobalLayoutListene
         ProductInfo productInfoMore = new ProductInfo(0, 0);
         
         // Determine the number of products to show
-        int maxProducts = (int) Math.floor(this.lastWidth / 130); // TODO: fix hardcoded value
+        int maxProducts = (int) Math.floor(this.lastWidth / this.productWidth); // TODO: fix hardcoded value
         int productCount = productMap.size();
         int childCount = holder.container.getChildCount();
         int index = 0;

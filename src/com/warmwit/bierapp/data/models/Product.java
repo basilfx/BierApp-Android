@@ -56,7 +56,7 @@ public class Product {
 	}
 
 	public String toString() {
-		return this.title;
+		return this.getTitle();
 	}
 
 	public Date getDateChanged() {

@@ -69,6 +69,15 @@ public class TransactionQuery extends QueryHelper {
 		}
 	}
 	
+	public Transaction byId(int id) {
+		try {
+			return transactionDao.queryForId(id);
+		} catch (SQLException e) {
+			this.handleException(e);
+			return null;
+		}
+	}
+	
 	public Transaction create(String description) {
 		Transaction transaction = new Transaction();
 		
@@ -171,6 +180,15 @@ public class TransactionQuery extends QueryHelper {
 		} catch (SQLException e) {
 			this.handleException(e);
 			return null;
+		}
+	}
+	
+	public void addTransactionItem(Transaction transaction, TransactionItem transactionItem) {
+		try {
+			transactionItem.setTransaction(transaction);
+			this.transactionItemDao.create(transactionItem);
+		} catch (SQLException e) {
+			this.handleException(e);
 		}
 	}
 	

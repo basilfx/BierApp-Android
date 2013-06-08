@@ -131,7 +131,6 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
  		
  		// Bind data
  		this.initList();
- 		this.refreshList();
     }
     
 	@Override
@@ -177,6 +176,9 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
  				}
  			}
  		}
+		
+		// Refresh list
+ 		this.refreshList();
 	}
 
 	@Override

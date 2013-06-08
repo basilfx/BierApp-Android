@@ -6,20 +6,22 @@ import java.text.DateFormat;
 import java.util.List;
 
 import android.app.AlertDialog;
+import android.content.Intent;
+import android.drm.DrmStore.Action;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View;
-import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 
+import com.google.common.collect.Lists;
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.mobsandgeeks.adapters.Sectionizer;
 import com.mobsandgeeks.adapters.SimpleSectionAdapter;
@@ -28,13 +30,12 @@ import com.warmwit.bierapp.data.adapters.TransactionItemListAdapter;
 import com.warmwit.bierapp.data.adapters.TransactionListAdapter;
 import com.warmwit.bierapp.data.models.Transaction;
 import com.warmwit.bierapp.data.models.TransactionItem;
-import com.warmwit.bierapp.data.models.User;
 import com.warmwit.bierapp.database.DatabaseHelper;
 import com.warmwit.bierapp.database.TransactionItemQuery;
 import com.warmwit.bierapp.database.TransactionQuery;
-import com.warmwit.bierapp.views.UserRowView;
 
 public class TransactionsActivity extends OrmLiteBaseActivity<DatabaseHelper> implements OnMenuItemClickListener {
+	private List<Transaction> transactions;
 	private ListView transactionListView;
 	private TransactionListAdapter transactionListAdapter;
 	
@@ -48,22 +49,24 @@ public class TransactionsActivity extends OrmLiteBaseActivity<DatabaseHelper> im
         
         // Bind controls
         this.transactionListView = (ListView) this.findViewById(R.id.list_transactions);
+        this.transactions = Lists.newArrayList(); 
         
         // Bind data
         this.bindData(savedInstanceState);
 	}
 	
+	
+	
 	private void bindData(Bundle savedInstanceState) {
-		final List<Transaction> transactions = new TransactionQuery(this).bySynced(true);
 		this.transactionListAdapter = new TransactionListAdapter(this) {
 			@Override
 			public int getCount() {
-				return transactions.size();
+				return TransactionsActivity.this.transactions.size();
 			}
 
 			@Override
 			public Object getItem(int position) {
-				return transactions.get(position);
+				return TransactionsActivity.this.transactions.get(position);
 			}
 
 			@Override
@@ -135,8 +138,17 @@ public class TransactionsActivity extends OrmLiteBaseActivity<DatabaseHelper> im
 
 	@Override
 	public boolean onMenuItemClick(MenuItem item) {
-		// TODO Auto-generated method stub
-		return false;
+		switch (item.getItemId()) {
+			case R.id.menu_add_transaction:
+				Intent intent = new Intent(this, TransactionEditorActivity.class);
+				intent.setAction(TransactionEditorActivity.ACTION_ADD_NORMAL_TRANSACTION);
+				
+				this.startActivity(intent);
+				
+				return true;
+			default:
+				return false;
+		}
 	}
 	
 	@Override
@@ -147,6 +159,13 @@ public class TransactionsActivity extends OrmLiteBaseActivity<DatabaseHelper> im
 			case R.id.menu_add_transaction:
 				return true;
 			case R.id.menu_context_undo_transaction:
+				Intent intent = new Intent(this, TransactionEditorActivity.class);
+				
+				intent.setAction(TransactionEditorActivity.ACTION_UNDO_TRANSACTION);
+				intent.putExtra("transaction", ((Transaction) this.transactionListView.getItemAtPosition(info.position)).getId());
+				
+				this.startActivity(intent);
+				
 				return true;
 			default:
 				return super.onContextItemSelected(item);
@@ -163,5 +182,13 @@ public class TransactionsActivity extends OrmLiteBaseActivity<DatabaseHelper> im
 		
 		// Done		
 		return super.onCreateOptionsMenu(menu);
+	}
+
+	@Override
+	protected void onResume() {
+		this.transactions = new TransactionQuery(this).bySynced(true);
+		((SimpleSectionAdapter) this.transactionListView.getAdapter()).notifyDataSetChanged();
+		
+		super.onResume();
 	}
 }

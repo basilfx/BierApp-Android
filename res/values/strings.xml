@@ -67,4 +67,8 @@
     <string name="product_logo">Product logo</string>
     <string name="number_10">10</string>
     <string name="application_logo">Application logo</string>
+    <string name="transaction_description">Transactie-omschrijving</string>
+    <string name="menu_delete">Verwijderen</string>
+    <string name="menu_save">Opslaan</string>
+    <string name="add">Toevoegen</string>
 </resources>
