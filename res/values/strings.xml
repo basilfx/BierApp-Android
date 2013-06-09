@@ -71,4 +71,7 @@
     <string name="menu_delete">Verwijderen</string>
     <string name="menu_save">Opslaan</string>
     <string name="add">Toevoegen</string>
+    <string name="menu_edit_transaction_item">Transactie-item aanpassen</string>
+    <string name="menu_delete_transaction_item">Transactie-item verwijderen</string>
+    <string name="edit">Aanpassen</string>
 </resources>

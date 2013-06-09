@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/menu_context_edit_transaction_item" android:title="@string/menu_edit_transaction_item"></item>
+    <item android:id="@+id/menu_context_delete_transaction_item" android:title="@string/menu_delete_transaction_item"></item>
+</menu>

@@ -2,11 +2,14 @@ package com.warmwit.bierapp.data.models;
 
 import java.util.Date;
 
+import com.google.common.base.Strings;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable(tableName = "transaction")
 public class Transaction {
+	public static final int ERROR_NONE = 0;
+	public static final int ERROR_DESCRIPTION_EMPTY = 1;
 
 	@DatabaseField(columnName = "id", index = true, generatedId = true)
 	private int id;
@@ -61,5 +64,13 @@ public class Transaction {
 
 	public void setSynced(boolean synced) {
 		this.synced = synced;
+	}
+	
+	public int isValid() {
+		if (Strings.nullToEmpty(this.description).isEmpty()) {
+			return ERROR_DESCRIPTION_EMPTY;
+		}
+		
+		return ERROR_NONE;
 	}
 }

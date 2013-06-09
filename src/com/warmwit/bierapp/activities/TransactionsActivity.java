@@ -141,6 +141,7 @@ public class TransactionsActivity extends OrmLiteBaseActivity<DatabaseHelper> im
 		switch (item.getItemId()) {
 			case R.id.menu_add_transaction:
 				Intent intent = new Intent(this, TransactionEditorActivity.class);
+				
 				intent.setAction(TransactionEditorActivity.ACTION_ADD_NORMAL_TRANSACTION);
 				
 				this.startActivity(intent);
