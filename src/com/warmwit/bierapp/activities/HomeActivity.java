@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -63,8 +64,9 @@ import com.warmwit.bierapp.database.DatabaseHelper;
 import com.warmwit.bierapp.database.HostQuery;
 import com.warmwit.bierapp.database.ProductQuery;
 import com.warmwit.bierapp.database.TransactionItemQuery;
-import com.warmwit.bierapp.database.TransactionQuery;
 import com.warmwit.bierapp.database.UserQuery;
+import com.warmwit.bierapp.database2.TransactionHelper;
+import com.warmwit.bierapp.database2.TransactionItemHelper;
 import com.warmwit.bierapp.exceptions.UnexpectedData;
 import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;
 import com.warmwit.bierapp.service.SyncService;
@@ -82,7 +84,11 @@ import com.warmwit.bierapp.views.UserRowView;
 public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements OnProductClickListener, OnMenuItemClickListener {
 	public static final String LOG_TAG = "HomeActivity";
 	
+	private static final String TRANSACTION_TAG = LOG_TAG;
+	
 	private ApiConnector apiConnector;
+	private TransactionHelper transactionHelper;
+	private TransactionItemHelper transactionItemHelper;
 	
 	private UserListAdapter userListAdapter; 
 	private ListView userListView;
@@ -110,23 +116,34 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
         
         // Connect to API
 		this.apiConnector = new ApiConnector(BierAppApplication.getRemoteClient(), this.getHelper());
-        
-        // Set content
+		
+        // Initialize UI
         this.setContentView(R.layout.activity_home);
         
         // Bind controls
         this.userListView = (ListView) this.findViewById(R.id.list_users);
+
+        // Create helpers for transactions
+        this.transactionHelper = new TransactionHelper(this.getHelper());
+        this.transactionItemHelper = new TransactionItemHelper(this.getHelper());
         
-        // Restore state data
+        // Try to continue an ongoing transaction
+        TransactionHelper.Select builder = transactionHelper.select();
+        builder.whereTagEq(TRANSACTION_TAG).whereRemoteIdEq(null);
+        
  		if (savedInstanceState != null) {
- 			this.transaction = new TransactionQuery(this).resumeById(savedInstanceState.getInt("transactionId"));
- 		} else {
- 			this.transaction = new TransactionQuery(this).resumeLatest();
+ 			int transactionId = savedInstanceState.getInt("transactionId");
+ 			
+ 			if (transactionId > 0) {
+ 				builder.whereIdEq(transactionId);
+ 			}
  		}
  		
+ 		this.transaction = builder.first();
+ 		
+ 		// If an active transaction was found, sum it's transaction items
  		if (this.transaction != null) {
-    		TransactionQuery transactionQuery = new TransactionQuery(this);
-    		this.amount = transactionQuery.costByTransaction(this.transaction); 
+    		this.amount = this.transactionHelper.costByTransaction(this.transaction);
     	}
  		
  		// Bind data
@@ -479,8 +496,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				checkNotNull(this.transaction);
 
 				// Delete query
-				TransactionQuery transactionQuery = new TransactionQuery(this);
-				transactionQuery.delete(this.transaction);
+				this.transactionHelper.delete(this.transaction);
 				this.transaction = null;
 				
 				for (User user : Iterables.concat(this.inhabitants, this.guests)) {
@@ -579,7 +595,6 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	}
 	
 	private void refreshList() {
-    	TransactionQuery transactionQuery = new TransactionQuery(this);
 		UserQuery userQuery = new UserQuery(this);
 		ProductQuery productQuery = new ProductQuery(this);
 		
@@ -600,11 +615,8 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     			}
     			
     			if (this.transaction != null) {
-    				int change = transactionQuery.costByUserAndProduct(
-						this.transaction,
-						user,
-						product
-    				);
+    				int change = this.transactionHelper.costByUserAndProduct(
+    						this.transaction, user, product);
     				
     				builder.put(product, new ProductInfo(userInfo.getEstimatedCount(), change));
     			} else {
@@ -626,15 +638,28 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			return;
 		}
 		
-		TransactionQuery transactionQuery = new TransactionQuery(this);
-		
 		// Start a new transaction if needed
 		if (this.transaction == null) {
-			this.transaction = transactionQuery.create(getString(R.string.verkoop_vanaf_tablet));
+			this.transaction = new Transaction();
+			this.amount = 0;
+			
+			this.transaction.setDateCreated(new Date());
+			this.transaction.setDescription(getString(R.string.verkoop_vanaf_tablet));
+			this.transaction.setTag(TRANSACTION_TAG);
+			
+			transactionHelper.create(this.transaction);
 		}
 		
 		// Create (or update an existing) transaction item
-		transactionQuery.addTransactionItem(this.transaction, product, user, user, -1 * count);
+		TransactionItem transactionItem = new TransactionItem();
+		
+		transactionItem.setProduct(product);
+		transactionItem.setCount(-1 * count);
+		transactionItem.setUser(user);
+		transactionItem.setPayer(user);
+		transactionItem.setTransaction(this.transaction);
+		
+		this.transactionItemHelper.create(transactionItem);
 		
 		// Update counts
 		ProductInfo productInfo = user.getProducts().get(product);
@@ -688,7 +713,8 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	        
 	        // Stop an ongoing transaction
  			if (HomeActivity.this.transaction != null) {
- 				new TransactionQuery(HomeActivity.this).delete(HomeActivity.this.transaction);
+ 				new TransactionHelper(getHelper()).delete(transaction);
+ 				
  				HomeActivity.this.transaction = null;
  				HomeActivity.this.amount = 0;
  			}

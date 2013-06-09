@@ -9,6 +9,9 @@ public class TransactionItem {
 	@DatabaseField(columnName = "id", index = true, generatedId = true)
 	private int id;
 	
+	@DatabaseField(columnName = "remote_id", index = true, canBeNull = true)
+	private Integer remoteId;
+	
 	@DatabaseField(columnName = "user_id", foreign = true, foreignAutoRefresh = true)
 	private User user;
 	
@@ -21,7 +24,7 @@ public class TransactionItem {
 	@DatabaseField(columnName = "count")
 	private int count;
 	
-	@DatabaseField(foreign = true)
+	@DatabaseField(foreign = true, foreignAutoRefresh = true, columnName = "transaction_id")
 	private Transaction transaction;
 	
 	public int getCount() {
@@ -34,10 +37,6 @@ public class TransactionItem {
 
 	public int getId() {
 		return id;
-	}
-
-	public void setId(int id) {
-		this.id = id;
 	}
 
 	public User getPayer() {
@@ -70,5 +69,13 @@ public class TransactionItem {
 
 	public void setTransaction(Transaction transaction) {
 		this.transaction = transaction;
+	}
+
+	public Integer getRemoteId() {
+		return remoteId;
+	}
+
+	public void setRemoteId(Integer remoteId) {
+		this.remoteId = remoteId;
 	}
 }

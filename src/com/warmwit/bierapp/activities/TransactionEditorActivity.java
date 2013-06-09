@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.http.auth.AuthenticationException;
@@ -32,18 +33,17 @@ import android.widget.Toast;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
+import com.j256.ormlite.dao.CloseableIterator;
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.actions.Action;
 import com.warmwit.bierapp.data.ApiConnector;
 import com.warmwit.bierapp.data.adapters.TransactionItemEditorListAdapter;
-import com.warmwit.bierapp.data.models.Product;
 import com.warmwit.bierapp.data.models.Transaction;
 import com.warmwit.bierapp.data.models.TransactionItem;
-import com.warmwit.bierapp.data.models.User;
 import com.warmwit.bierapp.database.DatabaseHelper;
-import com.warmwit.bierapp.database.TransactionItemQuery;
-import com.warmwit.bierapp.database.TransactionQuery;
+import com.warmwit.bierapp.database2.TransactionHelper;
+import com.warmwit.bierapp.database2.TransactionItemHelper;
 import com.warmwit.bierapp.exceptions.UnexpectedData;
 import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;
 import com.warmwit.bierapp.utils.LogUtils;
@@ -54,6 +54,8 @@ import com.warmwit.bierapp.views.TransactionItemView.OnTransactionItemListener;
 public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelper> implements OnMenuItemClickListener, OnTransactionItemListener {
 	
 	public static final String LOG_TAG = "TransactionEditorActivity";
+	
+	private static final String TRANSACTION_TAG = LOG_TAG;
 	
 	public static final String ACTION_UNDO_TRANSACTION = "com.warmwit.bierapp.ACTION_UNDO_TRANSACTION";
 	public static final String ACTION_ADD_TEMPLATE_TRANSACTION = "com.warmwit.bierapp.ACTION_ADD_TEMPLATE_TRANSACTION";
@@ -69,6 +71,8 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 	private Transaction transaction;
 	
 	private ApiConnector apiConnector;
+	private TransactionHelper transactionHelper;
+	private TransactionItemHelper transactionItemHelper;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +81,10 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 		
 		// Connect to API
 		this.apiConnector = new ApiConnector(BierAppApplication.getRemoteClient(), this.getHelper());
+		
+		// Create helpers for transactions
+        this.transactionHelper = new TransactionHelper(this.getHelper());
+        this.transactionItemHelper = new TransactionItemHelper(this.getHelper());
 		
 		// Initialize the layout
 		this.setContentView(R.layout.activity_transaction_editor);
@@ -89,45 +97,63 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 		
 		this.transactionItems = Lists.newArrayList();
 		
-		// Decide what to do based on intent action
-		Intent intent = this.getIntent();
-		String action = Strings.nullToEmpty(intent.getAction());
-		
-		if (action.equals("") || action.equals(ACTION_ADD_NORMAL_TRANSACTION)) {
-			this.description.setText("Handmatige transactie vanaf Tablet");
-		} else if (action.equals(ACTION_ADD_TEMPLATE_TRANSACTION)) {
+		if (savedInstanceState == null) {
+			// Decide what to do based on intent action
+			Intent intent = this.getIntent();
+			String action = Strings.nullToEmpty(intent.getAction());
 			
-		} else if (action.equals(ACTION_UNDO_TRANSACTION)) {
-			int id = intent.getIntExtra("transaction", -1);
-			
-			if (id != -1) {
-				TransactionQuery transactionQuery = new TransactionQuery(this);
-				TransactionItemQuery transactionItemQuery = new TransactionItemQuery(this);
-				Transaction transaction = transactionQuery.byId(id);
+			if (action.equals("") || action.equals(ACTION_ADD_NORMAL_TRANSACTION)) {
+				this.description.setText("Handmatige transactie vanaf Tablet");
+			} else if (action.equals(ACTION_ADD_TEMPLATE_TRANSACTION)) {
 				
-				if (transaction != null && transaction.isSynced() == true) {
-					this.description.setText("Tegentransactie #" + id + " vanaf Tablet");
+			} else if (action.equals(ACTION_UNDO_TRANSACTION)) {
+				int id = intent.getIntExtra("transactionId", -1);
+				
+				if (id != -1) { 
+					Transaction oldTransaction = this.transactionHelper.select()
+						.whereIdEq(id)
+						.whereRemoteIdNeq(null)
+						.first();
 					
-					List<TransactionItem> oldTransactionItems = transactionItemQuery.byTransaction(transaction);
-					
-					for (TransactionItem oldTransactionItem : oldTransactionItems) {
-						TransactionItem newTransactionItem = new TransactionItem();
+					if (transaction != null) {
+						this.description.setText("Tegentransactie #" + oldTransaction.getRemoteId() + " vanaf Tablet");
 						
-						newTransactionItem.setCount(oldTransactionItem.getCount() * -1);
-						newTransactionItem.setPayer(oldTransactionItem.getPayer());
-						newTransactionItem.setUser(oldTransactionItem.getUser());
-						newTransactionItem.setProduct(oldTransactionItem.getProduct());
+						CloseableIterator<TransactionItem> iterator = oldTransaction.getTransactionItems().closeableIterator();
 						
-						this.transactionItems.add(newTransactionItem);
+						try {
+							TransactionItem oldTransactionItem = iterator.next();
+							TransactionItem newTransactionItem = new TransactionItem();
+							
+							newTransactionItem.setCount(oldTransactionItem.getCount() * -1);
+							newTransactionItem.setPayer(oldTransactionItem.getPayer());
+							newTransactionItem.setUser(oldTransactionItem.getUser());
+							newTransactionItem.setProduct(oldTransactionItem.getProduct());
+							
+							this.transactionItems.add(newTransactionItem);
+						} finally {
+							try {
+								iterator.close();
+							} catch (SQLException e) {
+								e.printStackTrace();
+							}
+						}
+					} else {
+						Log.w(LOG_TAG, "Transaction with ID " + id + " not found");
 					}
 				} else {
-					Log.w(LOG_TAG, "Transaction with ID " + id + " not found");
+					Log.w(LOG_TAG, "Received action to undo transaction, but no transaction ID given");
 				}
 			} else {
-				Log.w(LOG_TAG, "Received action to undo transaction, but no transaction ID given");
+				Log.e(LOG_TAG, "Unknown intent action: " + action);
 			}
 		} else {
-			Log.e(LOG_TAG, "Unknown intent action: " + action);
+			int id = savedInstanceState.getInt("transactionId", -1);
+			
+			this.transaction = this.transactionHelper.select()
+				.whereTagEq(TRANSACTION_TAG)
+				.whereRemoteIdNeq(null)
+				.whereIdEq(id)
+				.first(); 
 		}
 		
 		// Bind actions
@@ -159,7 +185,7 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 			    transaction.addToBackStack(null);
 
 			    // Create and show the dialog.
-			    TransactionItemView fragment = TransactionItemView.createInstance();
+			    TransactionItemView fragment = TransactionItemView.createInstance(TransactionEditorActivity.this.transaction);
 			    fragment.show(transaction, "dialog");
 			}
 		});
@@ -180,6 +206,8 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 	public boolean onMenuItemClick(MenuItem item) {
 		switch (item.getItemId()) {
 			case R.id.menu_save:
+				checkNotNull(this.transaction);
+				
 				if (this.description.getText().toString().isEmpty()) {
 					new AlertDialog.Builder(this)
 						.setTitle("Invoerfout")
@@ -190,13 +218,8 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 					return true;
 				}
 				
-				TransactionQuery transactionQuery = new TransactionQuery(this);
-				
-				this.transaction = transactionQuery.create(this.description.getText().toString());
-				
-				for (TransactionItem transactionItem : this.transactionItems) {
-					transactionQuery.addTransactionItem(this.transaction, transactionItem);
-				}
+				this.transaction.setDescription(this.description.getText().toString());
+				this.transaction.setDateCreated(new Date());
 				
 				new SaveTransactionTask().execute();
 				return true;
@@ -224,7 +247,7 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 			    transaction.addToBackStack(null);
 
 			    // Create and show the dialog.
-			    TransactionItemView fragment = TransactionItemView.createInstance(info.position, transactionItem.getProduct(), transactionItem.getCount(), transactionItem.getUser(), transactionItem.getPayer());
+			    TransactionItemView fragment = TransactionItemView.createInstance(this.transaction);
 			    fragment.show(transaction, "dialog");
 				
 				return true;
@@ -344,31 +367,13 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 	}
 
 	@Override
-	public void onTransactionItemCreated(Product product, int count, User user, User payer) {
-		TransactionItem transactionItem = new TransactionItem();
-		
-		transactionItem.setProduct(product);
-		transactionItem.setCount(count);
-		transactionItem.setUser(user);
-		transactionItem.setPayer(payer);
-		
+	public void onTransactionItemCreated(TransactionItem transactionItem) {		
 		this.transactionItems.add(transactionItem);
 		((TransactionItemEditorListAdapter) this.transactionItemList.getAdapter()).notifyDataSetChanged();
 	}
 
 	@Override
-	public void onTransactionItemUpdated(int id, Product product, int count, User user, User payer) {
-		TransactionItem transactionItem = this.transactionItems.get(id);
-		
-		if (transactionItem != null) {
-			transactionItem.setProduct(product);
-			transactionItem.setCount(count);
-			transactionItem.setUser(user);
-			transactionItem.setPayer(payer);
-			
-			((TransactionItemEditorListAdapter) this.transactionItemList.getAdapter()).notifyDataSetChanged();
-		} else {
-			Log.e(LOG_TAG, "Received update for transaction item for index " + id + " but doesn't exist");
-		}
+	public void onTransactionItemUpdated(TransactionItem transactionItem) {
+		((TransactionItemEditorListAdapter) this.transactionItemList.getAdapter()).notifyDataSetChanged();
 	}
 }

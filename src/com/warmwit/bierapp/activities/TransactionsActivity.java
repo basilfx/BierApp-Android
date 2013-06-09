@@ -7,7 +7,6 @@ import java.util.List;
 
 import android.app.AlertDialog;
 import android.content.Intent;
-import android.drm.DrmStore.Action;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -32,12 +31,14 @@ import com.warmwit.bierapp.data.models.Transaction;
 import com.warmwit.bierapp.data.models.TransactionItem;
 import com.warmwit.bierapp.database.DatabaseHelper;
 import com.warmwit.bierapp.database.TransactionItemQuery;
-import com.warmwit.bierapp.database.TransactionQuery;
+import com.warmwit.bierapp.database2.TransactionHelper;
 
 public class TransactionsActivity extends OrmLiteBaseActivity<DatabaseHelper> implements OnMenuItemClickListener {
 	private List<Transaction> transactions;
 	private ListView transactionListView;
 	private TransactionListAdapter transactionListAdapter;
+	
+	private TransactionHelper transactionHelper;
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -46,6 +47,9 @@ public class TransactionsActivity extends OrmLiteBaseActivity<DatabaseHelper> im
         // Set content
         this.setContentView(R.layout.activity_transactions);
         this.setTitle("Historie");
+        
+        // Construct model helpers
+        this.transactionHelper = new TransactionHelper(this.getHelper());
         
         // Bind controls
         this.transactionListView = (ListView) this.findViewById(R.id.list_transactions);
@@ -187,9 +191,14 @@ public class TransactionsActivity extends OrmLiteBaseActivity<DatabaseHelper> im
 
 	@Override
 	protected void onResume() {
-		this.transactions = new TransactionQuery(this).bySynced(true);
+		// (Re)load data
+		this.transactions = this.transactionHelper.select()
+			.whereRemoteIdNeq(null)
+			.all();
+		
 		((SimpleSectionAdapter) this.transactionListView.getAdapter()).notifyDataSetChanged();
 		
+		// Done
 		super.onResume();
 	}
 }

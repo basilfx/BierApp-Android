@@ -16,7 +16,6 @@ import com.warmwit.bierapp.data.models.UserInfo;
 import com.warmwit.bierapp.database.DatabaseHelper;
 import com.warmwit.bierapp.database.ProductQuery;
 import com.warmwit.bierapp.database.TransactionItemQuery;
-import com.warmwit.bierapp.database.TransactionQuery;
 import com.warmwit.bierapp.database.UserQuery;
 import com.warmwit.bierapp.exceptions.UnexpectedData;
 import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;
@@ -101,18 +100,17 @@ public class ApiConnector {
 	private Transaction convertToTransaction(ApiTransaction apiTransaction) throws IOException, SQLException {
 		Transaction transaction = new Transaction();
 		
-		transaction.setId(apiTransaction.id);
+		transaction.setRemoteId(apiTransaction.id);
 		transaction.setDescription(apiTransaction.description);
 		transaction.setDateCreated(apiTransaction.date_created);
 		transaction.setDirty(false);
-		transaction.setSynced(true);
 		
 		this.databaseHelper.getTransactionDao().create(transaction);
 		
 		for (ApiTransactionItem apiTransactionItem : apiTransaction.transaction_items) {
 			TransactionItem transactionItem = new TransactionItem();
 			
-			transactionItem.setId(apiTransactionItem.id);
+			transactionItem.setRemoteId(apiTransactionItem.id);
 			transactionItem.setUser(this.databaseHelper.getUserDao().queryForId(apiTransactionItem.executing_user));
 			transactionItem.setPayer(this.databaseHelper.getUserDao().queryForId(apiTransactionItem.accounted_user));
 			transactionItem.setProduct(this.databaseHelper.getProductDao().queryForId(apiTransactionItem.product));
@@ -169,7 +167,7 @@ public class ApiConnector {
 		apiTransaction = (ApiTransaction) result;
 		
 		// Remove the old transaction
-		new TransactionQuery(this.databaseHelper).delete(transaction);
+		// new TransactionQuery(this.databaseHelper).delete(transaction); TODO: fixme
 		
 		// Save a new one
 		return this.convertToTransaction(apiTransaction);

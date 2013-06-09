@@ -25,22 +25,31 @@ import com.google.common.collect.Lists;
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.data.models.Product;
+import com.warmwit.bierapp.data.models.Transaction;
+import com.warmwit.bierapp.data.models.TransactionItem;
 import com.warmwit.bierapp.data.models.User;
 import com.warmwit.bierapp.database.DatabaseHelper;
 import com.warmwit.bierapp.database.ProductQuery;
 import com.warmwit.bierapp.database.UserQuery;
+import com.warmwit.bierapp.database2.TransactionHelper;
+import com.warmwit.bierapp.database2.TransactionItemHelper;
 
 public class TransactionItemView extends DialogFragment implements OnCheckedChangeListener, OnItemSelectedListener, OnClickListener {
 	
 	private static final String LOG_TAG = "TransactionItemView";
 	
+	public static final int ACTION_CREATE = 1;
+	public static final int ACTION_UPDATE = 2;
+	
 	public static interface OnTransactionItemListener {
-		public void onTransactionItemCreated(Product product, int count, User user, User payer);
+		public void onTransactionItemCreated(TransactionItem transactionItem);
 		
-		public void onTransactionItemUpdated(int id, Product product, int count, User user, User payer);
+		public void onTransactionItemUpdated(TransactionItem transactionItem);
 	}
 	
-	private int id = -1;
+	private int action;
+	private int transactionId;
+	private int transactionItemId;
 	
 	private Spinner products;
 	private EditText count;
@@ -53,23 +62,23 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
 	private List<User> inhabitants;
 	private List<User> userList;
 	
-	private DatabaseHelper databaseHelper = null;
+	private DatabaseHelper databaseHelper;
+	private TransactionHelper transactionHelper;
+	private TransactionItemHelper transactionItemHelper;
 	
 	private OnTransactionItemListener callback;
 
-	public static TransactionItemView createInstance() {
-		return new TransactionItemView();
+	public static TransactionItemView createInstance(Transaction transaction) {
+		return TransactionItemView.createInstance(transaction, null);
 	}
 	
-	public static TransactionItemView createInstance(int id, Product product, int count, User user, User payer) {
+	public static TransactionItemView createInstance(Transaction transaction, TransactionItem transactionItem) {
 		TransactionItemView view = new TransactionItemView();
 		Bundle arguments = new Bundle();
 		
-		arguments.putInt("productId", product.getId());
-		arguments.putString("count", count + "");
-		arguments.putInt("userId", user.getId());
-		arguments.putInt("payerId", payer.getId());
-		arguments.putInt("id", id);
+		arguments.putInt("action", ACTION_UPDATE);
+		arguments.putInt("transactionId", transaction.getId());
+		arguments.putInt("transactionItemId", transactionItem != null ? transactionItem.getId() : -1);
 		
 		view.setArguments(arguments);
 		
@@ -88,6 +97,9 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
+		this.transactionHelper = new TransactionHelper(this.getHelper());
+		this.transactionItemHelper = new TransactionItemHelper(this.getHelper());
+		
 		this.productList = new ProductQuery(this.getHelper()).all();
 		this.guests = new UserQuery(this.getHelper()).guests();
 		this.inhabitants = new UserQuery(this.getHelper()).inhabitants();
@@ -100,7 +112,10 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
         
         if (this.databaseHelper != null) {
             OpenHelperManager.releaseHelper();
+            
             this.databaseHelper = null;
+            this.transactionHelper = null;
+            this.transactionItemHelper = null;
         }
     }
     
@@ -130,7 +145,9 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
 		outState.putInt("payers", this.payers.getSelectedItemPosition());
 		outState.putBoolean("userIsPayer", this.userIsPayer.isChecked());
 		
-		outState.putInt("id", this.id);
+		outState.putInt("action", this.action);
+		outState.putInt("transactionId", this.transactionId);
+		outState.putInt("transactionItemId", this.transactionItemId);
 		
 		super.onSaveInstanceState(outState);
 	}
@@ -159,24 +176,37 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
 			this.payers.setSelection(savedInstanceState.getInt("payers"));
 			this.userIsPayer.setChecked(savedInstanceState.getBoolean("userIsPayer"));
 			
-			this.id = savedInstanceState.getInt("id");
+			this.action = savedInstanceState.getInt("action");
+			this.transactionId = savedInstanceState.getInt("transactionId");
+			this.transactionItemId = savedInstanceState.getInt("transactionItemId");
 		} else if (this.getArguments() != null) {
 			Bundle arguments = this.getArguments();
 			
-			int userIndex = this.findUser(this.userList, arguments.getInt("userId"));
-			int payerIndex = this.findUser(this.inhabitants, arguments.getInt("payerId"));
-			int productIndex = this.findProduct(this.productList, arguments.getInt("productId"));
+			this.action = arguments.getInt("action");
+			this.transactionId = arguments.getInt("transactionId");
+			this.transactionItemId = arguments.getInt("transactionItemId");
 			
-			User user = this.userList.get(userIndex);
-			User payer = this.inhabitants.get(payerIndex);
-			
-			this.products.setSelection(productIndex);
-			this.count.setText(arguments.getString("count"));
-			this.users.setSelection(userIndex);
-			this.payers.setSelection(payerIndex);
-			this.userIsPayer.setChecked(user.getType() == User.INHABITANT && user.equals(payer));
-			
-			this.id = arguments.getInt("id");
+			if (this.action == ACTION_UPDATE) {
+				TransactionItem transactionItem = this.transactionItemHelper.select()
+					.whereIdEq(this.transactionItemId)
+					.whereTransactionIdEq(this.transactionItemId)
+					.first();
+				
+				int userIndex = this.findUser(this.userList, transactionItem.getUser().getId());
+				int payerIndex = this.findUser(this.inhabitants, transactionItem.getPayer().getId());
+				int productIndex = this.findProduct(this.productList, transactionItem.getProduct().getId());
+				
+				User user = this.userList.get(userIndex);
+				User payer = this.inhabitants.get(payerIndex);
+				
+				this.products.setSelection(productIndex);
+				this.count.setText(arguments.getString("count"));
+				this.users.setSelection(userIndex);
+				this.payers.setSelection(payerIndex);
+				this.userIsPayer.setChecked(user.getType() == User.INHABITANT && user.equals(payer));
+			}
+		} else {
+			throw new IllegalStateException("Dialog started without arguments bundle");
 		}
 		
 		// Add event listeners via post since onItemSelected would be triggered too early
@@ -194,7 +224,7 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
 		AlertDialog dialog = new AlertDialog.Builder(this.getActivity())
 			.setTitle("Transactie-item toevoegen")
 			.setNegativeButton(android.R.string.cancel, null)
-			.setPositiveButton(this.id == -1 ? R.string.add : R.string.edit, null)
+			.setPositiveButton(this.action == ACTION_CREATE ? R.string.add : R.string.edit, null)
 			.setView(view)
 			.create();
 		
@@ -259,22 +289,44 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
 			return;
 		}
 		
-		if (this.callback != null) {
-			Product product = (Product) this.products.getSelectedItem();
-			int count = Integer.valueOf(this.count.getText().toString());
-			User user = (User) this.users.getSelectedItem();
-			User payer;
-			
-			if (this.userIsPayer.isChecked() && user.getType() == User.INHABITANT) {
-				payer =  user;
+		TransactionItem transactionItem;
+		
+		if (this.action == ACTION_CREATE) {
+			transactionItem = new TransactionItem();
+		} else {
+			transactionItem = this.transactionItemHelper.select()
+				.whereIdEq(this.transactionItemId)
+				.whereTransactionIdEq(this.transactionItemId)
+				.first();
+		}
+		
+		// Set the (new) information
+		transactionItem.setProduct((Product) this.products.getSelectedItem());
+		transactionItem.setCount(Integer.valueOf(this.count.getText().toString()));
+		
+		User user = (User) this.users.getSelectedItem();
+		
+		if (this.userIsPayer.isChecked() && user.getType() == User.INHABITANT) {
+			transactionItem.setUser(user);
+			transactionItem.setPayer(user);
+		} else {
+			transactionItem.setUser(user);
+			transactionItem.setPayer((User) this.payers.getSelectedItem());
+		}
+		
+		// Save or update
+		if (this.action == ACTION_CREATE) {
+			this.transactionItemHelper.create(transactionItem);
+		} else {
+			this.transactionItemHelper.update(transactionItem);
+		}
+		
+		// Notify parent view
+		if (callback != null) {
+			if (this.action == ACTION_CREATE) {
+				callback.onTransactionItemCreated(transactionItem);
 			} else {
-				payer =  (User) this.payers.getSelectedItem();
-			}
-			
-			if (id == -1) {
-				callback.onTransactionItemCreated(product, count, user, payer);
-			} else {
-				callback.onTransactionItemUpdated(this.id, product, count, user, payer);
+				callback.onTransactionItemUpdated(transactionItem);
 			}
 		}
 		

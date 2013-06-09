@@ -26,11 +26,11 @@ public class BierAppApplication extends Application {
 	//public static final String API_URL = "http://api.beterlijst.nl/apps/bierapp";
 	//public static final String WEBSITE_URL = "http://www.beterlijst.nl";
 	
-	// public static final String API_URL = "http://10.0.0.13:8000/api/apps/bierapp";
-	// public static final String WEBSITE_URL = "http://10.0.0.13:8000";
+	public static final String API_URL = "http://10.0.0.16:8000/api/apps/bierapp";
+	public static final String WEBSITE_URL = "http://10.0.0.16:8000";
 	
-	public static final String API_URL = "http://192.168.2.6:8000/api/apps/bierapp";
-	public static final String WEBSITE_URL = "http://192.168.2.6:8000";
+	//public static final String API_URL = "http://192.168.2.6:8000/api/apps/bierapp";
+	//public static final String WEBSITE_URL = "http://192.168.2.6:8000";
 	
 	public static final String OAUTH2_CLIENT_ID = "8df8f62b96ba40d11cd1";
 	public static final String OAUTH2_CLIENT_SECRET = "eee752653d2a1afc5cdff451ebc5d17ec9b9bc9c";
