@@ -30,8 +30,8 @@ import com.warmwit.bierapp.data.adapters.TransactionListAdapter;
 import com.warmwit.bierapp.data.models.Transaction;
 import com.warmwit.bierapp.data.models.TransactionItem;
 import com.warmwit.bierapp.database.DatabaseHelper;
-import com.warmwit.bierapp.database.TransactionItemQuery;
-import com.warmwit.bierapp.database2.TransactionHelper;
+import com.warmwit.bierapp.database.TransactionHelper;
+import com.warmwit.bierapp.database.TransactionItemHelper;
 
 public class TransactionsActivity extends OrmLiteBaseActivity<DatabaseHelper> implements OnMenuItemClickListener {
 	private List<Transaction> transactions;
@@ -39,6 +39,7 @@ public class TransactionsActivity extends OrmLiteBaseActivity<DatabaseHelper> im
 	private TransactionListAdapter transactionListAdapter;
 	
 	private TransactionHelper transactionHelper;
+	private TransactionItemHelper transactionItemHelper;
 	
 	@Override
     public void onCreate(Bundle savedInstanceState) {
@@ -50,6 +51,7 @@ public class TransactionsActivity extends OrmLiteBaseActivity<DatabaseHelper> im
         
         // Construct model helpers
         this.transactionHelper = new TransactionHelper(this.getHelper());
+        this.transactionItemHelper = new TransactionItemHelper(this.getHelper());
         
         // Bind controls
         this.transactionListView = (ListView) this.findViewById(R.id.list_transactions);
@@ -108,12 +110,20 @@ public class TransactionsActivity extends OrmLiteBaseActivity<DatabaseHelper> im
 	}
 	
 	private void showTransactionSummary(Transaction transaction, final boolean byPayer) {
-		TransactionItemQuery transactionItemQuery = new TransactionItemQuery(this);
 		ListView listView = new ListView(this);
 		
 		// Create inner adapter
 		TransactionItemListAdapter adapter = new TransactionItemListAdapter(this);
-		adapter.addAll(transactionItemQuery.byTransaction(transaction, byPayer ? "payer_id" : "user_id"));
+		TransactionItemHelper.Select builder = this.transactionItemHelper.select()
+			.whereTransactionIdEq(transaction.getId());
+			
+		if (byPayer) {
+			builder.orderByPayer(true);
+		} else {
+			builder.orderByUser(true);
+		}
+			
+		adapter.addAll(builder.all());
 		
 		// Create outer adapter
 		listView.setAdapter(new SimpleSectionAdapter<TransactionItem>(
@@ -167,7 +177,7 @@ public class TransactionsActivity extends OrmLiteBaseActivity<DatabaseHelper> im
 				Intent intent = new Intent(this, TransactionEditorActivity.class);
 				
 				intent.setAction(TransactionEditorActivity.ACTION_UNDO_TRANSACTION);
-				intent.putExtra("transaction", ((Transaction) this.transactionListView.getItemAtPosition(info.position)).getId());
+				intent.putExtra("transactionId", ((Transaction) this.transactionListView.getItemAtPosition(info.position)).getId());
 				
 				this.startActivity(intent);
 				
@@ -194,6 +204,7 @@ public class TransactionsActivity extends OrmLiteBaseActivity<DatabaseHelper> im
 		// (Re)load data
 		this.transactions = this.transactionHelper.select()
 			.whereRemoteIdNeq(null)
+			.orderByDateCreated(false)
 			.all();
 		
 		((SimpleSectionAdapter) this.transactionListView.getAdapter()).notifyDataSetChanged();

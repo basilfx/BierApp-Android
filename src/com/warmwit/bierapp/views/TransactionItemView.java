@@ -29,10 +29,10 @@ import com.warmwit.bierapp.data.models.Transaction;
 import com.warmwit.bierapp.data.models.TransactionItem;
 import com.warmwit.bierapp.data.models.User;
 import com.warmwit.bierapp.database.DatabaseHelper;
-import com.warmwit.bierapp.database.ProductQuery;
-import com.warmwit.bierapp.database.UserQuery;
-import com.warmwit.bierapp.database2.TransactionHelper;
-import com.warmwit.bierapp.database2.TransactionItemHelper;
+import com.warmwit.bierapp.database.ProductHelper;
+import com.warmwit.bierapp.database.TransactionHelper;
+import com.warmwit.bierapp.database.TransactionItemHelper;
+import com.warmwit.bierapp.database.UserHelper;
 
 public class TransactionItemView extends DialogFragment implements OnCheckedChangeListener, OnItemSelectedListener, OnClickListener {
 	
@@ -65,20 +65,31 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
 	private DatabaseHelper databaseHelper;
 	private TransactionHelper transactionHelper;
 	private TransactionItemHelper transactionItemHelper;
+	private ProductHelper productHelper;
+	private UserHelper userHelper;
 	
 	private OnTransactionItemListener callback;
 
 	public static TransactionItemView createInstance(Transaction transaction) {
-		return TransactionItemView.createInstance(transaction, null);
+		TransactionItemView view = new TransactionItemView();
+		Bundle arguments = new Bundle();
+		
+		arguments.putInt("action", ACTION_CREATE);
+		arguments.putInt("transactionId", transaction.getId());
+		arguments.putInt("transactionItemId", -1);
+		
+		view.setArguments(arguments);
+		
+		return view;
 	}
 	
-	public static TransactionItemView createInstance(Transaction transaction, TransactionItem transactionItem) {
+	public static TransactionItemView createInstance(TransactionItem transactionItem) {
 		TransactionItemView view = new TransactionItemView();
 		Bundle arguments = new Bundle();
 		
 		arguments.putInt("action", ACTION_UPDATE);
-		arguments.putInt("transactionId", transaction.getId());
-		arguments.putInt("transactionItemId", transactionItem != null ? transactionItem.getId() : -1);
+		arguments.putInt("transactionId", -1);
+		arguments.putInt("transactionItemId", transactionItem.getId());
 		
 		view.setArguments(arguments);
 		
@@ -99,14 +110,21 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
 		
 		this.transactionHelper = new TransactionHelper(this.getHelper());
 		this.transactionItemHelper = new TransactionItemHelper(this.getHelper());
+		this.productHelper = new ProductHelper(this.getHelper());
+		this.userHelper = new UserHelper(this.getHelper());
 		
-		this.productList = new ProductQuery(this.getHelper()).all();
-		this.guests = new UserQuery(this.getHelper()).guests();
-		this.inhabitants = new UserQuery(this.getHelper()).inhabitants();
+		this.inhabitants = this.userHelper.select()
+			.whereTypeEq(User.INHABITANT)
+			.all();
+		this.guests = this.userHelper.select()
+			.whereTypeEq(User.GUEST)
+			.all();
+		this.productList = this.productHelper.select()
+			.all();
 		this.userList = Lists.newArrayList(Iterables.concat(this.inhabitants, this.guests));
 	}
-    
-    @Override
+
+	@Override
     public void onDestroy() {
         super.onDestroy();
         
@@ -116,6 +134,8 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
             this.databaseHelper = null;
             this.transactionHelper = null;
             this.transactionItemHelper = null;
+            this.productHelper = null;
+            this.userHelper = null;
         }
     }
     
@@ -189,7 +209,6 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
 			if (this.action == ACTION_UPDATE) {
 				TransactionItem transactionItem = this.transactionItemHelper.select()
 					.whereIdEq(this.transactionItemId)
-					.whereTransactionIdEq(this.transactionItemId)
 					.first();
 				
 				int userIndex = this.findUser(this.userList, transactionItem.getUser().getId());
@@ -200,7 +219,7 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
 				User payer = this.inhabitants.get(payerIndex);
 				
 				this.products.setSelection(productIndex);
-				this.count.setText(arguments.getString("count"));
+				this.count.setText(transactionItem.getCount() + "");
 				this.users.setSelection(userIndex);
 				this.payers.setSelection(payerIndex);
 				this.userIsPayer.setChecked(user.getType() == User.INHABITANT && user.equals(payer));
@@ -292,11 +311,15 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
 		TransactionItem transactionItem;
 		
 		if (this.action == ACTION_CREATE) {
+			Transaction transaction = this.transactionHelper.select()
+				.whereIdEq(this.transactionId)
+				.first();
+			
 			transactionItem = new TransactionItem();
+			transactionItem.setTransaction(transaction);
 		} else {
 			transactionItem = this.transactionItemHelper.select()
 				.whereIdEq(this.transactionItemId)
-				.whereTransactionIdEq(this.transactionItemId)
 				.first();
 		}
 		

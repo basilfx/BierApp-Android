@@ -27,7 +27,7 @@
     <string name="annuleren">Annuleren</string>
     <string name="s_als_gast_toegevoegd">%s als gast toegevoegd.</string>
     <string name="weet_je_zeker_dat_je_s_wilt_verwijderen">Weet je zeker dat je %s wilt verwijderen?</string>
-    <string name="s_is_verwijderd">" is verwijderd."</string>
+    <string name="s_is_verwijderd">%s is verwijderd."</string>
     <string name="transactie_items_voor_s_gewist">Transactie-items voor %s gewist.</string>
     <string name="er_is_een_huidige_transactie_gaande_die_gewist_zal_worden_wil_je_doorgaan">Er is een huidige transactie gaande die gewist zal worden. Wil je doorgaan?</string>
     <string name="vernieuwen">Vernieuwen</string>

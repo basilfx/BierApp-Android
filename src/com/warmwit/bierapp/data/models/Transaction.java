@@ -12,7 +12,7 @@ public class Transaction {
 	@DatabaseField(columnName = "id", index = true, generatedId = true)
 	private int id;
 	
-	@DatabaseField(columnName = "remote_id", index = true, canBeNull = true)
+	@DatabaseField(columnName = "remoteId", index = true, canBeNull = true)
 	private Integer remoteId;
 	
 	@DatabaseField(columnName = "description")
@@ -26,9 +26,6 @@ public class Transaction {
 
 	@DatabaseField(columnName = "tag", canBeNull = true)
 	private String tag;
-	
-	@ForeignCollectionField
-	private ForeignCollection<TransactionItem> transactionItems;
 
 	public int getId() {
 		return id;
@@ -80,9 +77,5 @@ public class Transaction {
 	public void setTag(String tag) {
 		this.tag = tag;
 		this.dirty = true;
-	}
-	
-	public ForeignCollection<TransactionItem> getTransactionItems() {
-		return transactionItems;
 	}
 }

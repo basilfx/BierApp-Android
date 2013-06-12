@@ -26,8 +26,8 @@ public class BierAppApplication extends Application {
 	//public static final String API_URL = "http://api.beterlijst.nl/apps/bierapp";
 	//public static final String WEBSITE_URL = "http://www.beterlijst.nl";
 	
-	public static final String API_URL = "http://10.0.0.16:8000/api/apps/bierapp";
-	public static final String WEBSITE_URL = "http://10.0.0.16:8000";
+	public static final String API_URL = "http://10.0.0.17:8000/api/apps/bierapp";
+	public static final String WEBSITE_URL = "http://10.0.0.17:8000";
 	
 	//public static final String API_URL = "http://192.168.2.6:8000/api/apps/bierapp";
 	//public static final String WEBSITE_URL = "http://192.168.2.6:8000";

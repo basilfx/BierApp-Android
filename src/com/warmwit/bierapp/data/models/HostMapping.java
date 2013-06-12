@@ -9,10 +9,10 @@ public class HostMapping {
 	@DatabaseField(columnName = "id", index = true, generatedId = true)
 	private int id;
 	
-	@DatabaseField(columnName = "hosting_id", foreign = true)
+	@DatabaseField(columnName = "hostingId", foreign = true)
 	private Hosting hosting;
 	
-	@DatabaseField(columnName = "host_id", foreign = true)
+	@DatabaseField(columnName = "hostId", foreign = true, foreignAutoRefresh = true)
 	private User host;
 
 	@DatabaseField(columnName = "timesPaid")
@@ -20,10 +20,6 @@ public class HostMapping {
 	
 	public int getId() {
 		return id;
-	}
-
-	public void setId(int id) {
-		this.id = id;
 	}
 
 	public Hosting getHosting() {

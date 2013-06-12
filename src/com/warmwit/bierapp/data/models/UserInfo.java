@@ -9,10 +9,10 @@ public class UserInfo {
 	@DatabaseField(columnName = "id", index = true, generatedId = true)
 	private int id;
 	
-	@DatabaseField(columnName = "user_id", foreign = true)
+	@DatabaseField(columnName = "userId", foreign = true)
 	private User user;
 	
-	@DatabaseField(columnName = "product_id", foreign = true)
+	@DatabaseField(columnName = "productId", foreign = true)
 	private Product product;
 	
 	@DatabaseField(columnName = "count")
@@ -21,7 +21,7 @@ public class UserInfo {
 	@DatabaseField(columnName = "value")
 	private Double value;
 	
-	@DatabaseField(columnName = "estimated_count")
+	@DatabaseField(columnName = "estimatedCount")
 	private int estimatedCount;
 	
 	public int getId() {

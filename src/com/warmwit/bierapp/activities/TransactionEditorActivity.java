@@ -12,6 +12,7 @@ import org.apache.http.auth.AuthenticationException;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -31,9 +32,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
-import com.j256.ormlite.dao.CloseableIterator;
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.actions.Action;
@@ -42,8 +41,8 @@ import com.warmwit.bierapp.data.adapters.TransactionItemEditorListAdapter;
 import com.warmwit.bierapp.data.models.Transaction;
 import com.warmwit.bierapp.data.models.TransactionItem;
 import com.warmwit.bierapp.database.DatabaseHelper;
-import com.warmwit.bierapp.database2.TransactionHelper;
-import com.warmwit.bierapp.database2.TransactionItemHelper;
+import com.warmwit.bierapp.database.TransactionHelper;
+import com.warmwit.bierapp.database.TransactionItemHelper;
 import com.warmwit.bierapp.exceptions.UnexpectedData;
 import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;
 import com.warmwit.bierapp.utils.LogUtils;
@@ -76,7 +75,6 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		
 		// Connect to API
@@ -88,64 +86,65 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 		
 		// Initialize the layout
 		this.setContentView(R.layout.activity_transaction_editor);
-		this.setResult(-1);
 		
 		this.focusDummy = (LinearLayout) this.findViewById(R.id.focus_dummy);
 		this.description = (EditText) this.findViewById(R.id.description);
 		this.addTransactionItem = (Button) this.findViewById(R.id.add_transactionitem);
 		this.transactionItemList = (ListView) this.findViewById(R.id.transaction_items);
 		
-		this.transactionItems = Lists.newArrayList();
-		
 		if (savedInstanceState == null) {
+			// Create new transaction
+			this.transaction = new Transaction();
+			this.transaction.setTag(TRANSACTION_TAG);
+			this.transaction.setDateCreated(new Date());
+			this.transactionHelper.create(this.transaction);
+			
 			// Decide what to do based on intent action
 			Intent intent = this.getIntent();
 			String action = Strings.nullToEmpty(intent.getAction());
 			
 			if (action.equals("") || action.equals(ACTION_ADD_NORMAL_TRANSACTION)) {
-				this.description.setText("Handmatige transactie vanaf Tablet");
+				this.transaction.setDescription("Handmatige transactie vanaf Tablet");
 			} else if (action.equals(ACTION_ADD_TEMPLATE_TRANSACTION)) {
-				
+				throw new IllegalStateException("Not yet implemented");
 			} else if (action.equals(ACTION_UNDO_TRANSACTION)) {
 				int id = intent.getIntExtra("transactionId", -1);
 				
-				if (id != -1) { 
-					Transaction oldTransaction = this.transactionHelper.select()
-						.whereIdEq(id)
-						.whereRemoteIdNeq(null)
-						.first();
+				if (id < 1) { 
+					throw new IllegalStateException("Received undo action, but no or invalid transaction ID given: " + id);
+				}
+				
+				// Fetch old transaction and transaction items
+				Transaction oldTransaction = this.transactionHelper.select()
+					.whereIdEq(id)
+					.whereRemoteIdNeq(null)
+					.first();
+				
+				List<TransactionItem> oldTransactionItems = this.transactionItemHelper.select()
+					.whereTransactionIdEq(oldTransaction.getId())
+					.all();
+				
+				// Set new title
+				this.transaction.setDescription("Tegentransactie #" + oldTransaction.getRemoteId() + " vanaf Tablet");
+				
+				// Iterate over each old transaction item and copy them
+				for (TransactionItem oldTransactionItem : oldTransactionItems) {
+					TransactionItem newTransactionItem = new TransactionItem();
 					
-					if (transaction != null) {
-						this.description.setText("Tegentransactie #" + oldTransaction.getRemoteId() + " vanaf Tablet");
-						
-						CloseableIterator<TransactionItem> iterator = oldTransaction.getTransactionItems().closeableIterator();
-						
-						try {
-							TransactionItem oldTransactionItem = iterator.next();
-							TransactionItem newTransactionItem = new TransactionItem();
-							
-							newTransactionItem.setCount(oldTransactionItem.getCount() * -1);
-							newTransactionItem.setPayer(oldTransactionItem.getPayer());
-							newTransactionItem.setUser(oldTransactionItem.getUser());
-							newTransactionItem.setProduct(oldTransactionItem.getProduct());
-							
-							this.transactionItems.add(newTransactionItem);
-						} finally {
-							try {
-								iterator.close();
-							} catch (SQLException e) {
-								e.printStackTrace();
-							}
-						}
-					} else {
-						Log.w(LOG_TAG, "Transaction with ID " + id + " not found");
-					}
-				} else {
-					Log.w(LOG_TAG, "Received action to undo transaction, but no transaction ID given");
+					newTransactionItem.setCount(oldTransactionItem.getCount() * -1);
+					newTransactionItem.setPayer(oldTransactionItem.getPayer());
+					newTransactionItem.setUser(oldTransactionItem.getUser());
+					newTransactionItem.setProduct(oldTransactionItem.getProduct());
+					newTransactionItem.setTransaction(this.transaction);
+					
+					this.transactionItemHelper.create(newTransactionItem);
 				}
 			} else {
 				Log.e(LOG_TAG, "Unknown intent action: " + action);
 			}
+			
+			// Save changes
+			this.transactionHelper.update(this.transaction);
 		} else {
 			int id = savedInstanceState.getInt("transactionId", -1);
 			
@@ -155,6 +154,14 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 				.whereIdEq(id)
 				.first(); 
 		}
+		
+		// Retrieve transaction items
+		this.transactionItems = this.transactionItemHelper.select()
+			.whereTransactionIdEq(this.transaction.getId())
+			.all();
+		
+		// Set data
+		this.description.setText(this.transaction.getDescription());
 		
 		// Bind actions
 		this.transactionItemList.setAdapter(new TransactionItemEditorListAdapter(this) {
@@ -195,6 +202,13 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 	}
 	
 	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		outState.putInt("transactionId", this.transaction.getId());
+		
+		super.onSaveInstanceState(outState);
+	}
+
+	@Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
         MenuInflater inflater = getMenuInflater(); 
 	    inflater.inflate(R.menu.menu_context_transaction_editor, menu);
@@ -219,12 +233,12 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 				}
 				
 				this.transaction.setDescription(this.description.getText().toString());
-				this.transaction.setDateCreated(new Date());
+				this.transactionHelper.update(transaction);
 				
 				new SaveTransactionTask().execute();
 				return true;
 			case R.id.menu_cancel:
-				this.finish();
+				this.onBackPressed();
 				return true;
 			default:
 				return false;
@@ -233,12 +247,11 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 	
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo(); 
+		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+		TransactionItem transactionItem = this.transactionItems.get(info.position);
 		
 		switch (item.getItemId()) {
 			case R.id.menu_context_edit_transaction_item:
-				TransactionItem transactionItem = this.transactionItems.get(info.position);
-				
 				FragmentTransaction transaction = TransactionEditorActivity.this.getFragmentManager().beginTransaction();
 				Fragment prev = getFragmentManager().findFragmentByTag("dialog");
 			    if (prev != null) {
@@ -247,18 +260,19 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 			    transaction.addToBackStack(null);
 
 			    // Create and show the dialog.
-			    TransactionItemView fragment = TransactionItemView.createInstance(this.transaction);
+			    TransactionItemView fragment = TransactionItemView.createInstance(transactionItem);
 			    fragment.show(transaction, "dialog");
 				
 				return true;
 			case R.id.menu_context_delete_transaction_item:
 				this.transactionItems.remove(info.position);
+				this.transactionItemHelper.delete(transactionItem);
+				
 				((TransactionItemEditorListAdapter) this.transactionItemList.getAdapter()).notifyDataSetChanged();
 				
 				return true;
 			default:
     			return super.onContextItemSelected(item);
-			
 		}
 	}
 	
@@ -320,7 +334,6 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 				case Action.RESULT_OK: // Ok
 					// Done
 					Toast.makeText(TransactionEditorActivity.this, R.string.transactie_succesvol_verzonden, Toast.LENGTH_LONG).show();
-					TransactionEditorActivity.this.setResult(0);
 					TransactionEditorActivity.this.finish();
 					
 					break;
@@ -374,6 +387,27 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 
 	@Override
 	public void onTransactionItemUpdated(TransactionItem transactionItem) {
+		for (int i = 0; i < this.transactionItems.size(); i++) {
+			if (this.transactionItems.get(i).getId() == transactionItem.getId()) {
+				this.transactionItems.set(i, transactionItem);
+			}
+		}
+		
 		((TransactionItemEditorListAdapter) this.transactionItemList.getAdapter()).notifyDataSetChanged();
+	}
+	
+	@Override
+	public void onBackPressed() {
+	    new AlertDialog.Builder(this)
+	    	.setTitle("Sluiten bevestigen")
+	    	.setMessage("Weet je zeker dat je wilt teruggaan? ")
+	    	.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+	    		public void onClick(DialogInterface dialog, int id) {
+	    			TransactionEditorActivity.this.transactionHelper.delete(TransactionEditorActivity.this.transaction);
+	    			TransactionEditorActivity.this.finish();
+	    		}
+           })
+           .setNegativeButton(android.R.string.no, null)
+           .show();
 	}
 }

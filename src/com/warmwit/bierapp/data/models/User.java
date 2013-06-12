@@ -33,22 +33,14 @@ public class User extends Observable {
 	@DatabaseField(columnName = "score")
 	private int score;
 	
-	@DatabaseField(columnName = "dirty")
-	private boolean dirty;
-	
 	@DatabaseField(columnName = "synced")
 	private boolean synced;
 	
 	@DatabaseField(columnName = "dateChanged", canBeNull = true)
 	private Date dateChanged;
 	
-	public String getFullName() {
-		return Joiner.on(' ').skipNulls().join(new Object[] { this.firstName, this.lastName});
-	}
-	
-	public String toString() {
-		return this.getFullName();
-	}
+	@DatabaseField(columnName = "dirty")
+	private boolean dirty;
 	
 	public int getId() {
 		return id;
@@ -152,11 +144,19 @@ public class User extends Observable {
 		return this.productMap;
 	}
 
-	public Date setDateChanged() {
+	public Date getDateChanged() {
 		return dateChanged;
 	}
 
 	public void setDateChanged(Date dateChanged) {
 		this.dateChanged = dateChanged;
+	}
+	
+	public String getFullName() {
+		return Joiner.on(' ').skipNulls().join(new Object[] { this.firstName, this.lastName});
+	}
+	
+	public String toString() {
+		return this.getFullName();
 	}
 }

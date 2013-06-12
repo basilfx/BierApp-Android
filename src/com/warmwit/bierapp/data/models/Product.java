@@ -23,6 +23,9 @@ public class Product {
 	@DatabaseField(columnName = "dateChanged", canBeNull = true)
 	private Date dateChanged;
 	
+	@DatabaseField(columnName = "dirty")
+	private boolean dirty;
+	
 	public int getId() {
 		return id;
 	}
@@ -65,5 +68,15 @@ public class Product {
 
 	public void setDateChanged(Date dateChanged) {
 		this.dateChanged = dateChanged;
-	}	
+	}
+
+	public boolean isDirty() {
+		return dirty;
+	}
+
+	public void setDirty(boolean dirty) {
+		this.dirty = dirty;
+	}
+	
+	
 }

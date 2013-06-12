@@ -1,8 +1,8 @@
 package com.warmwit.bierapp.data.models;
 
-import com.j256.ormlite.dao.ForeignCollection;
+import java.util.Date;
+
 import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.field.ForeignCollectionField;
 import com.j256.ormlite.table.DatabaseTable;
 
 @DatabaseTable(tableName = "hosting")
@@ -11,37 +11,20 @@ public class Hosting {
 	@DatabaseField(columnName = "id", index = true, generatedId = true)
 	private int id;
 	
-	@DatabaseField(columnName = "description")
-	private String description;
+	@DatabaseField(columnName = "active")
+	private boolean active;
 	
-	@ForeignCollectionField(eager = true)
-	private ForeignCollection<HostMapping> hosts;
-	
-	@DatabaseField(columnName = "user_id", foreign = true)
+	@DatabaseField(columnName = "userId", foreign = true, foreignAutoRefresh = true)
 	private User user;
+	
+	@DatabaseField(columnName = "dirty")
+	private boolean dirty;
+	
+	@DatabaseField(columnName = "dateChanged", canBeNull = true)
+	private Date dateChanged;
 	
 	public int getId() {
 		return id;
-	}
-
-	public void setId(int id) {
-		this.id = id;
-	}
-
-	public ForeignCollection<HostMapping> getHosts() {
-		return hosts;
-	}
-
-	public void setHosts(ForeignCollection<HostMapping> hosts) {
-		this.hosts = hosts;
-	}
-
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
 	}
 
 	public User getUser() {
@@ -50,5 +33,32 @@ public class Hosting {
 
 	public void setUser(User user) {
 		this.user = user;
+		this.dirty = true;
+	}
+
+	public boolean isActive() {
+		return active;
+	}
+
+	public void setActive(boolean active) {
+		this.active = active;
+		this.dirty = true;
+	}
+
+	public Date getDateChanged() {
+		return dateChanged;
+	}
+
+	public void setDateChanged(Date dateChanged) {
+		this.dateChanged = dateChanged;
+		this.dirty = true;
+	}
+	
+	public boolean isDirty() {
+		return dirty;
+	}
+
+	public void setDirty(boolean dirty) {
+		this.dirty = dirty;
 	}
 }

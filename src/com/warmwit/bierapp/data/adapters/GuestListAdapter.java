@@ -1,11 +1,10 @@
 package com.warmwit.bierapp.data.adapters;
 
-import android.app.Activity;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -14,16 +13,18 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.data.models.User;
 
-public class GuestListAdapter extends ArrayAdapter<User> {
+public abstract class GuestListAdapter extends BaseAdapter {
 	
 	private static class ViewHolder { 
 		private TextView username;
         private ImageView avatar;
 	}
 	
-	public GuestListAdapter(Activity context) {  
-        super(context, R.layout.listview_row_guest);
-	}
+	private Context context;
+	
+    public GuestListAdapter(Context context) {
+    	this.context = context;
+    }
 	
 	 @Override
     public View getView(int pos, View view, ViewGroup parent) {
@@ -31,7 +32,7 @@ public class GuestListAdapter extends ArrayAdapter<User> {
 		
     	// Inflate or reuse view
         if (view == null) {
-        	LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        	LayoutInflater inflater = (LayoutInflater) this.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             view = inflater.inflate(R.layout.listview_row_guest, parent, false);
 
             // Bind views
@@ -47,7 +48,7 @@ public class GuestListAdapter extends ArrayAdapter<User> {
         }
         
         // Retrieve the user corresponding to this row
-        User user = this.getItem(pos);
+        User user = (User) this.getItem(pos);
         
         // Bind data 
         holder.username.setText(user.getName());

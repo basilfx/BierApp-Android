@@ -9,22 +9,22 @@ public class TransactionItem {
 	@DatabaseField(columnName = "id", index = true, generatedId = true)
 	private int id;
 	
-	@DatabaseField(columnName = "remote_id", index = true, canBeNull = true)
+	@DatabaseField(columnName = "remoteId", index = true, canBeNull = true)
 	private Integer remoteId;
 	
-	@DatabaseField(columnName = "user_id", foreign = true, foreignAutoRefresh = true)
+	@DatabaseField(columnName = "userId", foreign = true, foreignAutoRefresh = true)
 	private User user;
 	
-	@DatabaseField(columnName = "payer_id", foreign = true, foreignAutoRefresh = true)
+	@DatabaseField(columnName = "payerId", foreign = true, foreignAutoRefresh = true)
 	private User payer;
 	
-	@DatabaseField(columnName = "product_id", foreign = true, foreignAutoRefresh = true)
+	@DatabaseField(columnName = "productId", foreign = true, foreignAutoRefresh = true)
 	private Product product;
 	
 	@DatabaseField(columnName = "count")
 	private int count;
 	
-	@DatabaseField(foreign = true, foreignAutoRefresh = true, columnName = "transaction_id")
+	@DatabaseField(foreign = true, columnName = "transactionId")
 	private Transaction transaction;
 	
 	public int getCount() {

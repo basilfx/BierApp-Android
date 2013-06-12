@@ -9,6 +9,7 @@ import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import org.apache.http.auth.AuthenticationException;
@@ -23,6 +24,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.util.Pair;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -61,12 +63,13 @@ import com.warmwit.bierapp.data.models.TransactionItem;
 import com.warmwit.bierapp.data.models.User;
 import com.warmwit.bierapp.data.models.UserInfo;
 import com.warmwit.bierapp.database.DatabaseHelper;
-import com.warmwit.bierapp.database.HostQuery;
-import com.warmwit.bierapp.database.ProductQuery;
-import com.warmwit.bierapp.database.TransactionItemQuery;
-import com.warmwit.bierapp.database.UserQuery;
-import com.warmwit.bierapp.database2.TransactionHelper;
-import com.warmwit.bierapp.database2.TransactionItemHelper;
+import com.warmwit.bierapp.database.HostMappingHelper;
+import com.warmwit.bierapp.database.HostingHelper;
+import com.warmwit.bierapp.database.ProductHelper;
+import com.warmwit.bierapp.database.TransactionHelper;
+import com.warmwit.bierapp.database.TransactionItemHelper;
+import com.warmwit.bierapp.database.UserHelper;
+import com.warmwit.bierapp.database.UserInfoHelper;
 import com.warmwit.bierapp.exceptions.UnexpectedData;
 import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;
 import com.warmwit.bierapp.service.SyncService;
@@ -87,8 +90,14 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	private static final String TRANSACTION_TAG = LOG_TAG;
 	
 	private ApiConnector apiConnector;
+	
 	private TransactionHelper transactionHelper;
 	private TransactionItemHelper transactionItemHelper;
+	private ProductHelper productHelper;
+	private UserHelper userHelper;
+	private UserInfoHelper userInfoHelper;
+	private HostingHelper hostingHelper;
+	private HostMappingHelper hostMappingHelper;
 	
 	private UserListAdapter userListAdapter; 
 	private ListView userListView;
@@ -106,9 +115,16 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	private Transaction transaction;
 	
 	/**
-	 * @var Cached total count of products in transaction.
+	 * @var Cached total count of products in current transaction. Only 
+	 * 		applicable if this.transaction is not null.
 	 */
 	private int amount;
+	
+	/**
+	 * @var Cached number of items in current transaction. Only applicable if
+	 * 		this.transaction is not null.
+	 */
+	private int items;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -126,10 +142,15 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
         // Create helpers for transactions
         this.transactionHelper = new TransactionHelper(this.getHelper());
         this.transactionItemHelper = new TransactionItemHelper(this.getHelper());
+        this.productHelper = new ProductHelper(this.getHelper());
+        this.userHelper = new UserHelper(this.getHelper());
+        this.userInfoHelper = new UserInfoHelper(this.getHelper());
+        this.hostingHelper = new HostingHelper(this.getHelper());
+        this.hostMappingHelper = new HostMappingHelper(this.getHelper());
         
-        // Try to continue an ongoing transaction
+        // Try to continue an ongoing transaction. Should only be one!
         TransactionHelper.Select builder = transactionHelper.select();
-        builder.whereTagEq(TRANSACTION_TAG).whereRemoteIdEq(null);
+        builder.whereTagEq(TRANSACTION_TAG).whereRemoteIdEq(null).orderByDateCreated(true);
         
  		if (savedInstanceState != null) {
  			int transactionId = savedInstanceState.getInt("transactionId");
@@ -140,11 +161,24 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
  		}
  		
  		this.transaction = builder.first();
+ 		this.amount = 0;
+ 		this.items = 0;
  		
  		// If an active transaction was found, sum it's transaction items
  		if (this.transaction != null) {
-    		this.amount = this.transactionHelper.costByTransaction(this.transaction);
+    		this.amount = this.transactionItemHelper.select()
+    			.sumCount()
+    			.whereTransactionIdEq(this.transaction.getId())
+    			.firstInt();
+    		
+    		this.items = this.transactionItemHelper.select()
+    			.count()
+    			.whereTransactionIdEq(this.transaction.getId())
+    			.firstInt();
     	}
+ 		
+ 		// Verify transaction state
+ 		this.checkTransaction();
  		
  		// Bind data
  		this.initList();
@@ -307,12 +341,17 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     	switch (item.getItemId()) {
     		case R.id.menu_context_add_guest:
 				checkArgument(user.getType() == User.INHABITANT);
-				
+
 				// Create list of inactive guests
+				final List<User> guests = this.userHelper.select() 
+					.whereTypeEq(User.GUEST)
+					.whereIdNotIn(this.hostingHelper.select().selectUserIds().whereActiveEq(true).getBuilder())
+					.all();
+				
     			final ArrayAdapter<User> adapter = new ArrayAdapter<User>(
 					this, 
 					android.R.layout.simple_list_item_single_choice, 
-					new UserQuery(this).inactiveGuests()
+					guests
     			);
     			
     			// Create list of hosts
@@ -358,8 +397,24 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 										}
 		
 										if (hosts.size() > 0) {
-											HostQuery hostQuery = new HostQuery(HomeActivity.this);
-											hostQuery.create(guest, hosts);
+											// Create a hosting
+											Hosting hosting = new Hosting();
+											
+											hosting.setUser(guest);
+											hosting.setActive(true);
+											hosting.setDateChanged(new Date());
+
+											HomeActivity.this.hostingHelper.create(hosting);
+											
+											// Create mappings for each host
+											for (User user : hosts) {
+												HostMapping mapping = new HostMapping();
+												
+												mapping.setHost(user);
+												mapping.setHosting(hosting);
+												
+												HomeActivity.this.hostMappingHelper.create(mapping);
+											}
 											
 											// Reload data
 											HomeActivity.this.refreshList();
@@ -392,19 +447,34 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 							if (HomeActivity.this.transaction != null) {
 								// Cancel transactions for this user
 								HomeActivity.this.cancelTransaction(user);
-								new TransactionItemQuery(HomeActivity.this).deleteByTransactionAndUser(HomeActivity.this.transaction, user);
+								
+								// Remove transaction items from database
+								int lines = HomeActivity.this.transactionItemHelper.delete()
+				    				.whereRemoteIdEq(null)
+				    				.whereUserIdEq(user.getId())
+				    				.whereTransactionIdEq(HomeActivity.this.transaction.getId())
+				    				.execute();
+								
+								// Update the number of transaction items
+								HomeActivity.this.items = HomeActivity.this.items - lines;
+								
+								// Check transaction state
+								HomeActivity.this.checkTransaction();
 							}
 							
-							// Delete hosting
-							HostQuery hostQuery = new HostQuery(HomeActivity.this);
-							hostQuery.delete(hostQuery.byUser(user));
+							// Mark hosting as inactive
+							HomeActivity.this.hostingHelper.update()
+								.whereUserIdEq(user.getId())
+								.setActive(false)
+								.execute();
 								
 							// Reload data
 							HomeActivity.this.refreshList();
 							HomeActivity.this.refreshMenu();
 							
 							// Done
-							Toast.makeText(HomeActivity.this, HomeActivity.this.getResources().getString(R.string.s_is_verwijderd, user.getName()), Toast.LENGTH_LONG).show();
+							String message = HomeActivity.this.getResources().getString(R.string.s_is_verwijderd, user.getName());
+							Toast.makeText(HomeActivity.this, message, Toast.LENGTH_LONG).show();
 						}
 					})
 	    			.show();
@@ -415,10 +485,17 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				
 				// Initialize data
 				List<String> message = Lists.newArrayList();
-				HostQuery hostQuery = new HostQuery(this);
+				List<HostMapping> mappings = this.hostMappingHelper.select()
+					.whereHostingIdIn(this.hostingHelper.select()
+						.selectIds()
+						.whereActiveEq(true)
+						.whereUserIdEq(user.getId())
+						.getBuilder())
+					.all();
 				
-				for (HostMapping host : hostQuery.byUser(user).getHosts()) {
-					message.add(host.getHost().getFullName());
+				// Build message
+				for (HostMapping mapping : mappings) {
+					message.add(mapping.getHost().getFullName() + " (" + mapping.getTimesPaid() + "x betaald)");
 				}
 				
 				// Create a dialog
@@ -433,8 +510,19 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     			checkNotNull(this.transaction);
     			
 				// Set each product info to 0
-    			new TransactionItemQuery(HomeActivity.this).deleteByTransactionAndUser(HomeActivity.this.transaction, user);
-				this.cancelTransaction(user);
+    			this.cancelTransaction(user);
+    			
+    			// Remove transaction items
+    			int lines = this.transactionItemHelper.delete()
+    				.whereRemoteIdEq(null)
+    				.whereUserIdEq(user.getId())
+    				.whereTransactionIdEq(this.transaction.getId())
+    				.execute();
+    			
+    			this.items = this.items - lines;
+    			
+    			// Check transaction state
+    			this.checkTransaction();
 				
 				// Refresh view
 				view.refreshProducts();
@@ -497,24 +585,25 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 
 				// Delete query
 				this.transactionHelper.delete(this.transaction);
-				this.transaction = null;
 				
 				for (User user : Iterables.concat(this.inhabitants, this.guests)) {
 					this.cancelTransaction(user);
 				}
 				
-				// Refresh visible rows
-				HomeActivity.this.applyToVisibleRows(new Function<UserRowView, Boolean>() {
+				// Refresh global
+				this.amount = 0;
+				this.items = 0;
+				this.transaction = null;
+				
+				// Update UI
+				this.refreshMenu();
+				this.applyToVisibleRows(new Function<UserRowView, Boolean>() {
 					@Override
 					public Boolean apply(UserRowView view) {
 						view.refreshProducts();
 						return true;
 					}
 				});
-				
-				// Refresh global
-				this.amount = 0;
-				this.refreshMenu();
 				
 				// Display toast message
 				Toast.makeText(HomeActivity.this, R.string.transactie_gewist, Toast.LENGTH_LONG).show();
@@ -586,7 +675,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	
 	public void refreshMenu() {
 		// Save or hide purchase menu based on amount.
-		if (this.amount == 0) {
+		if (this.items == 0) {
 			this.purchaseMenu.setVisible(false);
 		} else {
 			this.purchaseMenu.setTitle(this.getResources().getString(R.string.d_consumpties, -1 * this.amount));
@@ -595,28 +684,55 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	}
 	
 	private void refreshList() {
-		UserQuery userQuery = new UserQuery(this);
-		ProductQuery productQuery = new ProductQuery(this);
+		this.inhabitants = this.userHelper.select()
+			.whereTypeEq(User.INHABITANT)
+			.all();
+		this.guests = this.userHelper.select()
+			.whereTypeEq(User.GUEST)
+			.whereIdIn(this.hostingHelper.select().selectUserIds().whereActiveEq(true).getBuilder())
+			.all();
+		this.products = this.productHelper.select()
+			.all();
 		
-		this.inhabitants = userQuery.inhabitants();
-		this.guests = userQuery.activeGuests();
-		this.products = productQuery.all();
+		// Generate lists of IDs
+		List<Integer> userIds = Lists.newArrayList();
+		List<Integer> productIds = Lists.newArrayList();
+		
+		for (User user : Iterables.concat(this.inhabitants, this.guests)) {
+			userIds.add(user.getId());
+		}
+		
+		for (Product product : products) {
+			productIds.add(product.getId());
+		}
 		
 		// For each user, set the product info
+		Map<Pair<Integer, Integer>, UserInfo> userInfos = userInfoHelper.select()
+			.whereUserIdIn(userIds)
+			.whereProductIdIn(productIds)
+			.asUserProductMap();
+		
 		for (User user : Iterables.concat(this.inhabitants, this.guests)) {
     		Builder<Product, ProductInfo> builder = ImmutableMap.<Product, ProductInfo>builder();
     		
     		for (Product product : products) {
-    			UserInfo userInfo = userQuery.userProductInfo(user, product); 
+    			Pair<Integer, Integer> key = Pair.create(user.getId(), product.getId());
+    			UserInfo userInfo;
     			
     			// If userInfo is null, no information was found (e.g. no transactions)
-    			if (userInfo == null) {
+    			if (userInfos.containsKey(key)) {
+    				userInfo = userInfos.get(key);
+    			} else {
     				userInfo = new UserInfo();
     			}
     			
     			if (this.transaction != null) {
-    				int change = this.transactionHelper.costByUserAndProduct(
-    						this.transaction, user, product);
+    				int change = this.transactionItemHelper.select()
+		    			.sumCount()
+		    			.whereTransactionIdEq(this.transaction.getId())
+		    			.whereUserIdEq(user.getId())
+		    			.whereProductIdEq(product.getId())
+		    			.firstInt();
     				
     				builder.put(product, new ProductInfo(userInfo.getEstimatedCount(), change));
     			} else {
@@ -639,37 +755,57 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		}
 		
 		// Start a new transaction if needed
+		boolean created = false;
+		
 		if (this.transaction == null) {
 			this.transaction = new Transaction();
 			this.amount = 0;
+			this.items = 0;
 			
 			this.transaction.setDateCreated(new Date());
 			this.transaction.setDescription(getString(R.string.verkoop_vanaf_tablet));
 			this.transaction.setTag(TRANSACTION_TAG);
 			
 			transactionHelper.create(this.transaction);
+			created = true;
 		}
 		
-		// Create (or update an existing) transaction item
-		TransactionItem transactionItem = new TransactionItem();
+		// Try to update a similar transaction item
+		int id = 0;
+		int lines = created ? 0 : this.transactionItemHelper.update()
+			.wherePayerIdEq(user.getId())
+			.whereRemoteIdEq(null)
+			.whereProductIdEq(product.getId())
+			.whereTransactionIdEq(this.transaction.getId())
+			.addCount(-1 * count)
+			.execute();
 		
-		transactionItem.setProduct(product);
-		transactionItem.setCount(-1 * count);
-		transactionItem.setUser(user);
-		transactionItem.setPayer(user);
-		transactionItem.setTransaction(this.transaction);
+		// Or create it if needed.
+		if (lines == 0) {
+			TransactionItem transactionItem = new TransactionItem();
+			
+			transactionItem.setProduct(product);
+			transactionItem.setCount(-1 * count);
+			transactionItem.setUser(user);
+			transactionItem.setPayer(user);
+			transactionItem.setTransaction(this.transaction);
+			
+			id = this.transactionItemHelper.create(transactionItem);
+		}
 		
-		this.transactionItemHelper.create(transactionItem);
-		
-		// Update counts
+		// Update transaction state
 		ProductInfo productInfo = user.getProducts().get(product);
 		productInfo.setChange(productInfo.getChange() - count);
 		this.amount = this.amount - count;
+		this.items = this.items + (id > 0 ? 1 : 0);
 		
 		// Dialog items are not in the list, so invoke a custom refresh
 		if (inDialog) {
 			userView.refreshProduct(productView, productInfo);
 		}
+		
+		// Check transaction state
+		this.checkTransaction();
 		
 		// Refresh UI
 		userView.refreshProducts();
@@ -677,12 +813,20 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	}
 	
 	private void showTransactionSummary(Transaction transaction, final boolean byPayer) {
-		TransactionItemQuery transactionItemQuery = new TransactionItemQuery(this);
 		ListView listView = new ListView(this);
 		
 		// Create inner adapter
 		TransactionItemListAdapter adapter = new TransactionItemListAdapter(this);
-		adapter.addAll(transactionItemQuery.byTransaction(transaction, byPayer ? "payer_id" : "user_id"));
+		TransactionItemHelper.Select builder = this.transactionItemHelper.select()
+			.whereTransactionIdEq(transaction.getId());
+		
+		if (byPayer) {
+			builder.orderByPayer(true);
+		} else {
+			builder.orderByUser(true);
+		}
+		
+		adapter.addAll(builder.all());
 		
 		// Create outer adapter
 		listView.setAdapter(new SimpleSectionAdapter<TransactionItem>(
@@ -701,6 +845,22 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			.show();
 	}
 	
+	private void checkTransaction() {
+		// Check state
+ 		checkArgument(this.items >= 0, "Number of items cannot be negative");
+ 		checkArgument(this.amount != 0 || this.items == 0, "Amount not zero while items count is zero");
+ 		checkArgument(this.transaction != null || (this.amount == 0 && this.items == 0), "Amount and items not zero while no transaction");
+ 		
+ 		// Remove transaction if empty
+ 		if (this.transaction != null && this.items == 0) {
+ 			this.transactionHelper.delete(this.transaction);
+ 			
+ 			this.transaction = null;
+ 			this.amount = 0;
+ 			this.items = 0;
+ 		}
+	}
+	
 	private class LoadDataTask extends ProgressAsyncTask<Void, Void, Integer> {
 		public LoadDataTask() {
 	        super(HomeActivity.this);
@@ -715,8 +875,10 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
  			if (HomeActivity.this.transaction != null) {
  				new TransactionHelper(getHelper()).delete(transaction);
  				
+ 				// Reset transaction
  				HomeActivity.this.transaction = null;
  				HomeActivity.this.amount = 0;
+ 				HomeActivity.this.items = 0;
  			}
 		}
 		
@@ -764,24 +926,24 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			checkNotNull(HomeActivity.this.transaction);
 			
 			// For each guest transaction, set a payer
-			TransactionItemQuery transactionItemQuery = new TransactionItemQuery(HomeActivity.this);
-			HostQuery hostQuery = new HostQuery(HomeActivity.this);
-			List<TransactionItem> transactionItems = transactionItemQuery.byTransaction(HomeActivity.this.transaction);
+			List<TransactionItem> transactionItems = HomeActivity.this.transactionItemHelper.select()
+				.whereTransactionIdEq(HomeActivity.this.transaction.getId())
+				.all();
 			
 			for (TransactionItem transactionItem : transactionItems) {
 				if (transactionItem.getPayer().getType() == User.GUEST) {
-					Hosting hosting = hostQuery.byUser(transactionItem.getPayer());
+					List<HostMapping> mappings = HomeActivity.this.hostMappingHelper.select()
+						.whereHostingIdIn(HomeActivity.this.hostingHelper.select()
+							.selectIds()
+							.whereActiveEq(true)
+							.whereUserIdEq(transactionItem.getPayer().getId())
+							.getBuilder())
+						.all();
 					
 					// Determine the least times paid
 					int min = Integer.MAX_VALUE;
 					
-					try {
-						hosting.getHosts().refreshCollection();
-					} catch (Exception e) {
-						
-					}
-					
-					for (HostMapping host : hosting.getHosts()) {
+					for (HostMapping host : mappings) {
 						if (host.getTimesPaid() < min) {
 							min = host.getTimesPaid();
 						}
@@ -790,23 +952,19 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 					// Gather candidate payers
 					List<HostMapping> payers = Lists.newArrayList();
 					
-					for (HostMapping host : hosting.getHosts()) {
+					for (HostMapping host : mappings) {
 						if (host.getTimesPaid() <= min) {
 							payers.add(host);
 						}
 					}
 					
 					// Select random payer
-					HostMapping payer = payers.get(new Random().nextInt(payers.size()));
-					transactionItem.setPayer(payer.getHost());
-					payer.setTimesPaid(payer.getTimesPaid() + 1);
-					
-					try {
-						HomeActivity.this.getHelper().getTransactionItemDao().update(transactionItem);
-						HomeActivity.this.getHelper().getHostMappingDao().update(payer);
-					} catch (SQLException e) {
-						LogUtils.logException(LOG_TAG, e, 0);
-					}
+					HostMapping mapping = payers.get(new Random().nextInt(payers.size()));
+					transactionItem.setPayer(mapping.getHost());
+					mapping.setTimesPaid(mapping.getTimesPaid() + 1);
+
+					HomeActivity.this.transactionItemHelper.update(transactionItem);
+					HomeActivity.this.hostMappingHelper.update(mapping);
 				}
 			}
 			
@@ -841,8 +999,11 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			
 			switch (result) {
 				case Action.RESULT_OK: // OK
+					// Reset transaction
 					HomeActivity.this.transaction = null;
 					HomeActivity.this.amount = 0;
+					HomeActivity.this.items = 0;
+					
 					HomeActivity.this.refreshMenu();
 					HomeActivity.this.refreshList();
 					
@@ -866,7 +1027,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 						.show();
 					
 					break;
-				case Action.RESULT_ERROR_CONNECTION: // Exception
+				case Action.RESULT_ERROR_CONNECTION:
 					new AlertDialog.Builder(HomeActivity.this)
 						.setMessage(R.string.geen_internetverbinding_probeer_het_nogmaals)
 						.setTitle(R.string.connectiefout)
