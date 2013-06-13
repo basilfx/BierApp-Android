@@ -12,7 +12,6 @@ import com.j256.ormlite.dao.CloseableIterator;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
 import com.warmwit.bierapp.data.models.Product;
-import com.warmwit.bierapp.data.models.User;
 
 public class ProductHelper extends QueryHelper {
 	
