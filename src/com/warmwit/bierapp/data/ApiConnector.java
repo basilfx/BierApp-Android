@@ -203,8 +203,20 @@ public class ApiConnector {
 	public void loadTransactions() throws IOException, SQLException, UnexpectedStatusCode, UnexpectedData, AuthenticationException {
 		ApiTransactionPage apiTransactionPage = (ApiTransactionPage) this.remoteClient.get("/transactions/", null);
 		
+		TransactionHelper transactionHelper = new TransactionHelper(this.databaseHelper);
+		List<Integer> transactionIds = Lists.newArrayList();
+		
 		for (ApiTransaction apiTransaction : apiTransactionPage.results) {
-			if (!this.databaseHelper.getTransactionDao().idExists(apiTransaction.id)) {
+			transactionIds.add(apiTransaction.id);
+		}
+
+		transactionIds = transactionHelper.select()
+			.selectRemoteIds()
+			.whereRemoteIdIn(transactionIds)
+			.asIntList();
+		
+		for (ApiTransaction apiTransaction : apiTransactionPage.results) {
+			if (!transactionIds.contains(apiTransaction.id)) {
 				this.convertToTransaction(apiTransaction);
 			}
 		}

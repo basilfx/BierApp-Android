@@ -375,9 +375,9 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 
 	@Override
 	protected void onResume() {
-		// TODO Auto-generated method stub
 		super.onResume();
 		
+		// Dirty hack to prevent focus on description box
 		this.description.clearFocus();
 	    this.focusDummy.requestFocus();
 	}
@@ -403,7 +403,7 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 	public void onBackPressed() {
 	    new AlertDialog.Builder(this)
 	    	.setTitle("Sluiten bevestigen")
-	    	.setMessage("Weet je zeker dat je wilt teruggaan? ")
+	    	.setMessage("Weet je zeker dat je wilt teruggaan? De huidige transactie wordt verwijderd!")
 	    	.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 	    		public void onClick(DialogInterface dialog, int id) {
 	    			TransactionEditorActivity.this.transactionHelper.delete(TransactionEditorActivity.this.transaction);

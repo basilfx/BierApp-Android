@@ -5,11 +5,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.sql.SQLException;
 import java.util.List;
 
+import com.j256.ormlite.dao.GenericRawResults;
+import com.j256.ormlite.dao.RawRowMapper;
 import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
 import com.warmwit.bierapp.data.models.Transaction;
 import com.warmwit.bierapp.data.models.TransactionItem;
+import com.warmwit.bierapp.database.HostingHelper.Select;
 
 public class TransactionHelper extends QueryHelper {
 	
@@ -77,15 +80,39 @@ public class TransactionHelper extends QueryHelper {
 			this.builder = helper.helper.getTransactionDao().queryBuilder();
 		}
 		
+		private void checkWhere() {
+			if (this.where == null) {
+				this.where = builder.where();
+			} else if (!this.addedOr) {
+				this.where = this.where.and();
+			}
+		}
+		
+		public Select selectIds() {
+			this.builder = this.builder.selectColumns("id");
+			return this;
+		}
+		
+		public Select selectRemoteIds() {
+			this.builder = this.builder.selectColumns("remoteId");
+			return this;
+		}
+		
 		public Select whereIdEq(int id) {
 			try {
-				if (this.where == null) {
-					this.where = builder.where();
-				} else if (!this.addedOr) {
-					this.where = this.where.and();
-				}
-				
+				this.checkWhere();
 				this.where = this.where.eq("id", id);
+			} catch (SQLException e) {
+				this.helper.handleException(e);
+			}
+			
+			return this;
+		}
+		
+		public Select whereRemoteIdIn(List<Integer> remoteIds) {
+			try {
+				this.checkWhere();
+				this.where = this.where.in("remoteId", remoteIds);
 			} catch (SQLException e) {
 				this.helper.handleException(e);
 			}
@@ -95,12 +122,7 @@ public class TransactionHelper extends QueryHelper {
 		
 		public Select whereTagEq(String tag) {
 			try {
-				if (this.where == null) {
-					this.where = builder.where();
-				} else if (!this.addedOr) {
-					this.where = this.where.and();
-				}
-				
+				this.checkWhere();
 				this.where = this.where.eq("tag", tag);
 			} catch (SQLException e) {
 				this.helper.handleException(e);
@@ -111,11 +133,7 @@ public class TransactionHelper extends QueryHelper {
 		
 		public Select whereRemoteIdEq(Integer remoteId) {
 			try {
-				if (this.where == null) {
-					this.where = builder.where();
-				} else if (!this.addedOr) {
-					this.where = this.where.and();
-				}
+				this.checkWhere();
 				
 				if (remoteId == null) {
 					this.where = this.where.isNull("remoteId");
@@ -131,11 +149,7 @@ public class TransactionHelper extends QueryHelper {
 		
 		public Select whereRemoteIdNeq(Integer remoteId) {
 			try {
-				if (this.where == null) {
-					this.where = builder.where();
-				} else if (!this.addedOr) {
-					this.where = this.where.and();
-				}
+				this.checkWhere();
 				
 				if (remoteId == null) {
 					this.where = this.where.isNotNull("remoteId");
@@ -167,6 +181,22 @@ public class TransactionHelper extends QueryHelper {
 		public List<Transaction> all() {
 			try {
 				return this.builder.query();
+			} catch (SQLException e) {
+				this.helper.handleException(e);
+				return null;
+			}
+		}
+		
+		public List<Integer> asIntList() {
+			try {
+				RawRowMapper<Integer> mapper = new RawRowMapper<Integer>() {
+					public Integer mapRow(String[] columnNames, String[] resultColumns) {
+						return Integer.parseInt(resultColumns[0]);
+					}
+				};
+				GenericRawResults<Integer> result = this.helper.helper.getHostingDao().queryRaw(this.builder.prepareStatementString(), mapper); 
+				        
+				return result.getResults();
 			} catch (SQLException e) {
 				this.helper.handleException(e);
 				return null;
