@@ -13,6 +13,8 @@
 	        android:layout_width="match_parent"
 	        android:layout_height="wrap_content"
 	        android:text="Product"
+	        android:maxLines="1"
+	        android:maxLength="100"
 	        android:textAppearance="?android:attr/textAppearanceMedium" />
 	
 	    <LinearLayout
