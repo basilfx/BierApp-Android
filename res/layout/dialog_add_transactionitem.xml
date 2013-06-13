@@ -35,8 +35,8 @@
 	            android:gravity="center"
 	            android:ems="10"
 	            android:hint="Aantal"
-	            android:inputType="numberSigned" >
-	
+	            android:inputType="numberSigned" 
+	            android:maxLength="4">
 	        </EditText>
 	
 	    </LinearLayout>
