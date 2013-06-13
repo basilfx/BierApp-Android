@@ -33,7 +33,7 @@
     <string name="vernieuwen">Vernieuwen</string>
     <string name="transactie_gewist">Transactie gewist</string>
     <string name="d_consumpties">%d consumpties</string>
-    <string name="verkoop_vanaf_tablet">Verkoop vanaf Tablet</string>
+    <string name="verkoop_vanaf_s">Verkoop vanaf %s</string>
     <string name="transactiesamenvatting">Transactiesamenvatting</string>
     <string name="gegevens_herladen">Gegevens herladen</string>
     <string name="sluiten">Sluiten</string>

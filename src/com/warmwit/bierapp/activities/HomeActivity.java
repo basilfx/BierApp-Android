@@ -763,7 +763,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			this.items = 0;
 			
 			this.transaction.setDateCreated(new Date());
-			this.transaction.setDescription(getString(R.string.verkoop_vanaf_tablet));
+			this.transaction.setDescription(getString(R.string.verkoop_vanaf_s, android.os.Build.MODEL));
 			this.transaction.setTag(TRANSACTION_TAG);
 			
 			transactionHelper.create(this.transaction);
