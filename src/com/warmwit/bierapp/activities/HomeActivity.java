@@ -3,16 +3,12 @@ package com.warmwit.bierapp.activities;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.io.IOException;
-import java.sql.SQLException;
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
-import org.apache.http.auth.AuthenticationException;
 
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
@@ -50,8 +46,9 @@ import com.mobsandgeeks.adapters.SimpleSectionAdapter;
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.actions.Action;
-import com.warmwit.bierapp.actions.SyncAction;
 import com.warmwit.bierapp.callbacks.OnProductClickListener;
+import com.warmwit.bierapp.callbacks.OnRefreshActionListener;
+import com.warmwit.bierapp.callbacks.OnSaveActionListener;
 import com.warmwit.bierapp.data.ApiConnector;
 import com.warmwit.bierapp.data.adapters.TransactionItemListAdapter;
 import com.warmwit.bierapp.data.adapters.UserListAdapter;
@@ -70,12 +67,10 @@ import com.warmwit.bierapp.database.TransactionHelper;
 import com.warmwit.bierapp.database.TransactionItemHelper;
 import com.warmwit.bierapp.database.UserHelper;
 import com.warmwit.bierapp.database.UserInfoHelper;
-import com.warmwit.bierapp.exceptions.UnexpectedData;
-import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;
 import com.warmwit.bierapp.service.SyncService;
-import com.warmwit.bierapp.utils.LogUtils;
+import com.warmwit.bierapp.tasks.RefreshDataTask;
+import com.warmwit.bierapp.tasks.SaveTransactionTask;
 import com.warmwit.bierapp.utils.ProductInfo;
-import com.warmwit.bierapp.utils.ProgressAsyncTask;
 import com.warmwit.bierapp.views.ProductView;
 import com.warmwit.bierapp.views.UserRowView;
 
@@ -84,7 +79,7 @@ import com.warmwit.bierapp.views.UserRowView;
  * 
  * @author Bas Stottelaar
  */
-public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements OnProductClickListener, OnMenuItemClickListener {
+public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements OnProductClickListener, OnMenuItemClickListener, OnRefreshActionListener, OnSaveActionListener {
 	public static final String LOG_TAG = "HomeActivity";
 	
 	private static final String TRANSACTION_TAG = LOG_TAG;
@@ -542,15 +537,16 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		switch (item.getItemId()) {
 			case R.id.menu_show_guests:
 				// Switch to guests activity
-				startActivity(new Intent(this, GuestsActivity.class)); 
+				this.startActivity(new Intent(this, GuestsActivity.class)); 
 				return true;
 			case R.id.menu_transactions:
 				// Switch to guests activity
-				startActivity(new Intent(this, TransactionsActivity.class)); 
+				this.startActivity(new Intent(this, TransactionsActivity.class)); 
 				return true;
 			case R.id.menu_refresh:
-				// Refresh data
-				if (this.transaction != null) {
+				// Refresh data. If transaction exists, ask the user to cancel it.
+				// Otherwise, we just make sure it doesn't exist.
+				if (this.items > 0) {
 					new AlertDialog.Builder(this)
 						.setTitle(R.string.vernieuwen)
 						.setMessage(R.string.er_is_een_huidige_transactie_gaande_die_gewist_zal_worden_wil_je_doorgaan)
@@ -558,22 +554,22 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 						.setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialog, int which) {
-								new LoadDataTask().execute();
+								HomeActivity.this.refreshData();
 							}
 						})
 						.show();
 				} else {
-					new LoadDataTask().execute();
+					this.refreshData();
 				}
 				
 				return true;
 			case R.id.menu_settings:
 				// Switch to guests activity
-				startActivity(new Intent(this, SettingsActivity.class)); 
+				this.startActivity(new Intent(this, SettingsActivity.class)); 
 				return true;
 			case R.id.menu_purchase_confirm:
 				checkNotNull(this.transaction);
-				new SaveTransactionTask().execute();
+				this.saveTransaction();
 				
 				return true;
 			case R.id.menu_purchase_show:
@@ -584,16 +580,11 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 				checkNotNull(this.transaction);
 
 				// Delete query
-				this.transactionHelper.delete(this.transaction);
+				this.cancelTransaction();
 				
 				for (User user : Iterables.concat(this.inhabitants, this.guests)) {
 					this.cancelTransaction(user);
 				}
-				
-				// Refresh global
-				this.amount = 0;
-				this.items = 0;
-				this.transaction = null;
 				
 				// Update UI
 				this.refreshMenu();
@@ -651,6 +642,64 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		}
 	}
 	
+	private void saveTransaction() {
+		// For each guest transaction, set a payer
+        List<TransactionItem> transactionItems = this.transactionItemHelper.select()
+            .whereTransactionIdEq(this.transaction.getId())
+            .all();
+		
+		for (TransactionItem transactionItem : transactionItems) {
+            if (transactionItem.getPayer().getType() == User.GUEST) {
+                List<HostMapping> mappings = this.hostMappingHelper.select()
+                    .whereHostingIdIn(this.hostingHelper.select()
+                        .selectIds()
+                        .whereActiveEq(true)
+                        .whereUserIdEq(transactionItem.getPayer().getId())
+                        .getBuilder())
+                    .all();
+                
+                // Determine the least times paid
+                int min = Integer.MAX_VALUE;
+                
+                for (HostMapping host : mappings) {
+                    if (host.getTimesPaid() < min) {
+                        min = host.getTimesPaid();
+                    }
+                }
+                
+                // Gather candidate payers
+                List<HostMapping> payers = Lists.newArrayList();
+                
+                for (HostMapping host : mappings) {
+                    if (host.getTimesPaid() <= min) {
+                        payers.add(host);
+                    }
+                }
+                
+                // Select random payer
+                HostMapping mapping = payers.get(new Random().nextInt(payers.size()));
+                transactionItem.setPayer(mapping.getHost());
+                mapping.setTimesPaid(mapping.getTimesPaid() + 1);
+
+                this.transactionItemHelper.update(transactionItem);
+                this.hostMappingHelper.update(mapping);
+            }
+        }
+		
+		// Display fragment which will load new data
+		SaveTransactionTask task = SaveTransactionTask.newInstance(this.transaction);
+		task.show(this.getFragmentManager(), SaveTransactionTask.FRAGMENT_TAG);
+	}
+	
+	private void refreshData() {
+		// Make sure current transaction is stopped
+		this.cancelTransaction();
+		
+		// Display fragment which will load new data
+		RefreshDataTask task = RefreshDataTask.newInstance();
+		task.show(this.getFragmentManager(), RefreshDataTask.FRAGMENT_TAG);
+	}
+	
 	private void cancelTransaction(User user) {
 		for (ProductInfo productInfo : user.getProducts().values()) {
 			this.amount = this.amount - productInfo.getChange(); 
@@ -683,6 +732,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	private void refreshList() {
 		this.inhabitants = this.userHelper.select()
 			.whereTypeEq(User.INHABITANT)
@@ -744,7 +794,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     	}
 		
 		// Notify change
-		((SimpleSectionAdapter) this.userListView.getAdapter()).notifyDataSetChanged();
+		((SimpleSectionAdapter<User>) this.userListView.getAdapter()).notifyDataSetChanged();
     }
 	
 	@Override
@@ -812,6 +862,23 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		this.refreshMenu();
 	}
 	
+	@Override
+	public void onBackPressed() {
+		moveTaskToBack(true);
+	}
+	
+	private void cancelTransaction() {
+		// Stop an ongoing transaction
+		if (this.transaction != null) {
+			this.transactionHelper.delete(this.transaction);
+		}
+			
+		// Reset transaction
+		HomeActivity.this.transaction = null;
+		HomeActivity.this.amount = 0;
+		HomeActivity.this.items = 0;
+	}
+	
 	private void showTransactionSummary(Transaction transaction, final boolean byPayer) {
 		ListView listView = new ListView(this);
 		
@@ -860,199 +927,84 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
  			this.items = 0;
  		}
 	}
-	
-	private class LoadDataTask extends ProgressAsyncTask<Void, Void, Integer> {
-		public LoadDataTask() {
-	        super(HomeActivity.this);
-	        this.setMessage(HomeActivity.this.getResources().getString(R.string.gegevens_herladen));
-	    }
-		
-		@Override
-		protected void onPreExecute() {
-			super.onPreExecute();
-	        
-	        // Stop an ongoing transaction
- 			if (HomeActivity.this.transaction != null) {
- 				new TransactionHelper(getHelper()).delete(transaction);
- 				
- 				// Reset transaction
- 				HomeActivity.this.transaction = null;
- 				HomeActivity.this.amount = 0;
- 				HomeActivity.this.items = 0;
- 			}
-		}
-		
-		@Override
-		protected Integer doInBackground(Void... params) {
-			return new SyncAction(HomeActivity.this.apiConnector).basicSync();
-		}
-		
-		@Override
-		protected void onPostExecute(Integer result) {
-			checkNotNull(result);
-			
-			switch (result) {
-				case 0:
-					// Update view
-					HomeActivity.this.refreshList();
-					HomeActivity.this.refreshMenu();
-					
-					// Inform user
-					Toast.makeText(HomeActivity.this, R.string.data_vernieuwd, Toast.LENGTH_LONG).show();
-					
-					break;
-				case 1:
-					break;
-				case 2:
-					break;
-				default:
-					throw new IllegalStateException();
-			}
-			
-			super.onPostExecute(result);
-		}
-	}
-	
-	private class SaveTransactionTask extends ProgressAsyncTask<Void, Void, Integer> {
-		private Transaction result;
-		
-		public SaveTransactionTask() {
-			super(HomeActivity.this);
-			this.setMessage(HomeActivity.this.getResources().getString(R.string.transactie_versturen));
-	    }
 
-		@Override
-		protected Integer doInBackground(Void... params) {
-			checkNotNull(HomeActivity.this.transaction);
-			
-			// For each guest transaction, set a payer
-			List<TransactionItem> transactionItems = HomeActivity.this.transactionItemHelper.select()
-				.whereTransactionIdEq(HomeActivity.this.transaction.getId())
-				.all();
-			
-			for (TransactionItem transactionItem : transactionItems) {
-				if (transactionItem.getPayer().getType() == User.GUEST) {
-					List<HostMapping> mappings = HomeActivity.this.hostMappingHelper.select()
-						.whereHostingIdIn(HomeActivity.this.hostingHelper.select()
-							.selectIds()
-							.whereActiveEq(true)
-							.whereUserIdEq(transactionItem.getPayer().getId())
-							.getBuilder())
-						.all();
-					
-					// Determine the least times paid
-					int min = Integer.MAX_VALUE;
-					
-					for (HostMapping host : mappings) {
-						if (host.getTimesPaid() < min) {
-							min = host.getTimesPaid();
-						}
-					}
-					
-					// Gather candidate payers
-					List<HostMapping> payers = Lists.newArrayList();
-					
-					for (HostMapping host : mappings) {
-						if (host.getTimesPaid() <= min) {
-							payers.add(host);
-						}
-					}
-					
-					// Select random payer
-					HostMapping mapping = payers.get(new Random().nextInt(payers.size()));
-					transactionItem.setPayer(mapping.getHost());
-					mapping.setTimesPaid(mapping.getTimesPaid() + 1);
-
-					HomeActivity.this.transactionItemHelper.update(transactionItem);
-					HomeActivity.this.hostMappingHelper.update(mapping);
-				}
-			}
-			
-			// Send transaction to the server
-			try {
-				this.result = HomeActivity.this.apiConnector.saveTransaction(HomeActivity.this.transaction);
-				
-				if (this.result != null) {
-					// Reload new user data
-					HomeActivity.this.apiConnector.loadUserInfo();
-					
-					return Action.RESULT_OK;
-				} else {
-					return Action.RESULT_ERROR_INTERNAL;
-				}
-			} catch (IOException e) {
-				return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_CONNECTION);
-			} catch (SQLException e) {
-				return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_SQL);
-			} catch (AuthenticationException e) {
-				return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_AUTHENTICATION);
-			} catch (UnexpectedStatusCode e) {
-				return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_SERVER);
-			} catch (UnexpectedData e) {
-				return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_SERVER);
-			}
-		}
-		
-		@Override
-		protected void onPostExecute(Integer result) {
-			checkNotNull(result);
-			
-			switch (result) {
-				case Action.RESULT_OK: // OK
-					// Reset transaction
-					HomeActivity.this.transaction = null;
-					HomeActivity.this.amount = 0;
-					HomeActivity.this.items = 0;
-					
-					HomeActivity.this.refreshMenu();
-					HomeActivity.this.refreshList();
-					
-					// Display summary
-					SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(HomeActivity.this);
-					
-					if (preferences.getBoolean("transaction_post_save_summary", true)) {
-						HomeActivity.this.showTransactionSummary(this.result, true);
-					}
-					
-					// Done
-					Toast.makeText(HomeActivity.this, R.string.transactie_succesvol_verzonden, Toast.LENGTH_LONG).show();
-					
-					break;
-				case Action.RESULT_ERROR_INTERNAL:
-				case Action.RESULT_ERROR_SERVER:
-					new AlertDialog.Builder(HomeActivity.this)
-						.setMessage(R.string.opslaan_van_transactie_is_mislukt_probeer_het_nogmaals)
-						.setTitle(R.string.transactiefout)
-						.create()
-						.show();
-					
-					break;
-				case Action.RESULT_ERROR_CONNECTION:
-					new AlertDialog.Builder(HomeActivity.this)
-						.setMessage(R.string.geen_internetverbinding_probeer_het_nogmaals)
-						.setTitle(R.string.connectiefout)
-						.create()
-						.show();
-					
-					break;
-				case Action.RESULT_ERROR_AUTHENTICATION:
-					new AlertDialog.Builder(HomeActivity.this)
-						.setMessage(R.string.authenticatie_met_de_server_is_mislukt_de_applicatie_moet_opnieuw_gekoppeld_worden)
-						.setTitle(R.string.authenticatiefout)
-						.create()
-						.show();
-					
-					break;
-				default:
-					throw new IllegalStateException("Code: " + result);
-			}
-			
-			super.onPostExecute(result);
-		}
+	@Override
+	public void onRefreshActionResult(int result) {
+		switch (result) {
+	        case Action.RESULT_OK:
+	            // Update view
+	            this.refreshList();
+	            this.refreshMenu();
+	            
+	            // Inform user
+	            Toast.makeText(HomeActivity.this, R.string.data_vernieuwd, Toast.LENGTH_LONG).show();
+	            
+	            break;
+	        case 1:
+	            break;
+	        case 2:
+	            break;
+	        default:
+	        	throw new IllegalStateException("Code: " + result);
+	    }
 	}
 
 	@Override
-	public void onBackPressed() {
-		moveTaskToBack(true);
+	public void onSaveActionResult(int result, int transactionId) {
+        switch (result) {
+	        case Action.RESULT_OK:
+	            // Reset state
+	            this.transaction = null;
+	            this.amount = 0;
+	            this.items = 0;
+	            
+	            // Update UI
+	            this.refreshMenu();
+	            this.refreshList();
+	            
+	            // Display summary
+	            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+	            
+	            if (preferences.getBoolean("transaction_post_save_summary", true)) {
+	            	Transaction transaction = this.transactionHelper.select()
+	            		.whereIdEq(transactionId)
+	            		.whereRemoteIdNeq(null)
+	            		.first();
+	            	
+	                this.showTransactionSummary(transaction, true);
+	            }
+	            
+	            // Done
+	            Toast.makeText(this, R.string.transactie_succesvol_verzonden, Toast.LENGTH_LONG).show();
+	            
+	            break;
+	        case Action.RESULT_ERROR_INTERNAL:
+	        case Action.RESULT_ERROR_SERVER:
+	            new AlertDialog.Builder(this)
+	                .setMessage(R.string.opslaan_van_transactie_is_mislukt_probeer_het_nogmaals)
+	                .setTitle(R.string.transactiefout)
+	                .create()
+	                .show();
+	            
+	            break;
+	        case Action.RESULT_ERROR_CONNECTION:
+	            new AlertDialog.Builder(this)
+	                .setMessage(R.string.geen_internetverbinding_probeer_het_nogmaals)
+	                .setTitle(R.string.connectiefout)
+	                .create()
+	                .show();
+	            
+	            break;
+	        case Action.RESULT_ERROR_AUTHENTICATION:
+	            new AlertDialog.Builder(this)
+	                .setMessage(R.string.authenticatie_met_de_server_is_mislukt_de_applicatie_moet_opnieuw_gekoppeld_worden)
+	                .setTitle(R.string.authenticatiefout)
+	                .create()
+	                .show();
+	            
+	            break;
+	        default:
+	            throw new IllegalStateException("Code: " + result);
+	    }
 	}
 }

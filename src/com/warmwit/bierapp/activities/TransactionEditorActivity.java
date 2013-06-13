@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 import org.apache.http.auth.AuthenticationException;
 
@@ -14,7 +15,9 @@ import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -32,25 +35,30 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.warmwit.bierapp.BierAppApplication;
 import com.warmwit.bierapp.R;
 import com.warmwit.bierapp.actions.Action;
+import com.warmwit.bierapp.callbacks.OnSaveActionListener;
 import com.warmwit.bierapp.data.ApiConnector;
 import com.warmwit.bierapp.data.adapters.TransactionItemEditorListAdapter;
+import com.warmwit.bierapp.data.models.HostMapping;
 import com.warmwit.bierapp.data.models.Transaction;
 import com.warmwit.bierapp.data.models.TransactionItem;
+import com.warmwit.bierapp.data.models.User;
 import com.warmwit.bierapp.database.DatabaseHelper;
 import com.warmwit.bierapp.database.TransactionHelper;
 import com.warmwit.bierapp.database.TransactionItemHelper;
 import com.warmwit.bierapp.exceptions.UnexpectedData;
 import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;
+import com.warmwit.bierapp.tasks.SaveTransactionTask;
 import com.warmwit.bierapp.utils.LogUtils;
 import com.warmwit.bierapp.utils.ProgressAsyncTask;
 import com.warmwit.bierapp.views.TransactionItemView;
 import com.warmwit.bierapp.views.TransactionItemView.OnTransactionItemListener;
 
-public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelper> implements OnMenuItemClickListener, OnTransactionItemListener {
+public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelper> implements OnMenuItemClickListener, OnTransactionItemListener, OnSaveActionListener {
 	
 	public static final String LOG_TAG = "TransactionEditorActivity";
 	
@@ -150,7 +158,6 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 			
 			this.transaction = this.transactionHelper.select()
 				.whereTagEq(TRANSACTION_TAG)
-				.whereRemoteIdEq(null)
 				.whereIdEq(id)
 				.first();
 		}
@@ -224,21 +231,8 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 		switch (item.getItemId()) {
 			case R.id.menu_save:
 				checkNotNull(this.transaction);
+				this.saveTransaction();
 				
-				if (this.description.getText().toString().isEmpty()) {
-					new AlertDialog.Builder(this)
-						.setTitle("Invoerfout")
-						.setMessage("Omschrijving mag niet leeg zijn.")
-						.setPositiveButton(android.R.string.ok, null)
-						.show();
-						
-					return true;
-				}
-				
-				this.transaction.setDescription(this.description.getText().toString());
-				this.transactionHelper.update(transaction);
-				
-				new SaveTransactionTask().execute();
 				return true;
 			case R.id.menu_cancel:
 				this.onBackPressed();
@@ -292,87 +286,6 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 		return super.onCreateOptionsMenu(menu);
 	}
 
-	private class SaveTransactionTask extends ProgressAsyncTask<Void, Void, Integer> {
-		private Transaction result;
-		
-		public SaveTransactionTask() {
-			super(TransactionEditorActivity.this);
-			this.setMessage(TransactionEditorActivity.this.getResources().getString(R.string.transactie_versturen));
-	    }
-
-		@Override
-		protected Integer doInBackground(Void... params) {
-			checkNotNull(TransactionEditorActivity.this.transaction);
-			
-			// Send transaction to the server
-			try {
-				this.result = TransactionEditorActivity.this.apiConnector.saveTransaction(TransactionEditorActivity.this.transaction);
-				
-				if (this.result != null) {
-					// Reload new user data
-					TransactionEditorActivity.this.apiConnector.loadUserInfo();
-					
-					return Action.RESULT_OK;
-				} else {
-					return Action.RESULT_ERROR_INTERNAL;
-				}
-			} catch (IOException e) {
-				return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_CONNECTION);
-			} catch (SQLException e) {
-				return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_SQL);
-			} catch (AuthenticationException e) {
-				return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_AUTHENTICATION);
-			} catch (UnexpectedStatusCode e) {
-				return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_SERVER);
-			} catch (UnexpectedData e) {
-				return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_SERVER);
-			}
-		}
-		
-		@Override
-		protected void onPostExecute(Integer result) {
-			checkNotNull(result);
-			
-			switch (result) {
-				case Action.RESULT_OK: // Ok
-					// Done
-					Toast.makeText(TransactionEditorActivity.this, R.string.transactie_succesvol_verzonden, Toast.LENGTH_LONG).show();
-					TransactionEditorActivity.this.finish();
-					
-					break;
-				case Action.RESULT_ERROR_INTERNAL:
-				case Action.RESULT_ERROR_SERVER:
-					new AlertDialog.Builder(TransactionEditorActivity.this)
-						.setMessage(R.string.opslaan_van_transactie_is_mislukt_probeer_het_nogmaals)
-						.setTitle(R.string.transactiefout)
-						.create()
-						.show();
-					
-					break;
-				case Action.RESULT_ERROR_CONNECTION: // Exception
-					new AlertDialog.Builder(TransactionEditorActivity.this)
-						.setMessage(R.string.geen_internetverbinding_probeer_het_nogmaals)
-						.setTitle(R.string.connectiefout)
-						.create()
-						.show();
-					
-					break;
-				case Action.RESULT_ERROR_AUTHENTICATION:
-					new AlertDialog.Builder(TransactionEditorActivity.this)
-						.setMessage(R.string.authenticatie_met_de_server_is_mislukt_de_applicatie_moet_opnieuw_gekoppeld_worden)
-						.setTitle(R.string.authenticatiefout)
-						.create()
-						.show();
-					
-					break;
-				default:
-					throw new IllegalStateException("Code: " + result);
-			}
-			
-			super.onPostExecute(result);
-		}
-	}
-
 	@Override
 	protected void onResume() {
 		super.onResume();
@@ -412,5 +325,63 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
            })
            .setNegativeButton(android.R.string.no, null)
            .show();
+	}
+	
+	@Override
+	public void onSaveActionResult(int result, int transactionId) {
+        switch (result) {
+	        case Action.RESULT_OK:
+	        	// Done
+	            Toast.makeText(this, R.string.transactie_succesvol_verzonden, Toast.LENGTH_LONG).show();
+	            this.finish();
+	            
+	            break;
+	        case Action.RESULT_ERROR_INTERNAL:
+	        case Action.RESULT_ERROR_SERVER:
+	            new AlertDialog.Builder(this)
+	                .setMessage(R.string.opslaan_van_transactie_is_mislukt_probeer_het_nogmaals)
+	                .setTitle(R.string.transactiefout)
+	                .create()
+	                .show();
+	            
+	            break;
+	        case Action.RESULT_ERROR_CONNECTION:
+	            new AlertDialog.Builder(this)
+	                .setMessage(R.string.geen_internetverbinding_probeer_het_nogmaals)
+	                .setTitle(R.string.connectiefout)
+	                .create()
+	                .show();
+	            
+	            break;
+	        case Action.RESULT_ERROR_AUTHENTICATION:
+	            new AlertDialog.Builder(this)
+	                .setMessage(R.string.authenticatie_met_de_server_is_mislukt_de_applicatie_moet_opnieuw_gekoppeld_worden)
+	                .setTitle(R.string.authenticatiefout)
+	                .create()
+	                .show();
+	            
+	            break;
+	        default:
+	            throw new IllegalStateException("Code: " + result);
+	    }
+	}
+	
+	private void saveTransaction() {
+		if (this.description.getText().toString().isEmpty()) {
+			new AlertDialog.Builder(this)
+				.setTitle("Invoerfout")
+				.setMessage("Omschrijving mag niet leeg zijn.")
+				.setPositiveButton(android.R.string.ok, null)
+				.show();
+				
+			return;
+		}
+		
+		this.transaction.setDescription(this.description.getText().toString());
+		this.transactionHelper.update(transaction);
+		
+		// Display fragment which will load new data
+		SaveTransactionTask task = SaveTransactionTask.newInstance(this.transaction);
+		task.show(this.getFragmentManager(), SaveTransactionTask.FRAGMENT_TAG);
 	}
 }
