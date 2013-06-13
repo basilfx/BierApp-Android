@@ -1,6 +1,6 @@
 <manifest package="com.warmwit.bierapp"
     android:versionCode="1"
-    android:versionName="1.0" android:installLocation="auto" xmlns:android="http://schemas.android.com/apk/res/android">
+    android:versionName="1.1" android:installLocation="auto" xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-sdk android:minSdkVersion="15" android:targetSdkVersion="15" />
     
