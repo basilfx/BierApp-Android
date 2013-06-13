@@ -104,7 +104,7 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 			String action = Strings.nullToEmpty(intent.getAction());
 			
 			if (action.equals("") || action.equals(ACTION_ADD_NORMAL_TRANSACTION)) {
-				this.transaction.setDescription("Handmatige transactie vanaf Tablet");
+				this.transaction.setDescription("Handmatige transactie vanaf " + android.os.Build.MODEL);
 			} else if (action.equals(ACTION_ADD_TEMPLATE_TRANSACTION)) {
 				throw new IllegalStateException("Not yet implemented");
 			} else if (action.equals(ACTION_UNDO_TRANSACTION)) {
@@ -125,7 +125,7 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 					.all();
 				
 				// Set new title
-				this.transaction.setDescription("Tegentransactie #" + oldTransaction.getRemoteId() + " vanaf Tablet");
+				this.transaction.setDescription("Tegentransactie #" + oldTransaction.getRemoteId() + " vanaf " + android.os.Build.MODEL);
 				
 				// Iterate over each old transaction item and copy them
 				for (TransactionItem oldTransactionItem : oldTransactionItems) {
@@ -150,10 +150,13 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 			
 			this.transaction = this.transactionHelper.select()
 				.whereTagEq(TRANSACTION_TAG)
-				.whereRemoteIdNeq(null)
+				.whereRemoteIdEq(null)
 				.whereIdEq(id)
-				.first(); 
+				.first();
 		}
+		
+		// Application state check
+		checkNotNull(this.transaction, "No transaction loaded.");
 		
 		// Retrieve transaction items
 		this.transactionItems = this.transactionItemHelper.select()
