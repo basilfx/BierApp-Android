@@ -10,6 +10,7 @@ import android.util.Log;
 import com.warmwit.bierapp.data.ApiConnector;
 import com.warmwit.bierapp.exceptions.UnexpectedData;
 import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;
+import com.warmwit.bierapp.exceptions.UnexpectedUrl;
 import com.warmwit.bierapp.utils.LogUtils;
 
 public class SyncAction extends Action {
@@ -45,6 +46,8 @@ public class SyncAction extends Action {
 		} catch (UnexpectedStatusCode e) {
 			return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_SERVER);
 		} catch (UnexpectedData e) {
+			return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_SERVER);
+		} catch (UnexpectedUrl e) {
 			return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_SERVER);
 		} catch (AuthenticationException e) {
 			return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_AUTHENTICATION);

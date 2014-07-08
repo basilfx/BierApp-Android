@@ -158,6 +158,7 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 			
 			this.transaction = this.transactionHelper.select()
 				.whereTagEq(TRANSACTION_TAG)
+				.whereRemoteIdEq(null)
 				.whereIdEq(id)
 				.first();
 		}

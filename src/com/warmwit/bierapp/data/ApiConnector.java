@@ -25,6 +25,7 @@ import com.warmwit.bierapp.database.UserHelper;
 import com.warmwit.bierapp.database.UserInfoHelper;
 import com.warmwit.bierapp.exceptions.UnexpectedData;
 import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;
+import com.warmwit.bierapp.exceptions.UnexpectedUrl;
 
 public class ApiConnector {
 
@@ -40,14 +41,24 @@ public class ApiConnector {
 	// Users
 	//
 	
-	public void loadUsers() throws IOException, SQLException, UnexpectedStatusCode, UnexpectedData, AuthenticationException {
-		ApiUserPage apiUserPage = (ApiUserPage) this.remoteClient.get("/users/", null);
+	public void loadUsers() throws IOException, SQLException, UnexpectedStatusCode, UnexpectedData, UnexpectedUrl, AuthenticationException {
 		UserHelper userHelper = new UserHelper(this.databaseHelper);
-		
 		List<Integer> userIds = Lists.newArrayList();
 		
-		for (ApiUser apiUser : apiUserPage.results) {
-			userIds.add(apiUser.id);
+		ApiUserPage apiUserPage = (ApiUserPage) this.remoteClient.get("/users?limit=50");
+		
+		while (true) {
+			for (ApiUser apiUser : apiUserPage.results) {
+				userIds.add(apiUser.id);
+			}
+			
+			// Fetch next page
+			if (apiUserPage.next == null) {
+				break;
+			} else {
+				apiUserPage = (ApiUserPage) this.remoteClient.get(apiUserPage.next);
+				checkNotNull(apiUserPage.previous);
+			}
 		}
 		
 		Map<Integer, User> users = userHelper.select()
@@ -91,7 +102,7 @@ public class ApiConnector {
 		}
 	}
 	
-	public void loadUserInfo() throws IOException, SQLException, UnexpectedStatusCode, UnexpectedData, AuthenticationException {
+	public void loadUserInfo() throws IOException, SQLException, UnexpectedStatusCode, UnexpectedData, UnexpectedUrl, AuthenticationException {
 		UserHelper userHelper = new UserHelper(this.databaseHelper);
 		ProductHelper productHelper = new ProductHelper(this.databaseHelper);
 		UserInfoHelper userInfoHelper = new UserInfoHelper(this.databaseHelper);
@@ -99,13 +110,23 @@ public class ApiConnector {
 		List<Integer> userIds = Lists.newArrayList();
 		List<Integer> productIds = Lists.newArrayList();
 		
-		ApiUserPage apiUserPage = (ApiUserPage) this.remoteClient.get("/users/info/", null);
+		ApiUserPage apiUserPage = (ApiUserPage) this.remoteClient.get("/users/info?limit=50");
 		
-		for (ApiUser apiUser : apiUserPage.results) {
-			userIds.add(apiUser.id);
+		while (true) {
+			for (ApiUser apiUser : apiUserPage.results) {
+				userIds.add(apiUser.id);
+				
+				for (ApiUserInfo apiUserInfo : apiUser.product_info) {
+					productIds.add(apiUserInfo.product);
+				}
+			}
 			
-			for (ApiUserInfo apiUserInfo : apiUser.product_info) {
-				productIds.add(apiUserInfo.product);
+			// Fetch next page
+			if (apiUserPage.next == null) {
+				break;
+			} else {
+				apiUserPage = (ApiUserPage) this.remoteClient.get(apiUserPage.next);
+				checkNotNull(apiUserPage.previous);
 			}
 		}
 		
@@ -200,14 +221,28 @@ public class ApiConnector {
 		return transaction;
 	}
 	
-	public void loadTransactions() throws IOException, SQLException, UnexpectedStatusCode, UnexpectedData, AuthenticationException {
-		ApiTransactionPage apiTransactionPage = (ApiTransactionPage) this.remoteClient.get("/transactions/", null);
-		
+	public void loadTransactions() throws IOException, SQLException, UnexpectedStatusCode, UnexpectedData, UnexpectedUrl, AuthenticationException {
 		TransactionHelper transactionHelper = new TransactionHelper(this.databaseHelper);
 		List<Integer> transactionIds = Lists.newArrayList();
 		
-		for (ApiTransaction apiTransaction : apiTransactionPage.results) {
-			transactionIds.add(apiTransaction.id);
+		ApiTransactionPage apiTransactionPage = (ApiTransactionPage) this.remoteClient.get("/transactions?limit=50");
+		
+		while (true) {
+			for (ApiTransaction apiTransaction : apiTransactionPage.results) {
+				transactionIds.add(apiTransaction.id);
+			}
+		
+			// Fetch next page
+			if (apiTransactionPage.next == null) {
+				break;
+			} else {
+				if (transactionIds.size() < 250) {
+					apiTransactionPage = (ApiTransactionPage) this.remoteClient.get(apiTransactionPage.next);
+					checkNotNull(apiTransactionPage.previous);
+				} else {
+					break;
+				}
+			}
 		}
 
 		transactionIds = transactionHelper.select()
@@ -222,7 +257,7 @@ public class ApiConnector {
 		}
 	}
 	
-	public Transaction saveTransaction(Transaction transaction) throws IOException, SQLException, UnexpectedStatusCode, UnexpectedData, AuthenticationException {
+	public Transaction saveTransaction(Transaction transaction) throws IOException, SQLException, UnexpectedStatusCode, UnexpectedData, UnexpectedUrl, AuthenticationException {
 		ApiTransaction apiTransaction = new ApiTransaction();
 		int i = 0;
 		
@@ -246,7 +281,7 @@ public class ApiConnector {
 		}
 		
 		// Send to server
-		Object result = this.remoteClient.post(apiTransaction, "/transactions/", null);
+		Object result = this.remoteClient.post(apiTransaction, "/transactions/");
 		
 		// Parse result
 		if (result == null) {
@@ -267,14 +302,24 @@ public class ApiConnector {
 	// Products
 	//
 	
-	public void loadProducts() throws IOException, SQLException, UnexpectedStatusCode, UnexpectedData, AuthenticationException {
-		ApiProductPage apiProductPage = (ApiProductPage) this.remoteClient.get("/products/", null);
+	public void loadProducts() throws IOException, SQLException, UnexpectedStatusCode, UnexpectedData, UnexpectedUrl, AuthenticationException {
 		ProductHelper productHelper = new ProductHelper(this.databaseHelper);
-		
 		List<Integer> productIds = Lists.newArrayList();
 		
-		for (ApiProduct apiProduct : apiProductPage.results) {
-			productIds.add(apiProduct.id);
+		ApiProductPage apiProductPage = (ApiProductPage) this.remoteClient.get("/products?limit=5");
+		
+		while (true) {
+			for (ApiProduct apiProduct : apiProductPage.results) {
+				productIds.add(apiProduct.id);
+			}
+			
+			// Fetch next page
+			if (apiProductPage.next == null) {
+				break;
+			} else {
+				apiProductPage = (ApiProductPage) this.remoteClient.get(apiProductPage.next);
+				checkNotNull(apiProductPage.previous);
+			}
 		}
 		
 		Map<Integer, Product> products = productHelper.select()

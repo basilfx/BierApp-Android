@@ -23,24 +23,19 @@ import com.warmwit.bierapp.service.BatchIntentReceiver;
 public class BierAppApplication extends Application {
 	public static final String LOG_TAG = "BierAppApplication";
 	
-	//public static final String API_URL = "http://api.beterlijst.nl/apps/bierapp";
-	//public static final String WEBSITE_URL = "http://www.beterlijst.nl";
+	public static final String SITE_URL = "http://www.beterlijst.nl";
+	public static final String API_URL = "http://api.beterlijst.nl";
+	public static final String API_PATH = "/apps/bierapp";
 	
 	//public static final String API_URL = "http://www.beterlijst.nl:8000/api/apps/bierapp";
 	//public static final String WEBSITE_URL = "http://www.beterlijst.nl:8000";
-	
-	//public static final String API_URL = "http://10.0.0.17:8000/api/apps/bierapp";
-	//public static final String WEBSITE_URL = "http://10.0.0.17:8000";
-	
-	//public static final String API_URL = "http://192.168.2.6:8000/api/apps/bierapp";
-	//public static final String WEBSITE_URL = "http://192.168.2.6:8000";
 	
 	public static final String OAUTH2_CLIENT_ID = "8df8f62b96ba40d11cd1";
 	public static final String OAUTH2_CLIENT_SECRET = "eee752653d2a1afc5cdff451ebc5d17ec9b9bc9c";
 	
 	public static final String OAUTH2_REDIRECT_URL = "http://www.beterlijst.nl/oauth/catch_me";
-	public static final String OAUTH2_AUTHORIZE_URL = WEBSITE_URL + "/oauth2/authorize";
-	public static final String OAUTH2_TOKEN_URL = WEBSITE_URL + "/oauth2/access_token";
+	public static final String OAUTH2_AUTHORIZE_URL = SITE_URL + "/oauth2/authorize";
+	public static final String OAUTH2_TOKEN_URL = SITE_URL + "/oauth2/access_token";
 	
 	private static RemoteClient remoteClient;
 	
@@ -98,7 +93,7 @@ public class BierAppApplication extends Application {
         );
 		
 		// Setup remote client
-		BierAppApplication.remoteClient = new RemoteClient(this, BierAppApplication.API_URL);
+		BierAppApplication.remoteClient = new RemoteClient(this, BierAppApplication.API_URL, BierAppApplication.API_PATH);
 		
 		// Send initial intent to setup alarm
 		Intent intent = new Intent(this, BatchIntentReceiver.class);

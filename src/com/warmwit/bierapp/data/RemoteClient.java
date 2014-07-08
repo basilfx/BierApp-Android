@@ -22,6 +22,7 @@ import com.warmwit.bierapp.actions.RefreshTokenAction;
 import com.warmwit.bierapp.exceptions.RetryException;
 import com.warmwit.bierapp.exceptions.UnexpectedData;
 import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;
+import com.warmwit.bierapp.exceptions.UnexpectedUrl;
 import com.warmwit.bierapp.utils.TokenInfo;
 
 
@@ -31,7 +32,9 @@ public class RemoteClient {
 	 */
 	public static final String LOG_TAG = "RemoteClient";
 	
-	private String baseUrl;
+	private String apiUrl;
+	
+	private String apiPath;
 	
 	private TokenInfo tokenInfo;
 	
@@ -39,9 +42,10 @@ public class RemoteClient {
 	
 	private Context context;
 	
-	public RemoteClient(Context context, String baseUrl) {
+	public RemoteClient(Context context, String apiUrl, String apiPath) {
 		this.context = checkNotNull(context);
-		this.baseUrl = checkNotNull(baseUrl);
+		this.apiUrl = checkNotNull(apiUrl);
+		this.apiPath = checkNotNull(apiPath);
 		
 		// Initialize token
 		this.tokenInfo = TokenInfo.createFromPreferences(context);
@@ -59,12 +63,48 @@ public class RemoteClient {
 		this.tokenInfo = tokenInfo;
 	}
 	
-	public Object post(Object object, String url, String query) throws IOException, AuthenticationException, UnexpectedStatusCode, UnexpectedData {
+	public String validateUrl(String url) throws UnexpectedUrl {
 		checkNotNull(url);
+
+		if (url.startsWith("/")) {
+			url = this.apiUrl + this.apiPath + url;
+		} else if (url.contains(this.apiUrl) && url.contains(this.apiPath)) {
+			url = this.apiUrl + url.substring(url.indexOf(this.apiPath));
+		} else {
+			throw new UnexpectedUrl("Not an API url");
+		}
 		
-		String completeUrl = url + (query != null ? "?" + query : "");
+		// Add slash
+		if (url.contains("?")) {
+			String first = url.substring(0, url.indexOf("?"));
+			String second = url.substring(url.indexOf("?"));
+
+			if (!first.endsWith("/")) {
+				url = first + "/" + second; 
+			}
+		} else {
+			if (!url.endsWith("/")) {
+				url = url + "/";
+			}
+		}
 		
-		if (url.equals("/transactions/")){
+		// Done
+		return url;
+	}
+	
+	public String splitUrl(String url) {
+		if (url.contains("?")) {
+			return url.substring(url.indexOf(this.apiPath) + this.apiPath.length(), url.indexOf("?"));
+		} else {
+			return url.substring(url.indexOf(this.apiPath) + this.apiPath.length());
+		}
+	}
+	
+	public Object post(Object object, String url) throws IOException, AuthenticationException, UnexpectedUrl, UnexpectedStatusCode, UnexpectedData {
+		String completeUrl = validateUrl(url);
+		String path = splitUrl(completeUrl);
+		
+		if (path.equals("/transactions/")){
 			String data = new Gson().toJson(object);
 			HttpResponse response = this.postRequest(completeUrl, data);
 			
@@ -87,16 +127,9 @@ public class RemoteClient {
 		throw new UnsupportedOperationException(url);
 	}
 	
-	public Object get(String url, String query) throws IOException, AuthenticationException, UnexpectedStatusCode, UnexpectedData {
-		checkNotNull(url);
-		
-		// Build complete URL
-		String completeUrl = url + (query != null ? "?" + query : "");
-		
-		// Remove last slash
-		if (url.endsWith("/")) {
-			url = url.substring(0, url.length() - 1);
-		}
+	public Object get(String url) throws IOException, AuthenticationException, UnexpectedUrl, UnexpectedStatusCode, UnexpectedData {
+		String completeUrl = validateUrl(url);
+		String path = splitUrl(completeUrl);
 		
 		// Request URL. Throws IOException on error
 		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd'T'HH:mm:ss").create();
@@ -107,24 +140,24 @@ public class RemoteClient {
 		
 		// Parse result
 		try {
-			if (url.equals("/")) {
+			if (path.equals("/")) {
 				return new Gson().fromJson(data, ApiRoot.class);
-			} else if (url.startsWith("/users")) {
-				if (url.equals("/users")) { // All users
+			} else if (path.startsWith("/users/")) {
+				if (path.equals("/users/")) { // All users
 					return gson.fromJson(data, ApiUserPage.class);
-				} else if (url.equals("/users/info")) {
+				} else if (path.equals("/users/info/")) {
 					return gson.fromJson(data, ApiUserPage.class);
 				} else { // Single user
 					return gson.fromJson(data, ApiUser.class);
 				}
-			} else if (url.startsWith("/products")) {
-				if (url.equals("/products")) { // All products
+			} else if (path.startsWith("/products/")) {
+				if (path.equals("/products/")) { // All products
 					return gson.fromJson(data, ApiProductPage.class);
 				} else { // Single product
 					return gson.fromJson(data, ApiProduct.class);
 				}
-			} else if (url.startsWith("/transactions")) {
-				if (url.equals("/transactions")) { // All transactions
+			} else if (path.startsWith("/transactions/")) {
+				if (path.equals("/transactions/")) { // All transactions
 					return gson.fromJson(data, ApiTransactionPage.class);
 				} else { // Single transaction
 					return gson.fromJson(data, ApiTransaction.class);
@@ -187,13 +220,13 @@ public class RemoteClient {
 		}
 	}
 	
-	private HttpResponse getRequest(String relativeUrl) throws IOException, AuthenticationException, UnexpectedStatusCode {
+	private HttpResponse getRequest(String url) throws IOException, AuthenticationException, UnexpectedStatusCode {
 		if (this.client == null) {
 			this.client = new DefaultHttpClient();
 		}
 		
 		// Create request
-		HttpGet request = new HttpGet(this.baseUrl + relativeUrl);
+		HttpGet request = new HttpGet(url);
 		
 		request.addHeader("Content-type", "application/json");
 		if (this.tokenInfo.isValid()) {
@@ -204,20 +237,20 @@ public class RemoteClient {
 		try {
 			return this.handleResponse(this.client.execute(request));
 		} catch (RetryException e) {
-			return this.getRequest(relativeUrl);
+			return this.getRequest(url);
 		} catch (IOException e) {
 			this.client = null;
 			throw e;
 		}
 	}
 	
-	private HttpResponse postRequest(String relativeUrl, String data) throws IOException, AuthenticationException, UnexpectedStatusCode {
+	private HttpResponse postRequest(String url, String data) throws IOException, AuthenticationException, UnexpectedStatusCode {
 		if (this.client == null) {
 			this.client = new DefaultHttpClient();
 		}
 		
 		// Create request
-		HttpPost request = new HttpPost(this.baseUrl + relativeUrl);
+		HttpPost request = new HttpPost(url);
 		
 		request.addHeader("Content-type", "application/json");
 		if (this.tokenInfo.isValid()) {
@@ -231,7 +264,7 @@ public class RemoteClient {
 		try {
 			return this.handleResponse(this.client.execute(request));
 		} catch (RetryException e) {
-			return this.postRequest(relativeUrl, data);
+			return this.postRequest(url, data);
 		} catch (IOException e) {
 			this.client = null;
 			throw e;

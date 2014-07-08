@@ -29,6 +29,7 @@ import com.warmwit.bierapp.database.DatabaseHelper;
 import com.warmwit.bierapp.database.TransactionHelper;
 import com.warmwit.bierapp.exceptions.UnexpectedData;
 import com.warmwit.bierapp.exceptions.UnexpectedStatusCode;
+import com.warmwit.bierapp.exceptions.UnexpectedUrl;
 import com.warmwit.bierapp.utils.LogUtils;
 
 public class SaveTransactionTask extends DialogFragment {
@@ -175,6 +176,8 @@ public class SaveTransactionTask extends DialogFragment {
                 return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_SERVER);
             } catch (UnexpectedData e) {
                 return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_SERVER);
+            } catch (UnexpectedUrl e) {
+            	return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_SERVER);
             }
 		}
 		
