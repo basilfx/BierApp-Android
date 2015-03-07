@@ -23,11 +23,12 @@
 	        android:weightSum="10"
 	        android:orientation="horizontal">
 	
-	        <Spinner
+	        <com.basilfx.bierapp.views.NoDefaultSpinner
 	            android:id="@+id/products"
 	            android:layout_width="0dp"
 	            android:layout_height="wrap_content"
-	            android:layout_weight="7" />
+	            android:layout_weight="7" 
+	            android:prompt="@string/select_hint"/>
 	
 	        <EditText
 	            android:id="@+id/count"
@@ -49,10 +50,11 @@
 	        android:text="Gebruiker"
 	        android:textAppearance="?android:attr/textAppearanceMedium" />
 	    
-	    <Spinner
+	    <com.basilfx.bierapp.views.NoDefaultSpinner
 	        android:id="@+id/users"
 	        android:layout_width="match_parent"
-	        android:layout_height="wrap_content" />
+	        android:layout_height="wrap_content" 
+	        android:prompt="@string/select_hint" />
 	    
 	    <TextView
 	        android:layout_width="match_parent"

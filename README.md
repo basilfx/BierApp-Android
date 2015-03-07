@@ -1,4 +1,4 @@
 BierApp
 =======
 
-WarmWit BierApp
+BierApp

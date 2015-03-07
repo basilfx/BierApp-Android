@@ -9,7 +9,7 @@
 -keep enum com.j256.**
 -keep interface com.j256.**
 
--keepclassmembers class com.warmwit.bierapp.data.models.** { 
+-keepclassmembers class com.basilfx.bierapp.data.models.** { 
 	private <fields>; 
 }
 -keepclasseswithmembers class * {
@@ -18,7 +18,7 @@
 
 # Gson
 -keep class sun.misc.Unsafe { *; }
--keepclassmembers class com.warmwit.bierapp.data.Api* {
+-keepclassmembers class com.basilfx.bierapp.data.Api* {
 	public <fields>;
 }
 
