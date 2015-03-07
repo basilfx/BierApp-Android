@@ -32,7 +32,7 @@
     <string name="er_is_een_huidige_transactie_gaande_die_gewist_zal_worden_wil_je_doorgaan">Er is een huidige transactie gaande die gewist zal worden. Wil je doorgaan?</string>
     <string name="vernieuwen">Vernieuwen</string>
     <string name="transactie_gewist">Transactie gewist</string>
-    <string name="d_consumpties">%d consumpties</string>
+    <string name="d_producten">%d producten</string>
     <string name="verkoop_vanaf_s">Verkoop vanaf %s</string>
     <string name="transactiesamenvatting">Transactiesamenvatting</string>
     <string name="gegevens_herladen">Gegevens herladen</string>
@@ -74,4 +74,5 @@
     <string name="menu_edit_transaction_item">Transactie-item aanpassen</string>
     <string name="menu_delete_transaction_item">Transactie-item verwijderen</string>
     <string name="edit">Aanpassen</string>
+    <string name="select_hint">(Selecteren)</string>
 </resources>
