@@ -1,6 +1,7 @@
 package com.basilfx.bierapp.views;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,10 +11,11 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.google.common.base.Strings;
-import com.nostra13.universalimageloader.core.ImageLoader;
 import com.basilfx.bierapp.R;
 import com.basilfx.bierapp.utils.Convert;
+import com.google.common.base.Strings;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 
 /**
  *
@@ -71,16 +73,24 @@ public class ProductView extends FrameLayout {
 	}
 	
 	public void setProductLogo(String url) {
-		ViewHolder holder = (ViewHolder) this.getTag();
+		final ViewHolder holder = (ViewHolder) this.getTag();
 	
 		if (Strings.isNullOrEmpty(url)) {
 			url = "drawable://" + R.drawable.product_beer_none;
-			holder.title.setVisibility(View.VISIBLE);
-		} else {
-			holder.title.setVisibility(View.INVISIBLE);
 		}
 		
-		ImageLoader.getInstance().displayImage(url, holder.logo);
+		// Make title visible
+		holder.title.setVisibility(View.VISIBLE);
+		
+		// Load image
+		ImageLoader.getInstance().displayImage(url, holder.logo, new SimpleImageLoadingListener() {
+		    @Override
+		    public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+		    	if (!imageUri.startsWith("drawable://")) {
+		    		holder.title.setVisibility(View.INVISIBLE);
+		    	}
+		    }
+		});
 	}
 	
 	public void setGuestProduct(boolean guestProduct) {
