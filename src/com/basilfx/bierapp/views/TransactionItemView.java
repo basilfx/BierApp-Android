@@ -6,10 +6,14 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnTouchListener;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
@@ -20,9 +24,6 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.Spinner;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.basilfx.bierapp.R;
 import com.basilfx.bierapp.data.models.Product;
 import com.basilfx.bierapp.data.models.Transaction;
@@ -33,6 +34,9 @@ import com.basilfx.bierapp.database.ProductHelper;
 import com.basilfx.bierapp.database.TransactionHelper;
 import com.basilfx.bierapp.database.TransactionItemHelper;
 import com.basilfx.bierapp.database.UserHelper;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.j256.ormlite.android.apptools.OpenHelperManager;
 
 public class TransactionItemView extends DialogFragment implements OnCheckedChangeListener, OnItemSelectedListener, OnClickListener {
 	
@@ -187,6 +191,20 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
 		this.payers = (Spinner) view.findViewById(R.id.payers);
 		this.userIsPayer = (CheckBox) view.findViewById(R.id.user_is_payer);
 		
+		// Hide keyboard
+		OnTouchListener handler = new OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent event) {
+                InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+                return false;
+            }
+        };
+		
+		this.products.setOnTouchListener(handler);
+		this.users.setOnTouchListener(handler);
+		this.payers.setOnTouchListener(handler);
+		
 		// Initialize data		
 		this.products.setAdapter(new ArrayAdapter<Product>(this.getActivity(), android.R.layout.simple_spinner_dropdown_item, this.productList));
 		this.users.setAdapter(new ArrayAdapter<User>(this.getActivity(), android.R.layout.simple_spinner_dropdown_item, this.userList));
@@ -229,7 +247,7 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
 				this.userIsPayer.setChecked((user.getRole() == User.ADMIN || user.getRole() == User.MEMBER) && user.equals(payer));
 			}
 		} else {
-			throw new IllegalStateException("Dialog started without arguments bundle");
+			throw new IllegalStateException("Dialog started without arguments bundle.");
 		}
 		
 		// Add event listeners via post since onItemSelected would be triggered too early
