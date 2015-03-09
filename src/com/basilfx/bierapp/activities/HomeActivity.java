@@ -722,23 +722,24 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	}
 	
 	private void undoTransactionItem() {
-		int id = this.transactionItemHelper.select()
-			.selectIds()
+		TransactionItem transactionItem = this.transactionItemHelper.select()
 			.whereRemoteIdEq(null)
 			.whereTransactionIdEq(this.transaction.getId())
 			.orderById(false)
-			.firstInt();
+			.first();
 		
 		// There should be an ID of a transaction item
-		checkArgument(id != 0, "Transaction item ID expected");
+		checkNotNull(transactionItem, "Transaction item ID expected");
 		
 		// Delete it
+		int count = transactionItem.getCount();
 		int lines = this.transactionItemHelper.delete()
-			.whereIdEq(id)
+			.whereIdEq(transactionItem.getId())
 			.execute();
 		
 		// Update the number of transaction items
 		this.items = this.items - lines;
+		this.amount = this.amount - count;
 		
 		// Check transaction state
 		this.checkTransaction();
