@@ -89,10 +89,10 @@ public class TransactionsActivity extends OrmLiteBaseActivity<DatabaseHelper> im
 			this, this.transactionListAdapter, R.layout.listview_row_header, R.id.header, new Sectionizer<Transaction>() {
 			@Override
 			public String getSectionTitleForItem(Transaction instance) {
-				checkNotNull(instance.getDateCreated());
+				checkNotNull(instance.getCreated());
 				
 				return DateFormat.getDateInstance(DateFormat.LONG)
-								 .format(instance.getDateCreated());
+								 .format(instance.getCreated());
 			}		
 		});
     	
@@ -219,7 +219,7 @@ public class TransactionsActivity extends OrmLiteBaseActivity<DatabaseHelper> im
 		// (Re)load data
 		this.transactions = this.transactionHelper.select()
 			.whereRemoteIdNeq(null)
-			.orderByDateCreated(false)
+			.orderByCreated(false)
 			.all();
 		
 		((SimpleSectionAdapter) this.transactionListView.getAdapter()).notifyDataSetChanged();

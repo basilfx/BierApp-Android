@@ -115,10 +115,10 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
 		
 		// Load data for spinners
 		this.inhabitants = this.userHelper.select()
-			.whereTypeEq(User.INHABITANT)
+			.whereRoleIn(Lists.newArrayList(User.ADMIN, User.MEMBER))
 			.all();
 		this.guests = this.userHelper.select()
-			.whereTypeEq(User.GUEST)
+			.whereRoleEq(User.GUEST)
 			.all();
 		this.productList = this.productHelper.select()
 			.all();
@@ -226,7 +226,7 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
 				this.count.setText(transactionItem.getCount() + "");
 				this.users.setSelection(userIndex);
 				this.payers.setSelection(payerIndex);
-				this.userIsPayer.setChecked(user.getType() == User.INHABITANT && user.equals(payer));
+				this.userIsPayer.setChecked((user.getRole() == User.ADMIN || user.getRole() == User.MEMBER) && user.equals(payer));
 			}
 		} else {
 			throw new IllegalStateException("Dialog started without arguments bundle");
@@ -298,7 +298,7 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
 		if (user == null) {
 			this.userIsPayer.setVisibility(View.VISIBLE);
 			this.payers.setVisibility(View.GONE);
-		} else if (user.getType() == User.INHABITANT) {
+		} else if (user.getRole() == User.ADMIN || user.getRole() == User.MEMBER) {
 			if (this.userIsPayer.isChecked()) {
 				this.userIsPayer.setVisibility(View.VISIBLE);
 				this.payers.setVisibility(View.GONE);
@@ -359,7 +359,7 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
 		
 		User user = (User) this.users.getSelectedItem();
 		
-		if (this.userIsPayer.isChecked() && user.getType() == User.INHABITANT) {
+		if (this.userIsPayer.isChecked() && (user.getRole() == User.ADMIN && user.getRole() == User.MEMBER)) {
 			transactionItem.setUser(user);
 			transactionItem.setPayer(user);
 		} else {

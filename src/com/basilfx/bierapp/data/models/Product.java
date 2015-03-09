@@ -20,8 +20,11 @@ public class Product {
 	@DatabaseField(columnName = "logo")
 	private String logo;
 	
-	@DatabaseField(columnName = "dateChanged", canBeNull = true)
-	private Date dateChanged;
+	@DatabaseField(columnName = "created")
+	private Date created;
+	
+	@DatabaseField(columnName = "modified", canBeNull = true)
+	private Date modified;
 	
 	@DatabaseField(columnName = "dirty")
 	private boolean dirty;
@@ -62,12 +65,22 @@ public class Product {
 		return this.getTitle();
 	}
 
-	public Date getDateChanged() {
-		return this.dateChanged;
+	public Date getCreated() {
+		return this.created;
 	}
 
-	public void setDateChanged(Date dateChanged) {
-		this.dateChanged = dateChanged;
+	public void setCreated(Date created) {
+		this.created = created;
+		this.dirty = true;
+	}
+	
+	public Date getModified() {
+		return this.modified;
+	}
+
+	public void setModified(Date modified) {
+		this.modified = modified;
+		this.dirty = true;
 	}
 
 	public boolean isDirty() {

@@ -27,9 +27,8 @@ public class BierAppApplication extends Application {
 	//public static final String API_URL = "http://www.beterlijst.nl";
 	//public static final String SITE_URL = "http://10.0.0.3:8000";
 	//public static final String API_URL = "http://10.0.0.3:8000/api";
-	public static final String SITE_URL = "http://192.168.2.18:8000";
-	public static final String API_URL = "http://192.168.2.18:8000/api";
-	public static final String API_PATH = "";
+	public static final String SITE_URL = "http://192.168.1.114:8000";
+	public static final String API_URL = "http://192.168.1.114:8000/api";
 	
 	public static final String OAUTH2_CLIENT_ID = "8df8f62b96ba40d11cd1";
 	public static final String OAUTH2_CLIENT_SECRET = "eee752653d2a1afc5cdff451ebc5d17ec9b9bc9c";
@@ -90,7 +89,7 @@ public class BierAppApplication extends Application {
         );
 		
 		// Setup remote client
-		BierAppApplication.remoteClient = new RemoteClient(this, BierAppApplication.API_URL, BierAppApplication.API_PATH);
+		BierAppApplication.remoteClient = new RemoteClient(this, BierAppApplication.API_URL);
 		
 		// Send initial intent to setup alarm
 		Intent intent = new Intent(this, BatchIntentReceiver.class);

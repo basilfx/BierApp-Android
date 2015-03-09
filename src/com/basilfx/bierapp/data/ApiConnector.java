@@ -76,8 +76,8 @@ public class ApiConnector {
 				user = users.get(apiUser.id);
 				
 				// Check if local user is older
-				if (user.getDateChanged() != null) {
-					if (user.getDateChanged().equals(apiUser.date_changed)) {
+				if (user.getModified() != null) {
+					if (user.getModified().equals(apiUser.modified)) {
 						continue;
 					}
 				}
@@ -90,8 +90,9 @@ public class ApiConnector {
 			user.setFirstName(apiUser.first_name);
 			user.setLastName(apiUser.last_name);
 			user.setAvatarUrl(apiUser.avatar);
-			user.setType(apiUser.user_type);
-			user.setDateChanged(apiUser.date_changed);
+			user.setRole(apiUser.role);
+			user.setModified(apiUser.modified);
+			user.setCreated(apiUser.created);
 			
 			user.setDirty(false);
 			user.setSynced(true);
@@ -192,7 +193,8 @@ public class ApiConnector {
 		
 		transaction.setRemoteId(apiTransaction.id);
 		transaction.setDescription(apiTransaction.description);
-		transaction.setDateCreated(apiTransaction.date_created);
+		transaction.setCreated(apiTransaction.created);
+		transaction.setModified(apiTransaction.modified);
 		
 		new TransactionHelper(this.databaseHelper).create(transaction);
 		
@@ -348,8 +350,8 @@ public class ApiConnector {
 				product = products.get(apiProduct.id);
 				
 				// Check if local user is older
-				if (product.getDateChanged() != null) {
-					if (product.getDateChanged().equals(apiProduct.date_changed)) {
+				if (product.getModified() != null) {
+					if (product.getModified().equals(apiProduct.modified)) {
 						continue;
 					}
 				}
@@ -362,7 +364,8 @@ public class ApiConnector {
 			product.setTitle(apiProduct.title);
 			product.setCost(apiProduct.cost);
 			product.setLogo(apiProduct.logo);
-			product.setDateChanged(apiProduct.date_changed);
+			product.setCreated(apiProduct.created);
+			product.setModified(apiProduct.modified);
 			
 			// Save changes to database
 			if (created) {

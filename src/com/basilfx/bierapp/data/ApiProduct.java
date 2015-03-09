@@ -17,6 +17,9 @@ public class ApiProduct {
 	@SerializedName("cost")
 	public int cost;
 	
-	@SerializedName("date_changed")
-	public Date date_changed;
+	@SerializedName("created")
+	public Date created;
+	
+	@SerializedName("modified")
+	public Date modified;
 }

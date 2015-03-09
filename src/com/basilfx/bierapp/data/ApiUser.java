@@ -17,11 +17,14 @@ public class ApiUser {
 	@SerializedName("avatar")
 	public String avatar;
 	
-	@SerializedName("user_type")
-	public int user_type;
+	@SerializedName("role")
+	public int role;
 	
-	@SerializedName("date_changed")
-	public Date date_changed;
+	@SerializedName("created")
+	public Date created;
+	
+	@SerializedName("modified")
+	public Date modified;
 	
 	@SerializedName("xp")
 	public int xp;

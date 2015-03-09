@@ -139,7 +139,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
         
         // Try to continue an ongoing transaction. Should only be one!
         TransactionHelper.Select builder = transactionHelper.select();
-        builder.whereTagEq(TRANSACTION_TAG).whereRemoteIdEq(null).orderByDateCreated(true);
+        builder.whereTagEq(TRANSACTION_TAG).whereRemoteIdEq(null).orderByCreated(true);
         
  		if (savedInstanceState != null) {
  			int transactionId = savedInstanceState.getInt("transactionId");
@@ -189,24 +189,24 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		this.registerReceiver(this.broadcastReceiver, new IntentFilter(SyncService.SYNC_COMPLETE));
 		
 		// Warn user if he is resuming an existing transaction
- 		if (this.transaction != null && this.transaction.getDateCreated() != null) {
+ 		if (this.transaction != null && this.transaction.getCreated() != null) {
  			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
  			
  			if (preferences.getBoolean("transaction_warn_resume", false)) {
  				int seconds = Integer.parseInt(preferences.getString("transaction_warn_resume_timeout", "3600"));
  				
  				Calendar timeout = Calendar.getInstance();
- 				timeout.setTime(this.transaction.getDateCreated());
+ 				timeout.setTime(this.transaction.getModified());
  				timeout.add(Calendar.SECOND, seconds);
  				
  				if (Calendar.getInstance().after(timeout)) {
 	 				String startDate = DateFormat
 	 					.getDateInstance(DateFormat.LONG)
-	 					.format(this.transaction.getDateCreated());
+	 					.format(this.transaction.getCreated());
 	 				
 	 				String startTime = DateFormat
 	 					.getTimeInstance(DateFormat.SHORT)
-	 					.format(this.transaction.getDateCreated());
+	 					.format(this.transaction.getCreated());
 	 				
 	 				new AlertDialog.Builder(this)
 	 					.setTitle(R.string.transactie_resumeren)
@@ -281,13 +281,14 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			this, this.userListAdapter, R.layout.listview_row_header, R.id.header, new Sectionizer<User>() {
 			@Override
 			public String getSectionTitleForItem(User instance) {
-				switch (instance.getType()) {
-					case User.INHABITANT:
+				switch (instance.getRole()) {
+					case User.ADMIN:
+					case User.MEMBER:
 						return "Bewoners";
 					case User.GUEST:
 						return "Gasten";
 					default:
-						throw new IllegalStateException("type " + instance.getType());
+						throw new IllegalStateException("Unknown role " + instance.getRole());
 				}
 			}		
 		}));
@@ -303,16 +304,16 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
         AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
 	    User user = (User) this.userListView.getAdapter().getItem(info.position);
         
-        switch (user.getType()) {
-        	case User.INHABITANT:
+        switch (user.getRole()) {
+	        case User.ADMIN:
+			case User.MEMBER:
         		inflater.inflate(R.menu.menu_context_home_inhabitant, menu);
         		break;
         	case User.GUEST:
         		inflater.inflate(R.menu.menu_context_home_guest, menu);
         		break;
         	default:
-				Log.e(LOG_TAG, "Requested user type " + user.getType());
-				throw new IllegalStateException();
+        		throw new IllegalStateException("Unknown role " + user.getRole());
         }
         
         // Hide clear button if applicable
@@ -329,11 +330,11 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		
     	switch (item.getItemId()) {
     		case R.id.menu_context_add_guest:
-				checkArgument(user.getType() == User.INHABITANT);
+				checkArgument(user.getRole() == User.ADMIN || user.getRole() == User.MEMBER);
 
 				// Create list of inactive guests
 				final List<User> guests = this.userHelper.select() 
-					.whereTypeEq(User.GUEST)
+					.whereRoleEq(User.GUEST)
 					.whereIdNotIn(this.hostingHelper.select().selectUserIds().whereActiveEq(true).getBuilder())
 					.all();
 				
@@ -425,7 +426,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     			
     			return true;
     		case R.id.menu_context_remove_guest:
-				checkArgument(user.getType() == User.GUEST);
+				checkArgument(user.getRole() == User.GUEST);
 				
 				// Create a dialog
     			new AlertDialog.Builder(this)
@@ -471,7 +472,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
     		    
     			return true;
     		case R.id.menu_context_show_hosts:
-				checkArgument(user.getType() == User.GUEST);
+				checkArgument(user.getRole() == User.GUEST);
 				
 				// Initialize data
 				List<String> message = Lists.newArrayList();
@@ -662,7 +663,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
             .all();
 		
 		for (TransactionItem transactionItem : transactionItems) {
-            if (transactionItem.getPayer().getType() == User.GUEST) {
+            if (transactionItem.getPayer().getRole() == User.GUEST) {
                 List<HostMapping> mappings = this.hostMappingHelper.select()
                     .whereHostingIdIn(this.hostingHelper.select()
                         .selectIds()
@@ -773,12 +774,12 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	@SuppressWarnings("unchecked")
 	private void refreshList() {
 		Pair<Integer, Integer> key;
-		
+
 		this.inhabitants = this.userHelper.select()
-			.whereTypeEq(User.INHABITANT)
+			.whereRoleIn(Lists.newArrayList(User.ADMIN, User.MEMBER))
 			.all();
 		this.guests = this.userHelper.select()
-			.whereTypeEq(User.GUEST)
+			.whereRoleEq(User.GUEST)
 			.whereIdIn(this.hostingHelper.select().selectUserIds().whereActiveEq(true).getBuilder())
 			.all();
 		this.products = this.productHelper.select()
@@ -859,7 +860,8 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			this.amount = 0;
 			this.items = 0;
 			
-			this.transaction.setDateCreated(new Date());
+			this.transaction.setCreated(new Date());
+			this.transaction.setModified(new Date());
 			this.transaction.setDescription(getString(R.string.verkoop_vanaf_s, android.os.Build.MODEL));
 			this.transaction.setTag(TRANSACTION_TAG);
 			

@@ -16,8 +16,11 @@ public class Transaction {
 	@DatabaseField(columnName = "description")
 	private String description;
 	
-	@DatabaseField(columnName = "dateCreated", canBeNull = true)
-	private Date dateCreated;
+	@DatabaseField(columnName = "created")
+	private Date created;
+	
+	@DatabaseField(columnName = "modified", canBeNull = true)
+	private Date modified;
 
 	@DatabaseField(columnName = "dirty")
 	private boolean dirty;
@@ -38,12 +41,21 @@ public class Transaction {
 		this.dirty = true;
 	}
 	
-	public Date getDateCreated() {
-		return dateCreated;
+	public Date getCreated() {
+		return this.created;
+	}
+	
+	public void setCreated(Date created) {
+		this.created = created;
+		this.dirty = true;
+	}
+	
+	public Date getModified() {
+		return this.modified;
 	}
 
-	public void setDateCreated(Date dateCreated) {
-		this.dateCreated = dateCreated;
+	public void setModified(Date modified) {
+		this.modified = modified;
 		this.dirty = true;
 	}
 

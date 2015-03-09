@@ -87,7 +87,8 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 			// Create new transaction
 			this.transaction = new Transaction();
 			this.transaction.setTag(TRANSACTION_TAG);
-			this.transaction.setDateCreated(new Date());
+			this.transaction.setCreated(new Date());
+			this.transaction.setModified(new Date());
 			this.transactionHelper.create(this.transaction);
 			
 			// Decide what to do based on intent action

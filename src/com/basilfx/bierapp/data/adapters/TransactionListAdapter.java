@@ -50,7 +50,7 @@ public abstract class TransactionListAdapter extends BaseAdapter {
         
         holder.time.setText(DateFormat
 	    		.getTimeInstance(DateFormat.SHORT)
-	    		.format(transaction.getDateCreated()) + " uur"
+	    		.format(transaction.getCreated()) + " uur"
         );
         
         // Done

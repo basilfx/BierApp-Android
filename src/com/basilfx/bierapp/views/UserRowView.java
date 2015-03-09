@@ -180,7 +180,7 @@ public class UserRowView extends RelativeLayout implements OnGlobalLayoutListene
         if (more != null) {
         	more.setCount(productInfoMore.getCount());
         	more.setChange(productInfoMore.getChange());
-        	more.setGuestProduct(this.user.getType() == User.GUEST);
+        	more.setGuestProduct(this.user.getRole() == User.GUEST);
         	more.setProductMore();
         	
         	more.setOnClickListener(new OnClickListener() {
@@ -227,7 +227,7 @@ public class UserRowView extends RelativeLayout implements OnGlobalLayoutListene
 			return;
 		}
 		
-		productView.setGuestProduct(this.user.getType() == User.GUEST);
+		productView.setGuestProduct(this.user.getRole() == User.GUEST);
 		productView.setChange(productInfo.getChange());
 		productView.setCount(productInfo.getCount());
 		productView.setTitle(product.getTitle());

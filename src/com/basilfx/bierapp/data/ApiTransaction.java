@@ -14,6 +14,9 @@ public class ApiTransaction {
 	@SerializedName("transaction_items")
 	public ApiTransactionItem[] transaction_items;
 	
-	@SerializedName("date_created")
-	public Date date_created;
+	@SerializedName("created")
+	public Date created;
+	
+	@SerializedName("modified")
+	public Date modified;
 }

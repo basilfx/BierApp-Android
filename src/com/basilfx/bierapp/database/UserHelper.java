@@ -83,10 +83,21 @@ public class UserHelper extends QueryHelper {
 			}
 		}
 		
-		public Select whereTypeEq(int type) {
+		public Select whereRoleEq(int role) {
 			try {
 				this.checkWhere();
-				this.where = this.where.eq("type", type);
+				this.where = this.where.eq("role", role);
+			} catch (SQLException e) {
+				this.helper.handleException(e);
+			}
+			
+			return this;
+		}
+		
+		public Select whereRoleIn(List<Integer> roles) {
+			try {
+				this.checkWhere();
+				this.where = this.where.in("role", roles);
 			} catch (SQLException e) {
 				this.helper.handleException(e);
 			}

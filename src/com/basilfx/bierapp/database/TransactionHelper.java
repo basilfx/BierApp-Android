@@ -163,8 +163,8 @@ public class TransactionHelper extends QueryHelper {
 			return this;
 		}
 		
-		public Select orderByDateCreated(boolean ascending) {
-			builder.orderBy("dateCreated", ascending);
+		public Select orderByCreated(boolean ascending) {
+			builder.orderBy("created", ascending);
 			return this;
 		}
 		

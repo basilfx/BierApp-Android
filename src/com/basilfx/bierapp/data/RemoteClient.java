@@ -3,6 +3,8 @@ package com.basilfx.bierapp.data;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthenticationException;
@@ -19,6 +21,7 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import com.j256.ormlite.logger.Logger;
 import com.basilfx.bierapp.actions.RefreshTokenAction;
 import com.basilfx.bierapp.exceptions.RetriesExceededException;
 import com.basilfx.bierapp.exceptions.RetryException;
@@ -36,18 +39,15 @@ public class RemoteClient {
 	
 	private String apiUrl;
 	
-	private String apiPath;
-	
 	private TokenInfo tokenInfo;
 	
 	private HttpClient client;
 	
 	private Context context;
 	
-	public RemoteClient(Context context, String apiUrl, String apiPath) {
+	public RemoteClient(Context context, String apiUrl) {
 		this.context = checkNotNull(context);
 		this.apiUrl = checkNotNull(apiUrl);
-		this.apiPath = checkNotNull(apiPath);
 		
 		// Initialize token
 		this.tokenInfo = TokenInfo.createFromPreferences(context);
@@ -69,9 +69,9 @@ public class RemoteClient {
 		checkNotNull(url);
 
 		if (url.startsWith("/")) {
-			url = this.apiUrl + this.apiPath + url;
-		} else if (url.contains(this.apiUrl) && url.contains(this.apiPath)) {
-			url = this.apiUrl + url.substring(url.indexOf(this.apiPath));
+			url = this.apiUrl + url;
+		} else if (url.contains(this.apiUrl)) {
+			url = this.apiUrl + url.substring(url.indexOf(this.apiUrl) + apiUrl.length());
 		} else {
 			throw new UnexpectedUrl("Not an API url");
 		}
@@ -94,12 +94,29 @@ public class RemoteClient {
 		return url;
 	}
 	
+	/**
+	 * Split URL to retrieve the path between the API url and query 
+	 * parameters. Make sure that the result ends with a slash.
+	 * 
+	 * @param url
+	 * @return
+	 */
 	public String splitUrl(String url) {
+		String result;
+
+		// Get the part between API url and query parameters.
 		if (url.contains("?")) {
-			return url.substring(url.indexOf(this.apiPath) + this.apiPath.length(), url.indexOf("?"));
+			result = url.substring(this.apiUrl.length(), url.indexOf("?"));
 		} else {
-			return url.substring(url.indexOf(this.apiPath) + this.apiPath.length());
+			result = url.substring(this.apiUrl.length());
 		}
+		
+		// Make sure it ends with a slash.
+		if (!result.endsWith("/")) {
+			result = result + "/";
+		}
+		
+		return result;
 	}
 	
 	public Object post(Object object, String url) throws IOException, AuthenticationException, UnexpectedUrl, UnexpectedStatusCode, UnexpectedData, RetriesExceededException {
@@ -237,6 +254,7 @@ public class RemoteClient {
 		
 		// Execute request
 		try {
+			Log.d(LOG_TAG, "Requesting URL: " + url);
 			return this.handleResponse(this.client.execute(request));
 		} catch (RetryException e) {
 			if (retries < 3) {

@@ -90,7 +90,7 @@ public class GuestsActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 		
 		// Retrieve all guests
 		this.guests = this.userHelper.select()
-	    	.whereTypeEq(User.GUEST)
+	    	.whereRoleEq(User.GUEST)
 	    	.all();
 		this.userIds = this.hostingHelper.select()
 			.selectUserIds()
@@ -100,6 +100,4 @@ public class GuestsActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 		// Refresh UI
 		((SimpleSectionAdapter) this.guestListView.getAdapter()).notifyDataSetChanged();
 	}
-	
-	
 }
