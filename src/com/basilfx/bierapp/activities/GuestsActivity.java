@@ -30,6 +30,9 @@ public class GuestsActivity extends OrmLiteBaseActivity<DatabaseHelper> {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
+        // Show back arrow
+        this.getActionBar().setDisplayHomeAsUpEnabled(true);
+        
         // Set content
         this.setContentView(R.layout.activity_guests);
         this.setTitle("Gasten");

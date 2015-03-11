@@ -68,12 +68,12 @@ public class TransactionEditorActivity extends OrmLiteBaseActivity<DatabaseHelpe
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
+		// Show back arrow
+        this.getActionBar().setDisplayHomeAsUpEnabled(true);
+		
 		// Create helpers for transactions
         this.transactionHelper = new TransactionHelper(this.getHelper());
         this.transactionItemHelper = new TransactionItemHelper(this.getHelper());
-		
-        // Show back arrow
-        this.getActionBar().setDisplayHomeAsUpEnabled(true);
         
 		// Initialize the layout
 		this.setContentView(R.layout.activity_transaction_editor);

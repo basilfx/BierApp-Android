@@ -12,6 +12,9 @@ public class SettingsActivity extends Activity {
 	@Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // Show back arrow
+        this.getActionBar().setDisplayHomeAsUpEnabled(true);
 
         // Display the fragment as the main content.
         this.getFragmentManager()
