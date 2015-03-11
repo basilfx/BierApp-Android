@@ -7,7 +7,13 @@
 	
 	<ListView
         android:id="@+id/list_users"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
-    </ListView>
+        android:layout_width="fill_parent"
+        android:layout_height="0dp" 
+        android:layout_weight="2" />
+    
+	<TextView 
+	    android:id="@+id/text_status"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:layout_gravity="bottom" />
 </LinearLayout>

@@ -31,6 +31,7 @@ import android.view.View;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.common.base.Function;
@@ -92,6 +93,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	
 	private UserListAdapter userListAdapter; 
 	private ListView userListView;
+	private TextView status;
 	private MenuItem purchaseMenu;
 	private MenuItem undoMenu;
 	
@@ -127,6 +129,9 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
         
         // Bind controls
         this.userListView = (ListView) this.findViewById(R.id.list_users);
+        this.status = (TextView) this.findViewById(R.id.text_status);
+        
+        this.status.setText("Total 0 transactions");
 
         // Create helpers for transactions
         this.transactionHelper = new TransactionHelper(this.getHelper());
