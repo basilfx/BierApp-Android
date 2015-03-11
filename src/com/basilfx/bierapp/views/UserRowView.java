@@ -1,5 +1,6 @@
 package com.basilfx.bierapp.views;
 
+import java.io.FileNotFoundException;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -16,8 +17,7 @@ import android.widget.NumberPicker;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.google.common.base.Strings;
-import com.nostra13.universalimageloader.core.ImageLoader;
+import com.basilfx.bierapp.BierAppApplication;
 import com.basilfx.bierapp.R;
 import com.basilfx.bierapp.callbacks.OnProductClickListener;
 import com.basilfx.bierapp.data.models.Product;
@@ -25,6 +25,10 @@ import com.basilfx.bierapp.data.models.User;
 import com.basilfx.bierapp.utils.Convert;
 import com.basilfx.bierapp.utils.FlowLayout;
 import com.basilfx.bierapp.utils.ProductInfo;
+import com.google.common.base.Strings;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.assist.FailReason;
+import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 
 /**
  *
@@ -98,10 +102,20 @@ public class UserRowView extends RelativeLayout implements OnGlobalLayoutListene
 	
 	public void refreshAvatar() {
 		ViewHolder holder = (ViewHolder) this.getTag();
+		String url = user.getAvatarUrl();
 		
-		// Set at first
-		String url = Strings.isNullOrEmpty(user.getAvatarUrl()) ? "drawable://" + R.drawable.avatar_none : user.getAvatarUrl();
- 		ImageLoader.getInstance().displayImage(url, holder.avatar);
+		if (Strings.isNullOrEmpty(url) || BierAppApplication.badImageUrls.contains(url)) {
+			url = "drawable://" + R.drawable.avatar_none;
+		}
+		
+ 		ImageLoader.getInstance().displayImage(url, holder.avatar, new SimpleImageLoadingListener() {
+			@Override
+			public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
+				if (!Strings.isNullOrEmpty(imageUri) && failReason.getCause() instanceof FileNotFoundException) {
+					BierAppApplication.badImageUrls.add(imageUri);
+				}
+			}
+		});
 	}
 	
 	public void refreshUser() {

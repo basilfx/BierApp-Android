@@ -1,19 +1,20 @@
 package com.basilfx.bierapp;
 
 import java.io.File;
+import java.util.Set;
 
 import android.app.Application;
-import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import com.basilfx.bierapp.data.RemoteClient;
+import com.basilfx.bierapp.service.BatchIntentReceiver;
+import com.google.common.collect.Sets;
 import com.nostra13.universalimageloader.cache.disc.impl.UnlimitedDiscCache;
 import com.nostra13.universalimageloader.cache.memory.impl.LruMemoryCache;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
-import com.basilfx.bierapp.data.RemoteClient;
-import com.basilfx.bierapp.service.BatchIntentReceiver;
 
 /**
  *
@@ -42,6 +43,8 @@ public class BierAppApplication extends Application {
 	public static File generalCache;
 	public static File imageCache;
 	
+	public static Set<String> badImageUrls = Sets.newHashSet();
+
 	private void initCaches() {
 		// Resolve general cache
 		BierAppApplication.generalCache =  this.getExternalCacheDir();
@@ -78,6 +81,7 @@ public class BierAppApplication extends Application {
 		DisplayImageOptions displayOptions = new DisplayImageOptions.Builder()
 			.cacheInMemory(true)
 			.cacheOnDisc(true)
+			.resetViewBeforeLoading(false)
 			.build();
 
 		// Create global configuration and initialize ImageLoader with this configuration
