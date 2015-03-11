@@ -21,6 +21,7 @@
             android:gravity="top|left"
             android:maxLines="2"
             android:text="@string/product"
+            android:textColor="#ffffff"
             android:textAppearance="?android:attr/textAppearanceSmall"  />
     </RelativeLayout>
 
@@ -53,6 +54,7 @@
             android:gravity="bottom|left"
             android:maxLines="1"
             android:text="@string/number_10"
+            android:textColor="#ffffff"
             android:textAppearance="?android:attr/textAppearanceSmall" />
     </RelativeLayout>
 </merge>
