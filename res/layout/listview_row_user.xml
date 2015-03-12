@@ -7,6 +7,8 @@
         android:layout_centerVertical="true"
         android:layout_marginRight="5dp"
         android:background="@drawable/image_border" 
+        android:src="@drawable/avatar_none"
+        android:scaleType="centerCrop"
         android:contentDescription="@string/avatar"/>
 
     <LinearLayout

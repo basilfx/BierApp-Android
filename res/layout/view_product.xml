@@ -5,8 +5,10 @@
         android:id="@+id/product_logo"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:src="@drawable/product_beer_none" 
-        android:contentDescription="@string/product_logo" />
+        android:background="@drawable/image_border"
+        android:contentDescription="@string/product_logo"
+        android:scaleType="centerCrop"
+        android:src="@drawable/product_beer_none" />
 
     <RelativeLayout
         android:id="@+id/product_bar"
