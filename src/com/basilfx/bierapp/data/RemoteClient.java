@@ -3,8 +3,6 @@ package com.basilfx.bierapp.data;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthenticationException;
@@ -18,10 +16,6 @@ import org.apache.http.util.EntityUtils;
 import android.content.Context;
 import android.util.Log;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
-import com.j256.ormlite.logger.Logger;
 import com.basilfx.bierapp.actions.RefreshTokenAction;
 import com.basilfx.bierapp.exceptions.RetriesExceededException;
 import com.basilfx.bierapp.exceptions.RetryException;
@@ -29,6 +23,9 @@ import com.basilfx.bierapp.exceptions.UnexpectedData;
 import com.basilfx.bierapp.exceptions.UnexpectedStatusCode;
 import com.basilfx.bierapp.exceptions.UnexpectedUrl;
 import com.basilfx.bierapp.utils.TokenInfo;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 
 
 public class RemoteClient {
@@ -40,7 +37,7 @@ public class RemoteClient {
 	private String apiUrl;
 	
 	private TokenInfo tokenInfo;
-	
+
 	private HttpClient client;
 	
 	private Context context;
@@ -181,6 +178,8 @@ public class RemoteClient {
 				} else { // Single transaction
 					return gson.fromJson(data, ApiTransaction.class);
 				}
+			} else if (path.startsWith("/stats/")) {
+				return new Gson().fromJson(data, ApiStats.class);
 			}
 		} catch (JsonSyntaxException e) {
 			throw new UnexpectedData("JSON parse error");

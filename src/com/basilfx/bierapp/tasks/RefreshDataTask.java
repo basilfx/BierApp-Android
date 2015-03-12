@@ -12,13 +12,13 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 
-import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.basilfx.bierapp.BierAppApplication;
 import com.basilfx.bierapp.R;
 import com.basilfx.bierapp.actions.SyncAction;
 import com.basilfx.bierapp.callbacks.OnRefreshActionListener;
-import com.basilfx.bierapp.data.ApiConnector;
+import com.basilfx.bierapp.data.Connector;
 import com.basilfx.bierapp.database.DatabaseHelper;
+import com.j256.ormlite.android.apptools.OpenHelperManager;
 
 public class RefreshDataTask extends DialogFragment {
 	public static final String LOG_TAG = "RefreshDataTask";
@@ -31,7 +31,7 @@ public class RefreshDataTask extends DialogFragment {
 	
 	private DatabaseHelper databaseHelper;
 	
-	private ApiConnector apiConnector;
+	private Connector connector;
 	
 	public static RefreshDataTask newInstance() {
 		return new RefreshDataTask();
@@ -79,7 +79,7 @@ public class RefreshDataTask extends DialogFragment {
 	    setRetainInstance(true);
 		
 	    // Create an API connector
-	    this.apiConnector = new ApiConnector(BierAppApplication.getRemoteClient(), this.getHelper());
+	    this.connector = new Connector(BierAppApplication.getRemoteClient(), this.getHelper());
 	    
 	    // Create and start task
 		this.task = new InnerTask();
@@ -122,7 +122,7 @@ public class RefreshDataTask extends DialogFragment {
 
 		@Override
 		protected Integer doInBackground(Void... params) {
-		    return new SyncAction(RefreshDataTask.this.getActivity(), RefreshDataTask.this.apiConnector).basicSync();
+		    return new SyncAction(RefreshDataTask.this.getActivity(), RefreshDataTask.this.connector).basicSync();
 		}
 		
 		@Override

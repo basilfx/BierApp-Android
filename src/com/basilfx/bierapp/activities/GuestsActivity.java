@@ -3,6 +3,7 @@ package com.basilfx.bierapp.activities;
 import java.util.List;
 
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.widget.ListView;
 
 import com.google.common.collect.Lists;
@@ -87,6 +88,18 @@ public class GuestsActivity extends OrmLiteBaseActivity<DatabaseHelper> {
     	this.guestListView.setAdapter(sectionAdapter);
 	}
 
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+	    switch (item.getItemId()) {
+	    	case android.R.id.home:
+	    		this.onBackPressed();
+
+	        	return true;
+	    	default: 
+	    		return super.onOptionsItemSelected(item);  
+	    }
+	}
+	
 	@Override
 	protected void onResume() {
 		super.onResume();

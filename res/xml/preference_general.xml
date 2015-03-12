@@ -1,9 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+<PreferenceScreen 
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory 
+        android:title="@string/overzicht" >
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="summary_show"
+            android:title="@string/toon_overzicht" />
+        <ListPreference
+            android:key="summary_days"
+            android:title="@string/periode_van_overzicht" 
+            android:dependency="summary_show"
+            android:defaultValue="1"
+            android:entries="@array/preference_summary_periods"
+            android:entryValues="@array/preference_summary_periods_values"
+            android:dialogTitle="@string/selecteer_periode" />
+       	<com.basilfx.bierapp.views.TimePickerPreference
+	        android:key="summary_day_end"
+	        android:title="Einde van de dag"
+	        android:summary="Geef aan op welk uur de dag eindigd." 
+	        android:dependency="summary_show" />   
+    </PreferenceCategory>
+    
+    <PreferenceCategory 
         android:title="@string/transacties" >
-        
+
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="transaction_post_save_summary"

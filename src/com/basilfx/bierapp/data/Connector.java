@@ -4,6 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 
@@ -11,15 +13,16 @@ import org.apache.http.auth.AuthenticationException;
 
 import android.util.Pair;
 
-import com.google.common.collect.Lists;
 import com.basilfx.bierapp.data.models.Balance;
 import com.basilfx.bierapp.data.models.Product;
+import com.basilfx.bierapp.data.models.Stats;
 import com.basilfx.bierapp.data.models.Transaction;
 import com.basilfx.bierapp.data.models.TransactionItem;
 import com.basilfx.bierapp.data.models.User;
 import com.basilfx.bierapp.database.DatabaseHelper;
 import com.basilfx.bierapp.database.ProductBalanceHelper;
 import com.basilfx.bierapp.database.ProductHelper;
+import com.basilfx.bierapp.database.StatsHelper;
 import com.basilfx.bierapp.database.TransactionHelper;
 import com.basilfx.bierapp.database.TransactionItemHelper;
 import com.basilfx.bierapp.database.UserHelper;
@@ -27,13 +30,14 @@ import com.basilfx.bierapp.exceptions.RetriesExceededException;
 import com.basilfx.bierapp.exceptions.UnexpectedData;
 import com.basilfx.bierapp.exceptions.UnexpectedStatusCode;
 import com.basilfx.bierapp.exceptions.UnexpectedUrl;
+import com.google.common.collect.Lists;
 
-public class ApiConnector {
+public class Connector {
 
 	private RemoteClient remoteClient;
 	private DatabaseHelper databaseHelper;
 	
-	public ApiConnector(RemoteClient remoteClient, DatabaseHelper databaseHelper) {
+	public Connector(RemoteClient remoteClient, DatabaseHelper databaseHelper) {
 		this.remoteClient = checkNotNull(remoteClient);
 		this.databaseHelper = checkNotNull(databaseHelper);
 	}
@@ -374,5 +378,35 @@ public class ApiConnector {
 				productHelper.update(product);
 			}
 		}
+	}
+	
+	//
+	// Stats
+	//
+	
+	public void loadStats(Calendar dayEnd, int days) throws IOException, SQLException, UnexpectedStatusCode, UnexpectedData, UnexpectedUrl, AuthenticationException, RetriesExceededException {
+		StatsHelper statsHelper = new StatsHelper(this.databaseHelper); 
+		
+		// Determine overflow point
+		Calendar now = new GregorianCalendar();
+		Calendar overflow = new GregorianCalendar();
+		
+		overflow.set(Calendar.HOUR_OF_DAY, dayEnd.get(Calendar.HOUR_OF_DAY));
+		overflow.set(Calendar.MINUTE, dayEnd.get(Calendar.MINUTE));
+		overflow.set(Calendar.SECOND, 0);
+		overflow.set(Calendar.MILLISECOND, 0);
+		
+		if (now.before(overflow)) {
+			overflow.add(Calendar.DAY_OF_YEAR, -1);
+		}
+		
+		// Fetch page
+		ApiStats apiStats = (ApiStats) this.remoteClient.get("/stats/?after=" + overflow.get(Calendar.YEAR) + "-" + (overflow.get(Calendar.MONTH) + 1) + "-" + overflow.get(Calendar.DAY_OF_MONTH) + "%20" + overflow.get(Calendar.HOUR_OF_DAY) + ":" + overflow.get(Calendar.MINUTE));
+		
+		Stats stats = new Stats();
+		stats.setCount(apiStats.count);
+		
+		// Save changes to database
+		statsHelper.create(stats);
 	}
 }

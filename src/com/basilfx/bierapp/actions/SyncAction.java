@@ -2,15 +2,19 @@ package com.basilfx.bierapp.actions;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
 import org.apache.http.auth.AuthenticationException;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.basilfx.bierapp.data.ApiConnector;
+import com.basilfx.bierapp.data.Connector;
 import com.basilfx.bierapp.exceptions.RetriesExceededException;
 import com.basilfx.bierapp.exceptions.UnexpectedData;
 import com.basilfx.bierapp.exceptions.UnexpectedStatusCode;
@@ -22,11 +26,11 @@ public class SyncAction extends Action {
 
 	private Context context;
 	
-	private ApiConnector apiConnector;
+	private Connector connector;
 	
-	public SyncAction(Context context, ApiConnector apiConnector) {
+	public SyncAction(Context context, Connector connector) {
 		this.context = context;
-		this.apiConnector = apiConnector;
+		this.connector = connector;
 	}
 	
 	public int basicSync() {
@@ -40,19 +44,31 @@ public class SyncAction extends Action {
 		try {
 			// Products
 			Log.d(LOG_TAG, "Loading products");
-			this.apiConnector.loadProducts();
+			this.connector.loadProducts();
 			
 			// Users
 			Log.d(LOG_TAG, "Loading users");
-			this.apiConnector.loadUsers();
+			this.connector.loadUsers();
 			
 			// Transactions
 			Log.d(LOG_TAG, "Loading transactions");
-			this.apiConnector.loadTransactions();
+			this.connector.loadTransactions();
 			
 			// Users info
-			Log.d(LOG_TAG, "Loading users info");
-			this.apiConnector.loadUserInfo();
+			Log.d(LOG_TAG, "Loading user info");
+			this.connector.loadUserInfo();
+			
+			// Stats
+			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this.context);
+			
+			if (preferences.getBoolean("summary_show", true)) {
+				Calendar dayEnd = new GregorianCalendar();
+				dayEnd.setTimeInMillis(preferences.getLong("summary_day_end", System.currentTimeMillis()));
+				int days = Integer.parseInt(preferences.getString("summary_days", "1"));
+					
+				Log.d(LOG_TAG, "Loading stats");
+				this.connector.loadStats(dayEnd, days);
+			}
 		} catch (IOException e) {
 			return LogUtils.logException(LOG_TAG, e, Action.RESULT_ERROR_CONNECTION);
 		} catch (SQLException e) {

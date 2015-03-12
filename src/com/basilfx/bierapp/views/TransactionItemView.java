@@ -377,7 +377,7 @@ public class TransactionItemView extends DialogFragment implements OnCheckedChan
 		
 		User user = (User) this.users.getSelectedItem();
 		
-		if (this.userIsPayer.isChecked() && (user.getRole() == User.ADMIN && user.getRole() == User.MEMBER)) {
+		if (this.userIsPayer.isChecked() && (user.getRole() == User.ADMIN || user.getRole() == User.MEMBER)) {
 			transactionItem.setUser(user);
 			transactionItem.setPayer(user);
 		} else {

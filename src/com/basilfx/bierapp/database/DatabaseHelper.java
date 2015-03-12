@@ -1,27 +1,30 @@
 package com.basilfx.bierapp.database;
 
 import java.sql.SQLException;
+import java.util.Map;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
+import com.basilfx.bierapp.data.models.Balance;
+import com.basilfx.bierapp.data.models.HostMapping;
+import com.basilfx.bierapp.data.models.Hosting;
+import com.basilfx.bierapp.data.models.Product;
+import com.basilfx.bierapp.data.models.Stats;
+import com.basilfx.bierapp.data.models.Transaction;
+import com.basilfx.bierapp.data.models.TransactionItem;
+import com.basilfx.bierapp.data.models.User;
+import com.google.common.collect.Maps;
 import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
-import com.basilfx.bierapp.data.models.HostMapping;
-import com.basilfx.bierapp.data.models.Hosting;
-import com.basilfx.bierapp.data.models.Product;
-import com.basilfx.bierapp.data.models.Transaction;
-import com.basilfx.bierapp.data.models.TransactionItem;
-import com.basilfx.bierapp.data.models.User;
-import com.basilfx.bierapp.data.models.Balance;
 
 public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 
 	private static final String DATABASE_NAME = "database.db";
-	private static final int DATABASE_VERSION = 35;
+	private static final int DATABASE_VERSION = 36;
 
 	private Dao<User, Integer> userDao;
 	private Dao<Balance, Integer> productBalanceDao;
@@ -30,6 +33,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 	private Dao<TransactionItem, Integer> transactionItemDao;
 	private Dao<Hosting, Integer> hostingDao;
 	private Dao<HostMapping, Integer> hostMappingDao;
+	private Dao<Stats, Integer> statsDao;
 	
 	public DatabaseHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -45,6 +49,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 			TableUtils.createTable(connectionSource, TransactionItem.class);
 			TableUtils.createTable(connectionSource, Hosting.class);
 			TableUtils.createTable(connectionSource, HostMapping.class);
+			TableUtils.createTable(connectionSource, Stats.class);
 		} catch (SQLException e) {
 			Log.e(DatabaseHelper.class.getName(), "Unable to create datbases", e);
 		}
@@ -60,6 +65,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 			TableUtils.dropTable(connectionSource, TransactionItem.class, true);
 			TableUtils.dropTable(connectionSource, Hosting.class, true);
 			TableUtils.dropTable(connectionSource, HostMapping.class, true);
+			TableUtils.dropTable(connectionSource, Stats.class, true);
 			
 			this.onCreate(sqliteDatabase, connectionSource);
 		} catch (SQLException e) {
@@ -157,5 +163,17 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 		}
 		
 		return this.hostMappingDao;
+	}
+	
+	public Dao<Stats, Integer> getStatsDao() {
+		if (this.hostMappingDao == null) {
+			try {
+				this.statsDao = this.getDao(Stats.class);
+			} catch (SQLException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		
+		return this.statsDao;
 	}
 }

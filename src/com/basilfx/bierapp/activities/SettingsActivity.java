@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+import android.view.MenuItem;
 
 import com.basilfx.bierapp.R;
 
@@ -22,6 +23,18 @@ public class SettingsActivity extends Activity {
         	.replace(android.R.id.content, new GeneralFragment())
         	.commit();
     }
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+	    switch (item.getItemId()) {
+	    	case android.R.id.home:
+	    		this.onBackPressed();
+
+	        	return true;
+	    	default: 
+	    		return super.onOptionsItemSelected(item);  
+	    }
+	}
 
     /**
      * This fragment shows the preferences for the first header.

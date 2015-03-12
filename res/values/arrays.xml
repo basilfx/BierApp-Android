@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string-array name="preference_summary_periods">
+        <item>Vandaag</item>
+        <item>Twee dagen</item>
+        <item>Drie dagen</item>
+        <item>Zeven dagen</item>
+    </string-array>
+    
+    <string-array name="preference_summary_periods_values">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>7</item>
+    </string-array>
+    
     <string-array name="preference_transaction_timeouts">
         <item>10 minuten</item>
         <item>30 minuten</item>

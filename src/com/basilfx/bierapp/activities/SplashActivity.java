@@ -11,16 +11,15 @@ import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager.LayoutParams;
 
-import com.google.common.base.Function;
-import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.basilfx.bierapp.BierAppApplication;
 import com.basilfx.bierapp.R;
 import com.basilfx.bierapp.actions.Action;
 import com.basilfx.bierapp.actions.SyncAction;
-import com.basilfx.bierapp.data.ApiConnector;
+import com.basilfx.bierapp.data.Connector;
 import com.basilfx.bierapp.data.RemoteClient;
 import com.basilfx.bierapp.database.DatabaseHelper;
 import com.basilfx.bierapp.utils.TokenInfo;
+import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 
 /**
  * Splash screen activity. Loads data from server, then advances to 
@@ -43,7 +42,7 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
 	/**
 	 * @var Reference to API connector
 	 */
-	private ApiConnector apiConnector;
+	private Connector connector;
 	
 	/**
 	 * 
@@ -76,7 +75,7 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
         if (remoteClient.getTokenInfo().isValid()) {
         	// Create API instance
         	Log.d(LOG_TAG, "Using token info: " + remoteClient.getTokenInfo());
-        	this.apiConnector = new ApiConnector(remoteClient, this.getHelper());
+        	this.connector = new Connector(remoteClient, this.getHelper());
         	
         	// Load data and advance to next screen
             new LoadDataTask().execute();
@@ -100,7 +99,7 @@ public class SplashActivity extends OrmLiteBaseActivity<DatabaseHelper> {
     	 */
 		@Override
 		protected Integer doInBackground(Void... params) {
-			return new SyncAction(SplashActivity.this, SplashActivity.this.apiConnector).basicSync();
+			return new SyncAction(SplashActivity.this, SplashActivity.this.connector).basicSync();
 		}
 
 		/**

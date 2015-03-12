@@ -4,6 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
 import org.apache.http.auth.AuthenticationException;
 
@@ -12,18 +14,19 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.content.DialogInterface.OnKeyListener;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.KeyEvent;
 
-import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.basilfx.bierapp.BierAppApplication;
 import com.basilfx.bierapp.R;
 import com.basilfx.bierapp.actions.Action;
 import com.basilfx.bierapp.callbacks.OnSaveActionListener;
-import com.basilfx.bierapp.data.ApiConnector;
+import com.basilfx.bierapp.data.Connector;
 import com.basilfx.bierapp.data.models.Transaction;
 import com.basilfx.bierapp.database.DatabaseHelper;
 import com.basilfx.bierapp.database.TransactionHelper;
@@ -32,6 +35,7 @@ import com.basilfx.bierapp.exceptions.UnexpectedData;
 import com.basilfx.bierapp.exceptions.UnexpectedStatusCode;
 import com.basilfx.bierapp.exceptions.UnexpectedUrl;
 import com.basilfx.bierapp.utils.LogUtils;
+import com.j256.ormlite.android.apptools.OpenHelperManager;
 
 public class SaveTransactionTask extends DialogFragment {
 	public static final String LOG_TAG = "SaveTransactionTask";
@@ -44,7 +48,7 @@ public class SaveTransactionTask extends DialogFragment {
 	
 	private DatabaseHelper databaseHelper;
 	
-	private ApiConnector apiConnector;
+	private Connector connector;
 	
 	public static SaveTransactionTask newInstance(Transaction transaction) {
 		SaveTransactionTask task = new SaveTransactionTask();
@@ -98,7 +102,7 @@ public class SaveTransactionTask extends DialogFragment {
 	    setRetainInstance(true);
 		
 	    // Create an API connector
-	    this.apiConnector = new ApiConnector(BierAppApplication.getRemoteClient(), this.getHelper());
+	    this.connector = new Connector(BierAppApplication.getRemoteClient(), this.getHelper());
 	    
 	    // Create and start task
 	    int transactionId = this.getArguments().getInt("transactionId");
@@ -154,11 +158,24 @@ public class SaveTransactionTask extends DialogFragment {
 			
             // Send transaction to the server
             try {
-                Transaction result = SaveTransactionTask.this.apiConnector.saveTransaction(transaction);
+                Transaction result = SaveTransactionTask.this.connector.saveTransaction(transaction);
                 
                 if (result != null) {
                     // Reload new user data
-                    SaveTransactionTask.this.apiConnector.loadUserInfo();
+                	Log.d(LOG_TAG, "Loading users info");
+                    SaveTransactionTask.this.connector.loadUserInfo();
+                    
+                    // Stats
+                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                    
+        			if (preferences.getBoolean("summary_show", true)) {
+        				Calendar dayEnd = new GregorianCalendar();
+        				dayEnd.setTimeInMillis(preferences.getLong("summary_day_end", System.currentTimeMillis()));
+        				int days = Integer.parseInt(preferences.getString("summary_days", "1"));
+        					
+        				Log.d(LOG_TAG, "Loading stats");
+        				SaveTransactionTask.this.connector.loadStats(dayEnd, days);
+        			}
                     
                     // Save new transaction id
                     this.newTransactionId = result.getId();

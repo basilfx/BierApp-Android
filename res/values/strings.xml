@@ -75,4 +75,8 @@
     <string name="menu_delete_transaction_item">Transactie-item verwijderen</string>
     <string name="edit">Aanpassen</string>
     <string name="select_hint">(Selecteren)</string>
+    <string name="periode_van_overzicht">Periode van overzicht</string>
+    <string name="toon_overzicht">Toon overzicht</string>
+    <string name="overzicht">Overzicht</string>
+    <string name="selecteer_periode">Selecteer periode</string>
 </resources>

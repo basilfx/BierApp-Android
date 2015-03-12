@@ -34,6 +34,36 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.basilfx.bierapp.R;
+import com.basilfx.bierapp.actions.Action;
+import com.basilfx.bierapp.callbacks.OnProductClickListener;
+import com.basilfx.bierapp.callbacks.OnRefreshActionListener;
+import com.basilfx.bierapp.callbacks.OnSaveActionListener;
+import com.basilfx.bierapp.data.adapters.TransactionItemListAdapter;
+import com.basilfx.bierapp.data.adapters.UserListAdapter;
+import com.basilfx.bierapp.data.models.Balance;
+import com.basilfx.bierapp.data.models.HostMapping;
+import com.basilfx.bierapp.data.models.Hosting;
+import com.basilfx.bierapp.data.models.Product;
+import com.basilfx.bierapp.data.models.Stats;
+import com.basilfx.bierapp.data.models.Transaction;
+import com.basilfx.bierapp.data.models.TransactionItem;
+import com.basilfx.bierapp.data.models.User;
+import com.basilfx.bierapp.database.DatabaseHelper;
+import com.basilfx.bierapp.database.HostMappingHelper;
+import com.basilfx.bierapp.database.HostingHelper;
+import com.basilfx.bierapp.database.ProductBalanceHelper;
+import com.basilfx.bierapp.database.ProductHelper;
+import com.basilfx.bierapp.database.StatsHelper;
+import com.basilfx.bierapp.database.TransactionHelper;
+import com.basilfx.bierapp.database.TransactionItemHelper;
+import com.basilfx.bierapp.database.UserHelper;
+import com.basilfx.bierapp.service.SyncService;
+import com.basilfx.bierapp.tasks.RefreshDataTask;
+import com.basilfx.bierapp.tasks.SaveTransactionTask;
+import com.basilfx.bierapp.utils.ProductInfo;
+import com.basilfx.bierapp.views.ProductView;
+import com.basilfx.bierapp.views.UserRowView;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
@@ -44,34 +74,6 @@ import com.google.common.collect.Lists;
 import com.j256.ormlite.android.apptools.OrmLiteBaseActivity;
 import com.mobsandgeeks.adapters.Sectionizer;
 import com.mobsandgeeks.adapters.SimpleSectionAdapter;
-import com.basilfx.bierapp.R;
-import com.basilfx.bierapp.actions.Action;
-import com.basilfx.bierapp.callbacks.OnProductClickListener;
-import com.basilfx.bierapp.callbacks.OnRefreshActionListener;
-import com.basilfx.bierapp.callbacks.OnSaveActionListener;
-import com.basilfx.bierapp.data.adapters.TransactionItemListAdapter;
-import com.basilfx.bierapp.data.adapters.UserListAdapter;
-import com.basilfx.bierapp.data.models.HostMapping;
-import com.basilfx.bierapp.data.models.Hosting;
-import com.basilfx.bierapp.data.models.Product;
-import com.basilfx.bierapp.data.models.Balance;
-import com.basilfx.bierapp.data.models.Transaction;
-import com.basilfx.bierapp.data.models.TransactionItem;
-import com.basilfx.bierapp.data.models.User;
-import com.basilfx.bierapp.database.DatabaseHelper;
-import com.basilfx.bierapp.database.HostMappingHelper;
-import com.basilfx.bierapp.database.HostingHelper;
-import com.basilfx.bierapp.database.ProductBalanceHelper;
-import com.basilfx.bierapp.database.ProductHelper;
-import com.basilfx.bierapp.database.TransactionHelper;
-import com.basilfx.bierapp.database.TransactionItemHelper;
-import com.basilfx.bierapp.database.UserHelper;
-import com.basilfx.bierapp.service.SyncService;
-import com.basilfx.bierapp.tasks.RefreshDataTask;
-import com.basilfx.bierapp.tasks.SaveTransactionTask;
-import com.basilfx.bierapp.utils.ProductInfo;
-import com.basilfx.bierapp.views.ProductView;
-import com.basilfx.bierapp.views.UserRowView;
 
 /**
  *
@@ -90,6 +92,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	private ProductBalanceHelper productBalanceHelper;
 	private HostingHelper hostingHelper;
 	private HostMappingHelper hostMappingHelper;
+	private StatsHelper statsHelper;
 	
 	private UserListAdapter userListAdapter; 
 	private ListView userListView;
@@ -131,8 +134,6 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
         this.userListView = (ListView) this.findViewById(R.id.list_users);
         this.status = (TextView) this.findViewById(R.id.text_status);
         
-        this.status.setText("Total 0 transactions");
-
         // Create helpers for transactions
         this.transactionHelper = new TransactionHelper(this.getHelper());
         this.transactionItemHelper = new TransactionItemHelper(this.getHelper());
@@ -141,6 +142,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
         this.productBalanceHelper = new ProductBalanceHelper(this.getHelper());
         this.hostingHelper = new HostingHelper(this.getHelper());
         this.hostMappingHelper = new HostMappingHelper(this.getHelper());
+        this.statsHelper = new StatsHelper(this.getHelper());
         
         // Try to continue an ongoing transaction. Should only be one!
         TransactionHelper.Select builder = transactionHelper.select();
@@ -222,8 +224,9 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
  			}
  		}
 		
-		// Refresh list
+		// Refresh view
  		this.refreshList();
+ 		this.refreshStatus();
 	}
 
 	@Override
@@ -765,6 +768,41 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 		}
 	}
 	
+	public void refreshStatus() {
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		
+		// Set the text
+        if (preferences.getBoolean("summary_show", true)) {
+        	this.status.setVisibility(View.VISIBLE);
+        	
+        	// Retrieve count
+        	int count = 0;
+        	Stats stats = this.statsHelper.select().last();
+        	
+        	if (stats != null) {
+        		count = -1 * stats.getCount();
+        	}
+        	
+        	// Determine the text
+    		switch (Integer.parseInt(preferences.getString("summary_days", "1"))) {
+	    		case 1:
+	    			this.status.setText(count + " items vandaag");
+	    			break;
+	    		case 2:
+	    			this.status.setText(count + " items in de afgelopen twee dagen.");
+	    			break;
+	    		case 3:
+	    			this.status.setText(count + " items in de afgelopen drie dagen.");
+	    			break;
+	    		case 7:
+	    			this.status.setText(count + " items in de afgelopen zeven dagen.");
+	    			break;
+    		}
+        } else {
+        	this.status.setVisibility(View.GONE);
+        }
+	}
+	
 	public void refreshMenu() {
 		// Save or hide purchase menu based on amount.
 		if (this.items == 0) {
@@ -981,6 +1019,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	            // Update view
 	            this.refreshList();
 	            this.refreshMenu();
+	            this.refreshStatus();
 	            
 	            // Inform user
 	            Toast.makeText(HomeActivity.this, R.string.data_vernieuwd, Toast.LENGTH_LONG).show();
@@ -1007,6 +1046,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 	            // Update UI
 	            this.refreshMenu();
 	            this.refreshList();
+	            this.refreshStatus();
 	            
 	            // Display summary
 	            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);

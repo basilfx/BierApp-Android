@@ -15,5 +15,8 @@
 	    android:id="@+id/text_status"
 	    android:layout_width="fill_parent"
 	    android:layout_height="wrap_content"
-	    android:layout_gravity="bottom" />
+	    android:layout_gravity="bottom" 
+	    android:text="Status"
+	    android:padding="5dp"
+	    android:textAppearance="?android:attr/textAppearanceMedium" />
 </LinearLayout>

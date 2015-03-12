@@ -18,7 +18,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:hint="@string/transaction_description" 
+        android:hint="@string/transaction_description"
+        android:inputType="textCapSentences" 
         android:layout_margin="5dp"
         android:singleLine="true">
     </EditText>
