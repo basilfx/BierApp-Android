@@ -1,14 +1,29 @@
 package com.basilfx.bierapp.service;
 
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+
+import org.apache.http.auth.AuthenticationException;
+
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.common.base.Strings;
 import com.basilfx.bierapp.BierAppApplication;
+import com.basilfx.bierapp.data.Connector;
 import com.basilfx.bierapp.data.RemoteClient;
 import com.basilfx.bierapp.database.DatabaseHelper;
+import com.basilfx.bierapp.exceptions.RetriesExceededException;
+import com.basilfx.bierapp.exceptions.UnexpectedData;
+import com.basilfx.bierapp.exceptions.UnexpectedStatusCode;
+import com.basilfx.bierapp.exceptions.UnexpectedUrl;
+import com.basilfx.bierapp.tasks.SaveTransactionTask;
 import com.basilfx.bierapp.utils.OrmLiteBaseIntentService;
 
 public class SyncService extends OrmLiteBaseIntentService<DatabaseHelper> {
@@ -67,10 +82,39 @@ public class SyncService extends OrmLiteBaseIntentService<DatabaseHelper> {
 		int result = 0;
 		
 		RemoteClient remoteClient = BierAppApplication.getRemoteClient();
+		Connector connector = new Connector(remoteClient, this.getHelper());
 		
 		// Check for token info
 		if (!remoteClient.getTokenInfo().isValid()) {
 			Log.i(LOG_TAG, "Sync aborted due to invalid token info.");
+		}
+		
+		// Sync stats
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        
+		if (preferences.getBoolean("summary_show", true)) {
+			Calendar dayEnd = new GregorianCalendar();
+			dayEnd.setTimeInMillis(preferences.getLong("summary_day_end", System.currentTimeMillis()));
+			int days = Integer.parseInt(preferences.getString("summary_days", "1"));
+				
+			try {
+				Log.d(LOG_TAG, "Loading stats");
+				connector.loadStats(dayEnd, days);
+			} catch (AuthenticationException e) {
+				e.printStackTrace();
+			} catch (UnexpectedStatusCode e) {
+				e.printStackTrace();
+			} catch (UnexpectedData e) {
+				e.printStackTrace();
+			} catch (UnexpectedUrl e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			} catch (RetriesExceededException e) {
+				e.printStackTrace();
+			}
 		}
 		
 		// Create result intent

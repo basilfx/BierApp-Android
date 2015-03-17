@@ -191,7 +191,11 @@ public class AuthorizeActivity extends Activity {
         	    
         	    // Hide spinner
         	    if (AuthorizeActivity.this.dialog.isShowing()) {
-					AuthorizeActivity.this.dialog.dismiss();
+        	    	try {
+        	    		AuthorizeActivity.this.dialog.dismiss();
+        	    	} catch (IllegalArgumentException e) {
+        	    		// Do nothing: this may arise when view is not attached to window manager. Simply ignore it.
+        	    	}
 				}
         	}
 

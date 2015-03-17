@@ -46,7 +46,7 @@ public class BatchIntentReceiver extends BroadcastReceiver {
 		Intent packedIntent = new Intent(context, SyncService.class);
 		packedIntent.setAction(SyncService.SYNC_REQUEST);
 		
-		this.scheduleService(context, packedIntent, AlarmManager.INTERVAL_HALF_HOUR);
+		this.scheduleService(context, packedIntent, AlarmManager.INTERVAL_HALF_DAY);
 	}
 
 	private void scheduleService(Context context, Intent intent, Long interval) {

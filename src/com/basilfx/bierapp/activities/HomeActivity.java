@@ -245,6 +245,7 @@ public class HomeActivity extends OrmLiteBaseActivity<DatabaseHelper> implements
 			if (intent.getLongExtra("result", Action.RESULT_ERROR_UNKNOWN) == Action.RESULT_OK) {
 				HomeActivity.this.refreshMenu();
 				HomeActivity.this.refreshList();
+				HomeActivity.this.refreshStatus();
 			}
 		}
 	}
