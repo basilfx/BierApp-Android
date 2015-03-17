@@ -24,12 +24,9 @@ import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 public class BierAppApplication extends Application {
 	public static final String LOG_TAG = "BierAppApplication";
 	
+    // Change the values below if you run your own BierApp server instance
 	public static final String SITE_URL = "http://bierapp.huizewarmwit.nl";
 	public static final String API_URL = "http://bierapp.huizewarmwit.nl/api";
-	//public static final String SITE_URL = "http://10.0.0.3:8000";
-	//public static final String API_URL = "http://10.0.0.3:8000/api";
-	//public static final String SITE_URL = "http://10.0.0.119:8000";
-	//public static final String API_URL = "http://10.0.0.119:8000/api";
 	
 	public static final String OAUTH2_CLIENT_ID = "8df8f62b96ba40d11cd1";
 	public static final String OAUTH2_CLIENT_SECRET = "eee752653d2a1afc5cdff451ebc5d17ec9b9bc9c";
