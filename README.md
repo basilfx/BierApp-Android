@@ -18,13 +18,13 @@ This projected is a functional point-of-sale (POS) Android application that can 
 ![Statistics](https://raw.github.com/basilfx/BierApp-Android/master/docs/screenshots/editor.png)
 
 ## Requirements
-* Eclipse 4
+* Android Studio (IntelliJ IDEA)
 * Android Tools
 * BierApp Server
 
 ## Installation
 * Install the dependencies.
-* Import this project into Eclipse
+* Open this project in IntelliJ.
 * Configure the endpoint in `BierAppApplication.java`, together with API key and catch URL.
 
 ## Todo
