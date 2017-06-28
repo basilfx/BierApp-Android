@@ -1,25 +1,24 @@
 package com.basilfx.bierapp.actions;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.List;
-
+import com.basilfx.bierapp.BierAppApplication;
+import com.basilfx.bierapp.data.ApiAccessToken;
+import com.basilfx.bierapp.data.RemoteClient;
+import com.basilfx.bierapp.exceptions.UnexpectedStatusCode;
+import com.basilfx.bierapp.utils.LogUtils;
+import com.basilfx.bierapp.utils.TokenInfo;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
-import com.google.common.collect.Lists;
-import com.google.gson.Gson;
-import com.basilfx.bierapp.BierAppApplication;
-import com.basilfx.bierapp.data.ApiAccessToken;
-import com.basilfx.bierapp.exceptions.UnexpectedStatusCode;
-import com.basilfx.bierapp.utils.LogUtils;
-import com.basilfx.bierapp.utils.TokenInfo;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.List;
 
 public class RefreshTokenAction extends Action {
 	public static final String LOG_TAG = "ExchangeTokenAction";
@@ -37,7 +36,7 @@ public class RefreshTokenAction extends Action {
 	
 	public RefreshTokenAction(TokenInfo oldTokenInfo) {
 		this.oldTokenInfo = oldTokenInfo;
-		this.httpClient = new DefaultHttpClient();
+		this.httpClient = RemoteClient.getClient();
 	}
 	
 	public int refresh() {

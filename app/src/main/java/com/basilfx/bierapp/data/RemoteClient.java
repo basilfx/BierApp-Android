@@ -1,31 +1,38 @@
 package com.basilfx.bierapp.data;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.io.IOException;
-
-import org.apache.http.HttpResponse;
-import org.apache.http.auth.AuthenticationException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
-
 import android.content.Context;
+import android.os.Build;
 import android.util.Log;
-
 import com.basilfx.bierapp.actions.RefreshTokenAction;
-import com.basilfx.bierapp.exceptions.RetriesExceededException;
-import com.basilfx.bierapp.exceptions.RetryException;
-import com.basilfx.bierapp.exceptions.UnexpectedData;
-import com.basilfx.bierapp.exceptions.UnexpectedStatusCode;
-import com.basilfx.bierapp.exceptions.UnexpectedUrl;
+import com.basilfx.bierapp.exceptions.*;
 import com.basilfx.bierapp.utils.TokenInfo;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpVersion;
+import org.apache.http.auth.AuthenticationException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.scheme.PlainSocketFactory;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpParams;
+import org.apache.http.params.HttpProtocolParams;
+import org.apache.http.protocol.HTTP;
+import org.apache.http.util.EntityUtils;
+
+import java.io.IOException;
+import java.security.KeyStore;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 
 public class RemoteClient {
@@ -114,6 +121,43 @@ public class RemoteClient {
 		}
 		
 		return result;
+	}
+
+	/**
+	 * Create a HttpClient suitable for the running Android version.
+	 *
+	 * Older Android versions do not support SNI, which may fail for some servers. Because they are phased out,
+	 * just trust everything (bad idea, but it works.)
+	 *
+	 * @return New HttpClient instance.
+	 */
+	public static HttpClient getClient() {
+		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN) {
+			return new DefaultHttpClient();
+		}
+
+		// Older android version, create a HttpClient that trusts everything.
+		try {
+			KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+			trustStore.load(null, null);
+
+			UntrustedSSLSocketFactory sf = new UntrustedSSLSocketFactory(trustStore);
+			sf.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+
+			HttpParams params = new BasicHttpParams();
+			HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
+			HttpProtocolParams.setContentCharset(params, HTTP.UTF_8);
+
+			SchemeRegistry registry = new SchemeRegistry();
+			registry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+			registry.register(new Scheme("https", sf, 443));
+
+			ClientConnectionManager ccm = new ThreadSafeClientConnManager(params, registry);
+
+			return new DefaultHttpClient(ccm, params);
+		} catch (Exception e) {
+			return new DefaultHttpClient();
+		}
 	}
 	
 	public Object post(Object object, String url) throws IOException, AuthenticationException, UnexpectedUrl, UnexpectedStatusCode, UnexpectedData, RetriesExceededException {
@@ -212,7 +256,7 @@ public class RemoteClient {
 			// Try to refresh token
 			if (this.tokenInfo.isValid()) {
 				if (this.client == null) {
-					this.client = new DefaultHttpClient();
+					this.client = getClient();
 				}
 				
 				// Setup refresh action
@@ -240,7 +284,7 @@ public class RemoteClient {
 	
 	private HttpResponse getRequest(String url, int retries) throws IOException, AuthenticationException, UnexpectedStatusCode, RetriesExceededException {		
 		if (this.client == null) {
-			this.client = new DefaultHttpClient();
+			this.client = getClient();
 		}
 		
 		// Create request
@@ -269,7 +313,7 @@ public class RemoteClient {
 	
 	private HttpResponse postRequest(String url, String data, int retries) throws IOException, AuthenticationException, UnexpectedStatusCode, RetriesExceededException {
 		if (this.client == null) {
-			this.client = new DefaultHttpClient();
+			this.client = getClient();
 		}
 		
 		// Create request
