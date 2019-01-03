@@ -126,38 +126,10 @@ public class RemoteClient {
 	/**
 	 * Create a HttpClient suitable for the running Android version.
 	 *
-	 * Older Android versions do not support SNI, which may fail for some servers. Because they are phased out,
-	 * just trust everything (bad idea, but it works.)
-	 *
 	 * @return New HttpClient instance.
 	 */
 	public static HttpClient getClient() {
-		if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN) {
-			return new DefaultHttpClient();
-		}
-
-		// Older android version, create a HttpClient that trusts everything.
-		try {
-			KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-			trustStore.load(null, null);
-
-			UntrustedSSLSocketFactory sf = new UntrustedSSLSocketFactory(trustStore);
-			sf.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-
-			HttpParams params = new BasicHttpParams();
-			HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
-			HttpProtocolParams.setContentCharset(params, HTTP.UTF_8);
-
-			SchemeRegistry registry = new SchemeRegistry();
-			registry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
-			registry.register(new Scheme("https", sf, 443));
-
-			ClientConnectionManager ccm = new ThreadSafeClientConnManager(params, registry);
-
-			return new DefaultHttpClient(ccm, params);
-		} catch (Exception e) {
-			return new DefaultHttpClient();
-		}
+		return new DefaultHttpClient();
 	}
 	
 	public Object post(Object object, String url) throws IOException, AuthenticationException, UnexpectedUrl, UnexpectedStatusCode, UnexpectedData, RetriesExceededException {
